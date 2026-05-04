@@ -36,11 +36,33 @@
     <string name="cd_nav_collections">Collections tab</string>
     <string name="cd_nav_settings">Settings tab</string>
 
-    <!-- Phase C — placeholder titles for each tab body until C.2/D/I fill them in. -->
+    <!-- Phase C — placeholder titles until D/I fill in. -->
     <string name="collections_placeholder_title">Collections lands in Phase D</string>
-    <string name="settings_placeholder_title">Settings lands in Phase I</string>
 
     <!-- Phase C.2 — Photos timeline. -->
     <string name="photos_empty_title">No photos yet</string>
     <string name="photos_empty_subtitle">Connect a folder via Settings → Library → Manage sources, or grant photo access if you haven\'t.</string>
+
+    <!-- Phase C.x — Settings tab placeholder until Phase I builds the M3 Expressive root. -->
+    <string name="settings_root_about_row_label">About</string>
+    <string name="settings_root_about_row_subtitle">Build, license, GitHub, easter egg</string>
+    <string name="cd_settings_back">Back</string>
+
+    <!-- About sub-page (mirrors tonearmboy D.16.4 + D.16.5 easter egg). -->
+    <string name="about_title">About</string>
+    <string name="about_app_tagline">Modern photo gallery for Android</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_version_format">%1$s · %2$s · %3$s</string>
+    <string name="about_license_row_label">License</string>
+    <string name="about_license_row_value">MIT</string>
+    <string name="about_license_dialog_title">MIT License</string>
+    <string name="about_license_dialog_dismiss">Close</string>
+    <string name="about_license_dialog_body" translatable="false">MIT License\n\nCopyright (c) 2026 887\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
+    <string name="about_github_row_label">GitHub</string>
+    <string name="about_github_row_value">github.com/887/shutterboy</string>
+    <string name="about_github_url" translatable="false">https://github.com/887/shutterboy</string>
+    <string name="about_oss_row_label">Open-source acknowledgments</string>
+    <string name="about_oss_row_subtitle">Lands with Phase L release polish</string>
+    <string name="cd_easter_egg_tiger">Tiger easter egg</string>
+    <string name="cd_easter_egg_dismiss">Dismiss easter egg</string>
 </resources>

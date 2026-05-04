@@ -34,5 +34,14 @@ data object Collections : Destination
 @Serializable
 data object Settings : Destination
 
+/**
+ * Phase C.x — About sub-page (mirrors tonearmboy D.16.4 + D.16.5). Pushed onto
+ * the Settings tab from the placeholder root row until Phase I builds the full
+ * M3 Expressive grouped-cards Settings root with About underneath
+ * Settings → Library.
+ */
+@Serializable
+data object SettingsAbout : Destination
+
 /** The three top-level destinations a bottom-nav tap can route to. */
 internal val rootDestinations: List<Destination> = listOf(Photos, Collections, Settings)
