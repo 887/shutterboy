@@ -43,7 +43,7 @@ Capture the visual language we're targeting, document the decisions before any U
 
 ---
 
-## Phase B — Data layer — shipped in commits `6968e01` (B.1), `7b1f1d6` (B.2+B.3), `6f9ea68` (B.4), `da45328` (B.5+B.6), `<this commit>` (B.7)
+## Phase B — Data layer — shipped in commits `6968e01` (B.1), `7b1f1d6` (B.2+B.3), `6f9ea68` (B.4), `da45328` (B.5+B.6), `eb55537` (B.7)
 
 Room schema + MediaStore.Images scanner + EXIF cache + multi-source SAF + repository interface. Pure data — no UI in this phase.
 
