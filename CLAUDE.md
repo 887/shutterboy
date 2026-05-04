@@ -10,6 +10,7 @@ Modern Android photo gallery. Kotlin + Jetpack Compose + Coil 3 + Room. Built en
 - **EXIF / metadata:** `androidx.exifinterface` for orientation, capture date, lens, GPS. Read-only in v1; rotation / metadata edits are out of scope.
 - **Photo discovery:** `MediaStore.Images.Media` for the device's image collection; SAF (`Intent.ACTION_OPEN_DOCUMENT_TREE`) for additional folders / SD card / USB OTG sources. Same multi-source pattern tonearmboy uses for music sources.
 - **Data:** Room for cached MediaStore metadata (rows = thumbnail uri, capture date, dimensions, EXIF subset, album / folder key). FTS for search across filename + EXIF user-tags.
+- **i18n discipline (locked from Phase 0):** every user-facing string goes through `stringResource(R.string.…)` or `LocalContext.current.getString(R.string.…)`. No inline `Text("…")` literals on shipped UI. `app/src/main/res/values/strings.xml` is the canonical source of truth; locale variants live at `app/src/main/res/values-<locale>/strings.xml`. Naming scheme: `<surface>_<role>` lowercase snake (`photos_tab_title`, `viewer_share_cd`, `settings_library_rescan_button`). Surfaces: `photos_`, `collections_`, `viewer_`, `search_`, `settings_`, `dialog_`, `error_`, `cd_` (content descriptions). Translation workflow: see the **Translations** section below.
 - **Build front-end:** [Google's Android CLI](https://developer.android.com/tools/agents/android-cli) (`android` command, launched April 2026). Wraps project creation, SDK management, build, install, and run. **Do not introduce Android Studio project files** (`.idea/`, `*.iml`).
 - **Build back-end:** Gradle (driven by the Android CLI; the wrapper is committed to the repo).
 - **Tests, unit:** Robolectric. JVM-only. No device required.
@@ -163,6 +164,27 @@ When working on a phase:
 ## Editorial — user-facing copy
 
 The user follows Paul Graham's *Keep Your Identity Small*. App copy (settings descriptions, error messages, About text) should be plain, factual, useful. No "vibes" copy, no personal opinions, no humor that pins identity.
+
+## Translations
+
+**Translations are produced by the user + Claude, per-language, in dedicated sessions.** That's the canonical workflow, not a fallback. Community PRs are accepted if they show up but nothing in the pipeline assumes or requires them — no contributor onboarding doc, no PR template addendum, no welcome-mat infrastructure. (Mirrors the [`tonearmboy` translations plan](https://github.com/887/tonearmboy/blob/main/docs/plans/translations.md) — same constraints, same workflow.)
+
+Per-language session shape:
+1. User picks a target locale.
+2. Claude reads `app/src/main/res/values/strings.xml` and the editorial brief (plain / factual / useful — no vibes copy).
+3. Claude drafts `app/src/main/res/values-<locale>/strings.xml` with every translatable key. Same key order as `values/strings.xml` for diff-friendly review.
+4. Per-entry user review. Anything off → user redirects → Claude revises in place.
+5. Commit signed-off entries; leave anything unconfirmed missing — English-fallback is correct behaviour, not a placeholder.
+6. Run `scripts/translation-progress.sh` to refresh the README progress table.
+7. AVD smoke under the new locale: switch device locale (`adb shell setprop persist.sys.locale de-DE && adb shell stop && adb shell start`), walk every screen, watch for layout overflow on long compound words (German specifically — `flowRow` / `wrapContentWidth` may need targeted patches).
+
+Locked constraints:
+- **No third-party translation service.** No Crowdin, Lokalise, Weblate (hosted or self-hosted).
+- **No new build dependency.** Just Android's built-in `values-<locale>/strings.xml` + a small POSIX shell script for the README progress table.
+- **Zero CI minutes.** `scripts/translation-progress.sh` runs locally inside `scripts/build-release-apk.sh` before the `git tag` step.
+- **English is canonical.** Locale variants are partial overrides; missing keys fall back to English at runtime.
+
+What this deliberately does NOT include: a `CONTRIBUTING-TRANSLATIONS.md`, a PR template addendum for translation contributions, "we welcome contributions" copy in README, a `<!-- needs-translation -->` placeholder convention, or a reviewer-pair rule. The layout migrates cleanly to Weblate/Crowdin if the user ever opens community translations later — but this CLAUDE.md doesn't pre-build for that path.
 
 ## Easter egg + character art
 

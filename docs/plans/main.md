@@ -24,7 +24,8 @@ Scaffold the Android project, get a hello-world cold-boot on `emulator-5554`, an
 - [ ] **0.5** First-pass app icon — adaptive launcher with the tiger cutout + Pentax SLR composition. Source at `app/src/main/res/drawable-nodpi/ic_launcher_source.png` (1024×1536 RGBA, transparent canvas around a centered ~960×960 design square). Generate `mipmap-anydpi-v26/ic_launcher.xml` (`<adaptive-icon>` foreground = source, background = `@color/launcher_background` = `#1A1717`); generate the alpha-only monochrome layer for Android 13+ themed icons. Polish lands in Phase K — this just needs to be a recognizable shutterboy icon on the launcher.
 - [ ] **0.6** Splash screen via `androidx.core.splashscreen` — `windowSplashScreenBackground` matches launcher background, `windowSplashScreenAnimatedIcon` = the foreground drawable, `windowSplashScreenIconBackgroundColor` = transparent.
 - [ ] **0.7** Wire `scripts/start-avd.sh` and `scripts/build-release-apk.sh` adapted from tonearmboy (rename app references, drop music-specific bits). Confirm `scripts/build-release-apk.sh` builds a `release/shutterboy-0.1-<sha7>.apk`.
-- [ ] **0.8** README "Status" line flips from "Pre-Phase 0" to "Phase 0 shipped — see `docs/plans/main.md`."
+- [ ] **0.8** **i18n discipline locked from this phase forward.** Seed `app/src/main/res/values/strings.xml` with `app_name=shutterboy`, the channel-name strings the scaffolding hello-world needs, and a leading XML comment documenting the naming scheme (`<surface>_<role>` lowercase snake; surfaces: `photos_`, `collections_`, `viewer_`, `search_`, `settings_`, `dialog_`, `error_`, `cd_`). Add the lint-anchor: `<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">`. Confirm `<application>` doesn't pin a locale (default behaviour follows system locale). **Every UI string from Phase A onward goes through `stringResource(R.string.…)` — no inline `Text("…")` literals on shipped UI.** This eliminates a Phase T.A back-extraction phase entirely; shutterboy starts disciplined, locked from day one.
+- [ ] **0.9** README "Status" line flips from "Pre-Phase 0" to "Phase 0 shipped — see `docs/plans/main.md`."
 
 ---
 
@@ -36,7 +37,7 @@ Capture the visual language we're targeting, document the decisions before any U
 - [ ] **A.2** `docs/reference/oneplus-gallery.md` — written design doc. Sections: tab structure (Photos / Collections / Explore — decide whether shutterboy v1 ships 2 tabs or 3); density levels per the year-zoom (which thumbnail sizes per level, how many columns, header weight); year-scrubber behaviour (always visible vs reveal-on-scroll, bubble label format); smart-album catalogue (which ones we ship in v1: Camera, Screenshots, Favorites, Recents — defer Selfies / Videos / Recently Deleted to v2); fullscreen-viewer chrome timing (fade-out delay, tap toggle); multi-select gesture (long-press to enter, tap to add — confirm).
 - [ ] **A.3** Decide tab vs bottom-nav. tonearmboy uses top tabs under a single `LibraryRoot`; OnePlus Gallery uses bottom nav. **Default: bottom nav** — three top-level destinations (Photos / Collections / Settings), since each is a distinct surface, not a filtered view of the same library. Document the call in the design doc.
 - [ ] **A.4** Sort + custom-order spec. Per-tab persisted choice via DataStore. Sort axes: **Date taken** (default), Date added (file mtime), File name, File size; ASC/DESC. **Custom order** = user-defined drag-reorder for the albums list and the smart-album row; not applicable to the Photos timeline (which is intrinsically date-ordered).
-- [ ] **A.5** Settings catalogue — first cut. Mirror tonearmboy's M3 Expressive grouped-cards-with-pill-search shape: Look and Feel (theme, dynamic color, grid density default, thumbnail quality), Library (Manage sources, Rescan photos, Clear cache), Photos (date-header style, year-scrubber on/off, default sort), Albums (default sort, hide empty folders), About (build, license, GitHub, easter egg). Catalogued at `ui/settings/catalog/SettingsCatalog.kt` per the tonearmboy single-source-of-truth pattern.
+- [ ] **A.5** Settings catalogue — first cut. Mirror tonearmboy's M3 Expressive grouped-cards-with-pill-search shape: Look and Feel (theme, dynamic color, grid density default, thumbnail quality), Library (Manage sources, Rescan photos, Clear cache), Photos (date-header style, year-scrubber on/off, default sort), Albums (default sort, hide empty folders), About (build, license, GitHub, easter egg). Catalogued at `ui/settings/catalog/SettingsCatalog.kt` per the tonearmboy single-source-of-truth pattern. **Every catalog entry's label / subtitle / keywords carry `@StringRes Int` resource ids, not inline strings** — the catalog is i18n-native from the first row, since search filters resolve through `LocalContext.current.getString(R.string.…)` at filter time.
 
 ---
 
@@ -167,3 +168,89 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 - [ ] **L.5** First production release: `scripts/build-release-apk.sh --gh-release` → `v1.0-<sha7>` on `https://github.com/887/shutterboy/releases`. Obtainium picks it up via the README's deep-link.
 - [ ] **L.6** README "Status" line flips to "v1.0 shipped" with the release URL.
 - [ ] **L.7** Update `.maestro/README.md` (create if needed) with the smoke-test invocation pattern.
+
+---
+
+## Phase T — Translations
+
+**Translations are produced by the user + Claude, per-language, in dedicated sessions.** That's the canonical workflow, not a fallback. Mirrors the [`tonearmboy` translations plan](https://github.com/887/tonearmboy/blob/main/docs/plans/translations.md) — same constraints, same workflow — but skips the back-extraction phase since shutterboy's i18n discipline is locked from Phase 0 (every UI string is already resource-backed).
+
+Locked constraints (mirror tonearmboy):
+- No third-party translation service (no Crowdin, Lokalise, Weblate).
+- No new build dependency — just Android's built-in `values-<locale>/strings.xml` + a small POSIX shell script for the README progress table.
+- Zero CI minutes — `translation-progress.sh` runs locally inside `scripts/build-release-apk.sh`.
+- English is canonical. Locale variants are partial overrides; missing keys fall back to English at runtime.
+
+### T.A — extract is N/A
+
+Skipped — shutterboy ships with `stringResource(R.string.…)` from Phase A onward (locked in **Phase 0.8**). Every user-facing string already lives in `app/src/main/res/values/strings.xml` by the time Phase L closes; no back-extraction phase needed. tonearmboy's T.A (357-string mechanical pass) is the cost shutterboy pays nothing for by starting clean.
+
+### T.B — locale infrastructure
+
+- [ ] **T.B.1** Confirm `<application>` doesn't pin a locale (default behaviour follows system locale). Already confirmed in Phase 0.8; this is a re-verification once real UI exists.
+- [ ] **T.B.2** Confirm the `<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">` lint-anchor is intact in `values/strings.xml` — Phase 0.8 added it; this verifies it survived through Phase L.
+- [ ] **T.B.3** AVD locale-switch smoke under `de-DE` with **no** `values-de/` directory yet. Confirm every screen renders English (the fallback path) and nothing crashes on `getString` lookups. This proves the layout works before the first locale lands.
+- [ ] **T.B.4** Ship + tick.
+
+**Effort:** XS (1 hour). **Risk:** none.
+
+### T.C — translation-progress script + README markers
+
+- [ ] **T.C.1** Write `scripts/translation-progress.sh` (POSIX shell + sed + grep). Parses `app/src/main/res/values/strings.xml` → set of canonical keys (excluding `translatable="false"`); for each `app/src/main/res/values-<locale>/strings.xml` parses translated keys; computes `done / total`; prints a markdown table with locale display names and a tilde-delimited progress bar (plain ASCII, no rendering surprises on github).
+- [ ] **T.C.2** Add `<!-- TRANSLATIONS-START -->` / `<!-- TRANSLATIONS-END -->` markers in `README.md` (new "Translations" section). Script `sed`-replaces between markers; idempotent (byte-for-byte stable on re-run).
+- [ ] **T.C.3** Wire into `scripts/build-release-apk.sh` immediately before the `git tag` step. Regenerate the README block; `git diff --quiet README.md` to confirm intentional change vs noise; release commit picks up the updated table.
+- [ ] **T.C.4** Sanity tests: golden files under `scripts/tests/translation-progress/` exercising 0%, 100%, partial, and missing-locale cases. Run via `bash scripts/translation-progress.sh --test`.
+- [ ] **T.C.5** Verify: README section renders correctly on github.com; auto-update is stable on re-run.
+- [ ] **T.C.6** Ship + tick.
+
+**Effort:** S–M (½–1 day). **Risk:** low.
+
+### T.D — README "Translations" section content
+
+- [ ] **T.D.1** 2-sentence intro above the auto-table: *translations are produced by the user + Claude per-language, English is canonical, missing keys fall back to English*. **Not** a "we welcome contributions" pitch.
+- [ ] **T.D.2** Linkify each language row in the auto-table to its `values-<locale>/strings.xml` on github so the user jumps straight to "edit this file" from the table.
+- [ ] **T.D.3** Ship + tick.
+
+**Effort:** XS (15 min). **Risk:** none.
+
+### T.E — produce locales (one session per language)
+
+This is **the ship vector**. Every supported language lands here, in a dedicated user + tiger session. Standing per-language workflow:
+
+1. User opens a Claude session in this repo, names the target locale.
+2. Tiger reads `values/strings.xml` + the editorial brief from CLAUDE.md.
+3. Tiger drafts `values-<locale>/strings.xml` with every translatable key, **same key order as `values/strings.xml`** for diff-friendly review.
+4. Per-entry user review. Anything off → user redirects → tiger revises in place.
+5. Commit signed-off entries; leave anything unconfirmed missing (English-fallback is the right answer, not a placeholder).
+6. Run `scripts/translation-progress.sh` to refresh the README table.
+7. AVD smoke under the new locale; watch for layout overflow on long compound words (German `flowRow` / `wrapContentWidth` patches as needed).
+
+Per-locale ticks (extend as new languages land):
+
+- [ ] **T.E.1** German (`values-de/`) — user is local, primary review channel.
+- [ ] **T.E.2** Next locale — user picks; same workflow.
+- [ ] **T.E.3** Next locale — same workflow.
+- [ ] (… one sub-step per locale shipped)
+
+This phase is **never "done"** in the conventional sense — it stays open as long as new locales are added. Tick the parent phase header with the commit range when the user declares a particular set of locales the canonical shipped set; reopen later when adding a new one.
+
+**Per-locale effort:** M (½–1 day, mostly editorial review). **Risk:** low. **Blast radius:** `values-<locale>/` + README.
+
+---
+
+## What this plan deliberately does NOT include
+
+- **No `CONTRIBUTING-TRANSLATIONS.md`.** Replaced by the **Translations** section in CLAUDE.md.
+- **No PR template addendum** for translation contributions.
+- **No "welcome mat" copy** in README pitching community translations.
+- **No `<!-- needs-translation -->` placeholder convention** — leave keys missing; Android falls back to English; the progress script counts honestly.
+- **No reviewer-pair rule, no language-native verifier requirement** — the user reviews per-entry inside the session.
+- **No T.A back-extraction phase** — shutterboy is i18n-disciplined from Phase 0; tonearmboy's 1.5-day mechanical pass is a cost shutterboy doesn't owe.
+
+## Migration path (kept open, not scheduled)
+
+If at some future point the user decides to open community translations:
+- Layout is unchanged — `values-<locale>/strings.xml` is the standard Weblate / Crowdin input format.
+- Add a `CONTRIBUTING-TRANSLATIONS.md` then.
+- Add a PR template addendum then.
+- This plan covers none of that work pre-emptively.
