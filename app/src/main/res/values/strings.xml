@@ -37,7 +37,10 @@
     <string name="cd_nav_settings">Settings tab</string>
 
     <!-- Phase C — placeholder titles for each tab body until C.2/D/I fill them in. -->
-    <string name="photos_placeholder_title">Photos timeline lands in C.2</string>
     <string name="collections_placeholder_title">Collections lands in Phase D</string>
     <string name="settings_placeholder_title">Settings lands in Phase I</string>
+
+    <!-- Phase C.2 — Photos timeline. -->
+    <string name="photos_empty_title">No photos yet</string>
+    <string name="photos_empty_subtitle">Connect a folder via Settings → Library → Manage sources, or grant photo access if you haven\'t.</string>
 </resources>
