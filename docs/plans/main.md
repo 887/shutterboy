@@ -13,7 +13,7 @@ Pull more web references as needed — Fossify Gallery, Simple Gallery, Google P
 
 ---
 
-## Phase 0 — Bootstrap — shipped in commits `79a9999` (0.1+0.2+0.3), `4e82582` (0.4+0.5+0.6), `<this commit>` (0.7+0.8+0.9)
+## Phase 0 — Bootstrap — shipped in commits `79a9999` (0.1+0.2+0.3), `4e82582` (0.4+0.5+0.6), `224c5a9` (0.7+0.8+0.9)
 
 Scaffold the Android project, get a hello-world cold-boot on `emulator-5554`, and move the tiger artwork into the project tree. Mirror tonearmboy's Phase 0 shape.
 
