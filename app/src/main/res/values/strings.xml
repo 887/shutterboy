@@ -27,4 +27,17 @@
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="app_name">shutterboy</string>
+
+    <!-- Phase C — bottom navigation + tab labels. -->
+    <string name="nav_photos">Photos</string>
+    <string name="nav_collections">Collections</string>
+    <string name="nav_settings">Settings</string>
+    <string name="cd_nav_photos">Photos tab</string>
+    <string name="cd_nav_collections">Collections tab</string>
+    <string name="cd_nav_settings">Settings tab</string>
+
+    <!-- Phase C — placeholder titles for each tab body until C.2/D/I fill them in. -->
+    <string name="photos_placeholder_title">Photos timeline lands in C.2</string>
+    <string name="collections_placeholder_title">Collections lands in Phase D</string>
+    <string name="settings_placeholder_title">Settings lands in Phase I</string>
 </resources>
