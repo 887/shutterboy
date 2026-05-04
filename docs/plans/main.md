@@ -31,7 +31,7 @@ Scaffold the Android project, get a hello-world cold-boot on `emulator-5554`, an
 
 ---
 
-## Phase A — Reference research + design doc — shipped in commit `<this commit>`
+## Phase A — Reference research + design doc — shipped in commit `061d777`
 
 Capture the visual language we're targeting, document the decisions before any UI lands, so Phases C/D/E/F build against a settled spec.
 
