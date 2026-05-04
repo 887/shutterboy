@@ -49,21 +49,23 @@ class ExifEnricher(
     suspend fun enrichBatch(scanned: List<ScannedPhoto>): List<ScannedPhoto> =
         scanned.map { enrich(it) }
 
-    /**
-     * EXIF stores exposure time as a fractional seconds value: "1/250", "0.0033",
-     * etc. We normalise to a Float in seconds. Returns null if unparseable.
-     */
-    private fun parseShutterSpeed(raw: String?): Float? {
-        if (raw.isNullOrBlank()) return null
-        val slashIdx = raw.indexOf('/')
-        return runCatching {
-            if (slashIdx > 0) {
-                val num = raw.substring(0, slashIdx).toFloat()
-                val den = raw.substring(slashIdx + 1).toFloat()
-                if (den != 0f) num / den else null
-            } else {
-                raw.toFloat()
-            }
-        }.getOrNull()
-    }
+}
+
+/**
+ * EXIF stores exposure time as a fractional seconds value: "1/250", "0.0033",
+ * etc. We normalise to a Float in seconds. Returns null if unparseable. Top-level
+ * `internal` so tests can call it directly without instantiating ExifEnricher.
+ */
+internal fun parseShutterSpeed(raw: String?): Float? {
+    if (raw.isNullOrBlank()) return null
+    val slashIdx = raw.indexOf('/')
+    return runCatching {
+        if (slashIdx > 0) {
+            val num = raw.substring(0, slashIdx).toFloat()
+            val den = raw.substring(slashIdx + 1).toFloat()
+            if (den != 0f) num / den else null
+        } else {
+            raw.toFloat()
+        }
+    }.getOrNull()
 }

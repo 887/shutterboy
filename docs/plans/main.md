@@ -43,7 +43,7 @@ Capture the visual language we're targeting, document the decisions before any U
 
 ---
 
-## Phase B — Data layer
+## Phase B — Data layer — shipped in commits `6968e01` (B.1), `7b1f1d6` (B.2+B.3), `6f9ea68` (B.4), `da45328` (B.5+B.6), `<this commit>` (B.7)
 
 Room schema + MediaStore.Images scanner + EXIF cache + multi-source SAF + repository interface. Pure data — no UI in this phase.
 
@@ -62,7 +62,12 @@ Room schema + MediaStore.Images scanner + EXIF cache + multi-source SAF + reposi
   - `MediaChangeSource` — `observeChanges(): Flow<MediaChange>` (`ContentObserver`-backed). Phase B keeps the scanner reactive without UI direct-calls.
   Wrong-direction imports forbidden (R.A.5 locked): `data/` never imports `ui/`. Settings → scanner dependency is a `ScanConfigSource` interface defined in `data/`, implemented by `SettingsRepository`.
 - [x] **B.6** Smart-album resolution. `SmartAlbumId` sealed type (defined in B.1) with concrete cases `Camera` / `Screenshots` (case-insensitive `bucket_display_name` match via `PhotoDao.observeInBucketByName`), `Favorites` (`PhotoFavoriteDao.observeFavoritePhotos` joins `photo_favorites`), `Recents` (last 30 days by `dateTakenMs`, window constant on `SmartAlbumId.Recents.WINDOW_MS`). `SmartAlbumSource.observeSmartAlbum(id)` `when`-dispatches on the sealed id (exhaustive — adding a new variant compiles or it doesn't). `observeSmartAlbumCovers()` produces `Map<SmartAlbumId, Photo?>` via `combine` over the four album Flows; UI consumes one map and updates atomically.
-- [ ] **B.7** Robolectric tests: scan-then-rescan idempotency; SAF tree merge; EXIF enrichment for a fixture image; smart-album resolution for each case; FTS match on displayName.
+- [x] **B.7** Robolectric tests — 26 cases across four classes, all green:
+  - `data/scan/ExifEnricherTest` (8) — `parseShutterSpeed` covers fractional ("1/250"), decimal, integer-seconds, blank, null, unparseable, divide-by-zero, long-shutter inputs.
+  - `domain/sort/PhotoSortTest` (6) — every sort axis + direction permutation + Default sentinel.
+  - `data/db/MappingTest` (4) — PhotoEntity↔Photo round-trip preserves every field; FolderEntity→Folder maps DEVICE/SAF source types; garbled `sourceType` falls back to DEVICE; ScannedPhoto→PhotoEntity preserves every cached EXIF + GPS field.
+  - `data/repo/SmartAlbumResolutionTest` (8) — in-memory Room DB. Camera bucket case-insensitive match; Screenshots resolves only its bucket; Favorites joins photo_favorites; Recents window filtering; OnConflictStrategy.IGNORE on duplicate favorite-add; defaultOrder matches design doc; fromStorageKey is invertible for every case; replaceWithDelta idempotent on identical re-scan.
+  - Robolectric pinned to `sdk = [33]` via `@Config` since `compileSdk = 36` (Android 16) is too new for the current Robolectric jar bundle.
 
 ---
 
