@@ -4,7 +4,7 @@ Modern Android photo gallery. Built on Jetpack Compose + Coil 3 + Room. Sibling 
 
 ## Status
 
-Pre-Phase 0 — repo scaffolded, Android project not yet created. See [`docs/plans/main.md`](docs/plans/main.md) for the phased build plan (populated next).
+Phase 0 shipped. Android project scaffolded, `./gradlew :app:assembleDebug` clean, hello-world cold-boot verified on `emulator-5554`, tiger artwork in place as the launcher icon and triple-tap easter egg, splash screen wired, release script working. See [`docs/plans/main.md`](docs/plans/main.md) for the phased build plan and the next phase up.
 
 ## Goals
 

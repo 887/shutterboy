@@ -1,3 +1,30 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Shutterboy — canonical English string resources. **Source of truth.**
+
+  i18n discipline (locked from Phase 0 onward):
+
+    Every user-facing string lands here in the SAME COMMIT that introduces
+    its surface. No inline `Text("…")` or `contentDescription = "…"` literals
+    in `ui/**`. testTag / log tags / debug-only strings / format-string
+    constants / internal sentinels stay literal — those are not user-facing.
+
+  Naming scheme: `<surface>_<role>` lowercase snake.
+  Surfaces:
+    - photos_       — Photos tab (timeline, density zoom, year scrubber)
+    - collections_  — Collections tab (folders + smart albums)
+    - viewer_       — Fullscreen viewer (pager, EXIF panel, actions)
+    - search_       — Search overlay (filter chips, recent searches)
+    - settings_     — Settings root + sub-pages
+    - dialog_       — Dialogs (confirm, picker, info)
+    - error_        — Error / failure messaging
+    - cd_           — Content descriptions for icon-only actions
+
+  Locale variants live at `values-<locale>/strings.xml` and override
+  selected keys; missing keys fall back to English at runtime (Android
+  default behaviour). See CLAUDE.md "Translations" section for the
+  per-language session workflow.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="app_name">shutterboy</string>
 </resources>
