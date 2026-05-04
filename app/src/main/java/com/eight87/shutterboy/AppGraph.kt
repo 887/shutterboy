@@ -1,0 +1,78 @@
+package com.eight87.shutterboy
+
+import android.content.Context
+import androidx.room.Room
+import com.eight87.shutterboy.data.db.ShutterboyDatabase
+import com.eight87.shutterboy.data.repo.FavoriteCommands
+import com.eight87.shutterboy.data.repo.FolderSource
+import com.eight87.shutterboy.data.repo.LibraryScanner
+import com.eight87.shutterboy.data.repo.MediaChangeSource
+import com.eight87.shutterboy.data.repo.PhotoDeleter
+import com.eight87.shutterboy.data.repo.PhotoSearch
+import com.eight87.shutterboy.data.repo.PhotoSource
+import com.eight87.shutterboy.data.repo.RoomGalleryRepository
+import com.eight87.shutterboy.data.repo.SmartAlbumSource
+import com.eight87.shutterboy.data.saf.SafSourceManager
+import com.eight87.shutterboy.data.scan.ExifEnricher
+import com.eight87.shutterboy.data.scan.MediaStoreScanner
+import com.eight87.shutterboy.data.settings.ScanConfigSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+
+/**
+ * Composition root — the only place that knows concrete types.
+ * Phase B.5 ships eight narrow facets (R.A locked) so UI consumers depend
+ * only on what they read. `RoomGalleryRepository` happens to implement all
+ * eight; the AppGraph exposes them as the eight separate properties below.
+ *
+ * `ScanConfigSource` here is a placeholder that always returns an empty set
+ * of SAF tree URIs. Phase I lands the real `SettingsRepository` that
+ * implements [ScanConfigSource] and reads from DataStore. The repo is
+ * constructed against the interface, so swapping in the real impl is a
+ * one-line change in this file.
+ */
+class AppGraph(applicationContext: Context) {
+
+    private val appCtx: Context = applicationContext.applicationContext
+
+    private val database: ShutterboyDatabase = Room.databaseBuilder(
+        appCtx,
+        ShutterboyDatabase::class.java,
+        "shutterboy.db",
+    ).build()
+
+    private val mediaStoreScanner = MediaStoreScanner(appCtx)
+    private val exifEnricher = ExifEnricher(appCtx)
+    private val safSourceManager = SafSourceManager(appCtx)
+
+    /**
+     * Phase I.3 will replace this with the real `SettingsRepository`-backed
+     * impl. Until then SAF source set is empty; only MediaStore-visible
+     * device images are scanned.
+     */
+    private val scanConfig: ScanConfigSource = object : ScanConfigSource {
+        override val safSourceUris: Flow<Set<String>> = flowOf(emptySet())
+    }
+
+    private val repository = RoomGalleryRepository(
+        context = appCtx,
+        photoDao = database.photos(),
+        folderDao = database.folders(),
+        favoriteDao = database.favorites(),
+        searchDao = database.search(),
+        mediaStoreScanner = mediaStoreScanner,
+        exifEnricher = exifEnricher,
+        safSourceManager = safSourceManager,
+        scanConfig = scanConfig,
+    )
+
+    // Eight narrow facets — UI consumes whichever it needs, never the wholesale repo.
+    val photoSource: PhotoSource = repository
+    val folderSource: FolderSource = repository
+    val smartAlbumSource: SmartAlbumSource = repository
+    val photoSearch: PhotoSearch = repository
+    val libraryScanner: LibraryScanner = repository
+    val favoriteCommands: FavoriteCommands = repository
+    val photoDeleter: PhotoDeleter = repository
+    val mediaChangeSource: MediaChangeSource = repository
+}
