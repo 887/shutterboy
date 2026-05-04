@@ -1,6 +1,6 @@
 # shutterboy
 
-Modern Android photo gallery. Built on Jetpack Compose + Coil 3 + Room. Sibling app to [`tonearm`](https://github.com/887/tonearm) — same architectural shape, same release pipeline, same Obtainium distribution.
+Modern Android photo gallery. Built on Jetpack Compose + Coil 3 + Room. Sibling app to [`tonearmboy`](https://github.com/887/tonearmboy) — same architectural shape, same release pipeline, same Obtainium distribution.
 
 ## Status
 

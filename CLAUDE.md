@@ -1,6 +1,6 @@
 # shutterboy — Claude instructions
 
-Modern Android photo gallery. Kotlin + Jetpack Compose + Coil 3 + Room. Built entirely from the CLI, no Android Studio required, no QEMU emulator. Sibling app to [`tonearm`](https://github.com/887/tonearm) — same architectural shape, same release pipeline, same Obtainium distribution path.
+Modern Android photo gallery. Kotlin + Jetpack Compose + Coil 3 + Room. Built entirely from the CLI, no Android Studio required, no QEMU emulator. Sibling app to [`tonearmboy`](https://github.com/887/tonearmboy) — same architectural shape, same release pipeline, same Obtainium distribution path.
 
 ## Architectural decisions (locked)
 
@@ -8,7 +8,7 @@ Modern Android photo gallery. Kotlin + Jetpack Compose + Coil 3 + Room. Built en
 - **UI:** Jetpack Compose. No Android Views.
 - **Image loading:** [Coil 3](https://coil-kt.github.io/coil/) (Compose-native; backs all thumbnail / fullscreen / shared-element image loads). No Glide, no Picasso.
 - **EXIF / metadata:** `androidx.exifinterface` for orientation, capture date, lens, GPS. Read-only in v1; rotation / metadata edits are out of scope.
-- **Photo discovery:** `MediaStore.Images.Media` for the device's image collection; SAF (`Intent.ACTION_OPEN_DOCUMENT_TREE`) for additional folders / SD card / USB OTG sources. Same multi-source pattern tonearm uses for music sources.
+- **Photo discovery:** `MediaStore.Images.Media` for the device's image collection; SAF (`Intent.ACTION_OPEN_DOCUMENT_TREE`) for additional folders / SD card / USB OTG sources. Same multi-source pattern tonearmboy uses for music sources.
 - **Data:** Room for cached MediaStore metadata (rows = thumbnail uri, capture date, dimensions, EXIF subset, album / folder key). FTS for search across filename + EXIF user-tags.
 - **Build front-end:** [Google's Android CLI](https://developer.android.com/tools/agents/android-cli) (`android` command, launched April 2026). Wraps project creation, SDK management, build, install, and run. **Do not introduce Android Studio project files** (`.idea/`, `*.iml`).
 - **Build back-end:** Gradle (driven by the Android CLI; the wrapper is committed to the repo).
@@ -166,9 +166,9 @@ The user follows Paul Graham's *Keep Your Identity Small*. App copy (settings de
 
 ## Easter egg + character art
 
-Sibling pattern to tonearm's `R.drawable.easter_egg_fox`: triple-tapping the build-version row on the About sub-page reveals a full-screen modal showing `R.drawable.easter_egg_tiger` — an anthro tiger character in a "STRIPE A POSE" hoodie wearing a black collar with brass nametag stamped "TIGER". Source artwork is committed at [`docs/artwork/easter_egg_tiger.png`](docs/artwork/easter_egg_tiger.png) and is moved into `app/src/main/res/drawable-nodpi/easter_egg_tiger.png` during Phase 0 scaffolding. The tiger is the app's mascot the same way the fox is tonearm's.
+Sibling pattern to tonearmboy's `R.drawable.easter_egg_fox`: triple-tapping the build-version row on the About sub-page reveals a full-screen modal showing `R.drawable.easter_egg_tiger` — an anthro tiger character in a "STRIPE A POSE" hoodie wearing a black collar with brass nametag stamped "TIGER". Source artwork is committed at [`docs/artwork/easter_egg_tiger.png`](docs/artwork/easter_egg_tiger.png) and is moved into `app/src/main/res/drawable-nodpi/easter_egg_tiger.png` during Phase 0 scaffolding. The tiger is the app's mascot the same way the fox is tonearmboy's.
 
-App icon: tiger cutout + a Pentax SLR sitting on the right of the canvas, on the same warm-charcoal / burnt-orange / cream / brass palette as the tonearm fox-vinyl icon, so the two read as litter-mate apps on a launcher.
+App icon: tiger cutout + a Pentax SLR sitting on the right of the canvas, on the same warm-charcoal / burnt-orange / cream / brass palette as the tonearmboy fox-vinyl icon, so the two read as litter-mate apps on a launcher.
 
 ## Release workflow
 
