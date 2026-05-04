@@ -2,12 +2,23 @@ package com.eight87.shutterboy.data.db
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Transaction
 import androidx.room.Upsert
+import androidx.sqlite.db.SupportSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PhotoDao {
+    /**
+     * Sort-aware observation. Repository layer composes a [SupportSQLiteQuery]
+     * carrying the right `ORDER BY` fragment from `PhotoSort.sqlOrderBy`.
+     * `observedEntities` keeps Flow re-emission tied to row changes on
+     * `photos`, just like a regular `@Query`.
+     */
+    @RawQuery(observedEntities = [PhotoEntity::class])
+    fun observeAll(query: SupportSQLiteQuery): Flow<List<PhotoEntity>>
+
     @Query("SELECT * FROM photos ORDER BY date_taken_ms DESC")
     fun observeAllByDateTakenDesc(): Flow<List<PhotoEntity>>
 

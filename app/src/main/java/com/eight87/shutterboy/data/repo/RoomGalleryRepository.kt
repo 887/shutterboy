@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import androidx.sqlite.db.SimpleSQLiteQuery
 import com.eight87.shutterboy.data.db.FolderDao
 import com.eight87.shutterboy.data.db.FolderEntity
 import com.eight87.shutterboy.data.db.PhotoDao
@@ -47,10 +48,10 @@ import kotlinx.coroutines.flow.map
  * `AppGraph` exposes the eight facets separately so consumers depend only on
  * what they read. This class is the single Room/MediaStore binding point.
  *
- * Sort routing in [observePhotos] / [observePhotosInFolder] is currently
- * client-side via the domain comparator; Phase E.3 will refactor to
- * sort-aware Room queries (this is the only known SOLID-borderline shortcut
- * in B.5 — flagged in refactor-solid R.F as a future polish item).
+ * Sort routing in [observePhotos] / [observePhotosInFolder] pushes the sort
+ * to the database via Room's `@RawQuery` + `SimpleSQLiteQuery`, with the
+ * `ORDER BY` fragment sourced from the sealed `PhotoSort` variants — never
+ * user input, so injection-safe by construction.
  */
 class RoomGalleryRepository(
     private val context: Context,
@@ -75,15 +76,20 @@ class RoomGalleryRepository(
 
     // --- PhotoSource ---
 
-    override fun observePhotos(sort: PhotoSort): Flow<List<Photo>> =
-        photoDao.observeAllByDateTakenDesc().map { rows ->
-            rows.map { it.toDomain() }.sortedWith(sort.comparator)
-        }
+    override fun observePhotos(sort: PhotoSort): Flow<List<Photo>> {
+        val query = SimpleSQLiteQuery(
+            "SELECT * FROM photos ORDER BY ${sort.sqlOrderBy}",
+        )
+        return photoDao.observeAll(query).map { rows -> rows.map { it.toDomain() } }
+    }
 
-    override fun observePhotosInFolder(folderId: FolderId, sort: PhotoSort): Flow<List<Photo>> =
-        photoDao.observeInFolder(folderId.value).map { rows ->
-            rows.map { it.toDomain() }.sortedWith(sort.comparator)
-        }
+    override fun observePhotosInFolder(folderId: FolderId, sort: PhotoSort): Flow<List<Photo>> {
+        val query = SimpleSQLiteQuery(
+            "SELECT * FROM photos WHERE folder_id = ? ORDER BY ${sort.sqlOrderBy}",
+            arrayOf<Any>(folderId.value),
+        )
+        return photoDao.observeAll(query).map { rows -> rows.map { it.toDomain() } }
+    }
 
     override suspend fun photosByIds(ids: List<Long>): List<Photo> =
         photoDao.byIds(ids).map { it.toDomain() }
