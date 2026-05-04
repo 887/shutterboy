@@ -150,6 +150,8 @@ The codebase follows SOLID where it earns its keep. Kotlin + Compose change *how
 
 These are evaluation criteria, not religion — small ad-hoc helpers don't need their own interface, and one-off composables don't need to be split for principle's sake. But anything load-bearing (repositories, the gallery scanner, navigation, settings storage) should pass all five.
 
+SOLID refactor + standing-discipline plan: see [`docs/plans/refactor-solid.md`](docs/plans/refactor-solid.md). It tracks the cross-cutting rules every phase enforces, the tonearmboy-audit lessons absorbed pre-emptively into main.md's phase definitions (R.A → R.E), the standing R.F polish backlog, and the per-phase + end-of-major-phase audit cadence. Self-check the cross-cutting rules against the diff before ticking any phase header.
+
 ## Plan file
 
 The phased build plan lives at [`docs/plans/main.md`](docs/plans/main.md), per the user's global CLAUDE.md rule (numbered phases, sub-step checkboxes).
