@@ -22,6 +22,7 @@ kotlinxSerializationJson = "1.7.3"
 coil3 = "3.1.0"
 coreSplashscreen = "1.0.1"
 exifinterface = "1.4.1"
+documentfile = "1.0.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -64,6 +65,8 @@ coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 # ExifInterface — capture date, lens, focal length, aperture, ISO, GPS subset.
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
+# DocumentFile — walks SAF tree URIs for the multi-source library (Phase B.4).
+androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

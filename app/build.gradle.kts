@@ -108,6 +108,9 @@ dependencies {
   // EXIF metadata
   implementation(libs.androidx.exifinterface)
 
+  // SAF tree walking
+  implementation(libs.androidx.documentfile)
+
   // Room
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.room.ktx)
