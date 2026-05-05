@@ -85,7 +85,7 @@ The headline feature. Bottom-nav scaffold lands here, then the Photos tab on top
 
 ---
 
-## Phase D — Collections tab (folders + smart albums) — shipped in commits `4163862` (D.1+D.2+D.3+D.3.5)
+## Phase D — Collections tab (folders + smart albums) — shipped in commits `4163862` (D.1+D.2+D.3+D.3.5), `49cca98` (D.4+D.5)
 
 - [x] **D.1** `ui/collections/CollectionsScreen.kt` — single `LazyVerticalGrid(GridCells.Fixed(2))` hosts both surfaces: full-span "Smart albums" header + horizontal LazyRow of chips (Camera / Screenshots / Favorites / Recents / + Manage), then full-span "Folders" header + 2-column folder tiles. Smart-album chip taps push `SmartAlbumDetail(storageKey)`; folder taps push `FolderDetail(folderIdValue)`; Manage chip surfaces a snackbar (Phase I.3 lands the real Manage sources page). `SmartAlbumChipRow.kt` + `FolderTile.kt` carved out per R.F.7. Folder covers resolve via the new `FolderSource.observeFolderCovers(): Flow<Map<FolderId, Photo>>` facet method (mirrors `observeSmartAlbumCovers` shape; one batch read per emission). Smart-album covers via the existing `observeSmartAlbumCovers`. Empty-folders state shipped inline (D.4 will do the revoked-SAF re-add CTA).
 - [x] **D.2** `ui/collections/FolderDetailScreen.kt` — `Scaffold` + `TopAppBar` with the folder display name + back-arrow; body delegates to `GalleryTimelineFrame` with a `PhotoStream { sort -> photoSource.observePhotosInFolder(folderId, sort) }`. Repository-side filtering preserved (R.F.12 locked). Year-scrubber-only-for-spans-≥-90-days deferred to a later polish pass — for now the scrubber renders against whatever the timeline emits.
