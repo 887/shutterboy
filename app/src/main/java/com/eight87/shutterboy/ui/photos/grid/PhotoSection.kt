@@ -2,19 +2,19 @@ package com.eight87.shutterboy.ui.photos.grid
 
 import com.eight87.shutterboy.domain.Photo
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * One month-year section of the Photos timeline. The Aves inline-band pattern
- * (locked in C.2): each section is a full-width header band followed by the
- * photos taken in that month. Bands scroll with the content — no overlay-pin.
+ * One month-year section of the [PhotosZoomLevel.Items] timeline. The Aves
+ * inline-band pattern (locked in C.2): each section is a full-width header
+ * band followed by the photos taken in that month. Bands scroll with the
+ * content — no overlay-pin.
  *
- * The grouping is pure logic so it's testable without Compose. The
- * [PhotosGrid] composable builds a `LazyVerticalGrid` whose items list is
- * `groupByMonth(photos).flatMap { it.toLazyItems() }` (header + photo cells).
+ * The grouping is pure logic so it's testable without Compose.
  */
 data class PhotoSection(
     val yearMonth: YearMonth,
@@ -63,3 +63,185 @@ internal fun formatMonthBand(yearMonth: YearMonth, locale: Locale = Locale.getDe
     DateTimeFormatter.ofPattern("MMMM yyyy", locale)
         .format(yearMonth.atDay(1))
         .uppercase(locale)
+
+/** Year-only band format (used at [PhotosZoomLevel.Days] and `.Months`). */
+internal fun formatYearBand(year: Int): String = year.toString()
+
+/** Month-only label (used inside a [PhotosZoomLevel.Months] tile). */
+internal fun formatMonthTile(yearMonth: YearMonth, locale: Locale = Locale.getDefault()): String =
+    DateTimeFormatter.ofPattern("MMM", locale)
+        .format(yearMonth.atDay(1))
+        .uppercase(locale)
+
+/** Day-only label (used inside a [PhotosZoomLevel.Days] tile). */
+internal fun formatDayTile(date: LocalDate, locale: Locale = Locale.getDefault()): String =
+    DateTimeFormatter.ofPattern("EEE d", locale)
+        .format(date)
+
+/**
+ * Per-density display item. The `LazyVerticalGrid` consumes a flat list of
+ * these, mapping each to the appropriate item / span. Sealed dispatch keeps
+ * the per-level rendering exhaustive and OCP-friendly: adding a new density
+ * level is one new sealed-case + one new render-branch.
+ */
+sealed interface TimelineDisplayItem {
+    /** Full-width inline band with `MAY 2026` style label. */
+    data class MonthYearBand(val yearMonth: YearMonth) : TimelineDisplayItem
+
+    /** Full-width inline band with `2026` style label. */
+    data class YearBand(val year: Int) : TimelineDisplayItem
+
+    /** A single photo cell — only used at the [PhotosZoomLevel.Items] level. */
+    data class PhotoCell(val photo: Photo) : TimelineDisplayItem
+
+    /** A day-aggregate tile — cover photo + day label overlay. */
+    data class DayCell(
+        val date: LocalDate,
+        val cover: Photo,
+        val photoCount: Int,
+    ) : TimelineDisplayItem
+
+    /** A month-aggregate tile — cover photo + month label overlay. */
+    data class MonthCell(
+        val yearMonth: YearMonth,
+        val cover: Photo,
+        val photoCount: Int,
+    ) : TimelineDisplayItem
+
+    /** A year-aggregate tile — cover photo + year label overlay. */
+    data class YearCell(
+        val year: Int,
+        val cover: Photo,
+        val photoCount: Int,
+    ) : TimelineDisplayItem
+}
+
+/**
+ * Fold a flat photo list into the per-level display item list. Caller is
+ * responsible for sorting input — this function preserves input order
+ * section-by-section, so a newest-first input produces a newest-first
+ * timeline.
+ *
+ * Pure logic for unit-testability.
+ */
+internal fun buildTimeline(
+    photos: List<Photo>,
+    level: PhotosZoomLevel,
+    zone: ZoneId = ZoneId.systemDefault(),
+): List<TimelineDisplayItem> {
+    if (photos.isEmpty()) return emptyList()
+    return when (level) {
+        PhotosZoomLevel.Items -> buildItemsTimeline(photos, zone)
+        PhotosZoomLevel.Days -> buildDaysTimeline(photos, zone)
+        PhotosZoomLevel.Months -> buildMonthsTimeline(photos, zone)
+        PhotosZoomLevel.Years -> buildYearsTimeline(photos, zone)
+    }
+}
+
+private fun buildItemsTimeline(photos: List<Photo>, zone: ZoneId): List<TimelineDisplayItem> {
+    val out = mutableListOf<TimelineDisplayItem>()
+    val sections = groupByMonth(photos, zone)
+    for (section in sections) {
+        out += TimelineDisplayItem.MonthYearBand(section.yearMonth)
+        for (photo in section.photos) out += TimelineDisplayItem.PhotoCell(photo)
+    }
+    return out
+}
+
+private fun buildDaysTimeline(photos: List<Photo>, zone: ZoneId): List<TimelineDisplayItem> {
+    val out = mutableListOf<TimelineDisplayItem>()
+    var currentYear: Int? = null
+    var currentDate: LocalDate? = null
+    var dayCover: Photo? = null
+    var dayCount = 0
+    fun flushDay() {
+        val d = currentDate
+        val c = dayCover
+        if (d != null && c != null && dayCount > 0) {
+            out += TimelineDisplayItem.DayCell(date = d, cover = c, photoCount = dayCount)
+        }
+        currentDate = null
+        dayCover = null
+        dayCount = 0
+    }
+    for (photo in photos) {
+        val zdt = Instant.ofEpochMilli(photo.dateTakenMs).atZone(zone)
+        val date = zdt.toLocalDate()
+        val year = date.year
+        if (year != currentYear) {
+            flushDay()
+            out += TimelineDisplayItem.YearBand(year)
+            currentYear = year
+        }
+        if (date != currentDate) {
+            flushDay()
+            currentDate = date
+            dayCover = photo
+        }
+        dayCount += 1
+    }
+    flushDay()
+    return out
+}
+
+private fun buildMonthsTimeline(photos: List<Photo>, zone: ZoneId): List<TimelineDisplayItem> {
+    val out = mutableListOf<TimelineDisplayItem>()
+    var currentYear: Int? = null
+    var currentMonth: YearMonth? = null
+    var monthCover: Photo? = null
+    var monthCount = 0
+    fun flushMonth() {
+        val m = currentMonth
+        val c = monthCover
+        if (m != null && c != null && monthCount > 0) {
+            out += TimelineDisplayItem.MonthCell(yearMonth = m, cover = c, photoCount = monthCount)
+        }
+        currentMonth = null
+        monthCover = null
+        monthCount = 0
+    }
+    for (photo in photos) {
+        val ym = YearMonth.from(Instant.ofEpochMilli(photo.dateTakenMs).atZone(zone))
+        if (ym.year != currentYear) {
+            flushMonth()
+            out += TimelineDisplayItem.YearBand(ym.year)
+            currentYear = ym.year
+        }
+        if (ym != currentMonth) {
+            flushMonth()
+            currentMonth = ym
+            monthCover = photo
+        }
+        monthCount += 1
+    }
+    flushMonth()
+    return out
+}
+
+private fun buildYearsTimeline(photos: List<Photo>, zone: ZoneId): List<TimelineDisplayItem> {
+    val out = mutableListOf<TimelineDisplayItem>()
+    var currentYear: Int? = null
+    var yearCover: Photo? = null
+    var yearCount = 0
+    fun flushYear() {
+        val y = currentYear
+        val c = yearCover
+        if (y != null && c != null && yearCount > 0) {
+            out += TimelineDisplayItem.YearCell(year = y, cover = c, photoCount = yearCount)
+        }
+        currentYear = null
+        yearCover = null
+        yearCount = 0
+    }
+    for (photo in photos) {
+        val year = Instant.ofEpochMilli(photo.dateTakenMs).atZone(zone).year
+        if (year != currentYear) {
+            flushYear()
+            currentYear = year
+            yearCover = photo
+        }
+        yearCount += 1
+    }
+    flushYear()
+    return out
+}

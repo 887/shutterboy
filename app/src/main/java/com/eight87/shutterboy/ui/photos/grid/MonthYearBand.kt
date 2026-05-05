@@ -11,8 +11,9 @@ import androidx.compose.ui.unit.dp
 import java.time.YearMonth
 
 /**
- * Aves-pattern inline section header. Full-width band that scrolls with
- * the photos beneath it (NOT pinned). Lives inside the LazyVerticalGrid as
+ * Aves-pattern inline section header at [PhotosZoomLevel.Items] density.
+ * Full-width band that scrolls with the photos beneath it (NOT pinned).
+ * Lives inside the LazyVerticalGrid as
  * `item(span = { GridItemSpan(maxLineSpan) }) { MonthYearBand(...) }`.
  *
  * Locale follows the system; the band label uses [formatMonthBand].
@@ -30,5 +31,24 @@ internal fun MonthYearBand(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+}
+
+/**
+ * Year-only band at [PhotosZoomLevel.Days] / `.Months` density. Larger
+ * weight than the month-year band since it groups a wider span.
+ */
+@Composable
+internal fun YearBand(
+    year: Int,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = formatYearBand(year),
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
     )
 }
