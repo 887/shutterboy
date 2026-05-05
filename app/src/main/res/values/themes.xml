@@ -2,31 +2,24 @@
 <resources>
 
     <!--
-        Phase 0.6 — Shutterboy runs the SplashScreen API as the launch theme.
-        The activity body draws under Compose; the splash theme exists so
-        the cold-boot frame the system shows before onCreate hands off
-        cleanly to Compose without a white flash.
+        Shutterboy runs the SplashScreen API as the launch theme so the
+        cold-boot frame hands off cleanly to Compose without a white
+        flash. The Android 12+ SplashScreen icon area is a hard-coded
+        circle, which clips the square launcher artwork to its inscribed
+        circle — hiding the camera body / corners. To show the full
+        square design at cold start we skip the windowSplashScreen* icon
+        items entirely and draw a layer-list windowBackground: launcher
+        background colour underneath, the foreground bitmap centred on
+        top. installSplashScreen() in MainActivity still hands off
+        cleanly even when the icon items are absent.
 
-        - windowSplashScreenBackground: same dark grey as the adaptive
-          icon background, so the splash and launcher icon read as one
-          continuous surface during the launch animation.
-        - windowSplashScreenAnimatedIcon: the launcher foreground.
-          With the icon-background colour set (next item) Android sizes
-          the visible icon at 160dp inside a 240dp area instead of the
-          default 80dp/192dp — the design is twice the linear size on
-          the splash.
-        - windowSplashScreenIconBackgroundColor: same launcher
-          background colour as the splash, so the bigger icon area
-          blends with the surrounding splash and the foreground reads
-          as one continuous visual instead of a tiny inset puck.
         - postSplashScreenTheme: the regular Shutterboy theme that
           MainActivity continues to render under once Compose mounts.
+        - android:windowBackground: the layer-list described above.
     -->
     <style name="Theme.Shutterboy" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/launcher_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/launcher_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Shutterboy.Main</item>
+        <item name="android:windowBackground">@drawable/splash_window_background</item>
     </style>
 
     <style name="Theme.Shutterboy.Main" parent="android:Theme.Material.Light.NoActionBar">
