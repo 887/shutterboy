@@ -1,7 +1,6 @@
 package com.eight87.shutterboy.ui.photos.grid
 
 import com.eight87.shutterboy.domain.Photo
-import com.eight87.shutterboy.domain.sort.PhotoSort
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -12,15 +11,17 @@ import kotlinx.coroutines.flow.Flow
  * takes a `PhotoStream` instead of the wholesale [com.eight87.shutterboy.data.repo.PhotoSource]
  * facet — R.D engine-and-strategy locked, OCP open-for-new-surfaces.
  *
- * Concrete strategies built at the call-site:
- *   - Photos tab → `PhotoStream { sort -> scope.photoSource.observePhotos(sort) }`
- *   - FolderDetail → `PhotoStream { sort -> scope.photoSource.observePhotosInFolder(folderId, sort) }`
- *   - SmartAlbumDetail → `PhotoStream { _ -> scope.smartAlbumSource.observeSmartAlbum(id) }`
- *     (smart albums don't accept a sort in v1; the lambda parameter is
- *     ignored).
+ * **Sort discipline (Phase E.2 locked):** the strategy bakes the sort
+ * choice into the closure, not the engine. The renderer doesn't know
+ * about sort — the surface picks `observePhotos(sort)` /
+ * `observePhotosInFolder(folderId, sort)` /
+ * `observeSmartAlbum(id)` (no sort) per its own persisted preference and
+ * hands the resulting Flow to [PhotosGrid] via this interface. Sort
+ * changes thread through the surface re-creating its `PhotoStream` keyed
+ * against the new sort.
  *
  * `fun interface` so SAM-conversion lets each call-site stay a one-liner.
  */
 fun interface PhotoStream {
-    fun observe(sort: PhotoSort): Flow<List<Photo>>
+    fun observe(): Flow<List<Photo>>
 }

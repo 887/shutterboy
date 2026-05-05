@@ -23,6 +23,7 @@ fun rememberRouteScope(
             override val photoSource = graph.photoSource
             override val folderSource = graph.folderSource
             override val smartAlbumSource = graph.smartAlbumSource
+            override val sortPreferences = graph.sortPreferences
         }
     }
 }

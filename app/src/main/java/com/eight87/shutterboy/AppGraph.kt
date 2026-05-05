@@ -1,6 +1,9 @@
 package com.eight87.shutterboy
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.eight87.shutterboy.data.db.ShutterboyDatabase
 import com.eight87.shutterboy.data.repo.FavoriteCommands
@@ -15,9 +18,15 @@ import com.eight87.shutterboy.data.repo.SmartAlbumSource
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
+import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
+import com.eight87.shutterboy.data.settings.SortPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+
+private val Context.shutterboyPrefs: DataStore<Preferences> by preferencesDataStore(
+    name = "shutterboy_settings",
+)
 
 /**
  * Composition root — the only place that knows concrete types.
@@ -75,4 +84,7 @@ class AppGraph(applicationContext: Context) {
     val favoriteCommands: FavoriteCommands = repository
     val photoDeleter: PhotoDeleter = repository
     val mediaChangeSource: MediaChangeSource = repository
+
+    /** Phase E.2 — DataStore-backed sort persistence. */
+    val sortPreferences: SortPreferences = DataStoreSortPreferences(appCtx.shutterboyPrefs)
 }

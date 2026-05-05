@@ -10,18 +10,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.eight87.shutterboy.domain.PhotoId
-import com.eight87.shutterboy.domain.sort.PhotoSort
 
 /**
  * Phase D.3.5 — engine wrapper that hosts the [PhotosZoomLevel] state +
  * the pinch-to-cycle gesture and routes both into [PhotosGrid]. The three
  * timeline surfaces (Photos / FolderDetail / SmartAlbumDetail) all
  * delegate to this; the per-screen file then is just the surface
- * scaffolding (TopAppBar / back arrow / title) plus the [PhotoStream]
- * that picks *which* photos.
- *
- * Sort hard-coded to [PhotoSort.Default] for now; Phase E adds the
- * per-tab + per-folder sort sheet.
+ * scaffolding (TopAppBar / back arrow / title / sort overflow) plus the
+ * [PhotoStream] that picks *which* photos. The sort choice is baked into
+ * the [PhotoStream] closure (Phase E.2) — this engine doesn't know about
+ * sort.
  */
 @Composable
 fun GalleryTimelineFrame(
@@ -36,7 +34,6 @@ fun GalleryTimelineFrame(
     }
     PhotosGrid(
         stream = stream,
-        sort = PhotoSort.Default,
         level = accumulator.level,
         onPhotoTap = onPhotoTap,
         modifier = modifier

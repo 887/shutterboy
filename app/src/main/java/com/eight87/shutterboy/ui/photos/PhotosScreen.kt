@@ -1,34 +1,73 @@
 package com.eight87.shutterboy.ui.photos
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eight87.shutterboy.R
+import com.eight87.shutterboy.domain.sort.PhotoSort
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
+import com.eight87.shutterboy.ui.sort.SortOverflowAction
+import kotlinx.coroutines.launch
 
 /**
- * Phase C.2 + C.3 + C.6 + D.3.5 — Photos tab body. Scaffold + dispatch
- * only. The pinch-zoom + density-grid + scrubber + sticky-banner stack
- * lives in [GalleryTimelineFrame]; this screen supplies the [PhotoStream]
- * and the tap-to-viewer wiring.
+ * Phase C.2 + C.3 + C.6 + D.3.5 + E.2 — Photos tab body. Scaffold +
+ * TopAppBar (title + sort-overflow) + dispatch. The pinch-zoom + density-
+ * grid + scrubber + sticky-banner stack lives in [GalleryTimelineFrame];
+ * this screen supplies the [PhotoStream] (sort baked in from the
+ * persisted `photos_sort`) and the tap-to-viewer wiring.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotosScreen(
     scope: RouteScope,
     modifier: Modifier = Modifier,
 ) {
-    val stream = remember(scope) {
-        PhotoStream { sort -> scope.photoSource.observePhotos(sort) }
+    val sort: PhotoSort by scope.sortPreferences.observePhotosSort()
+        .collectAsStateWithLifecycle(initialValue = PhotoSort.Default)
+    val coroutineScope = rememberCoroutineScope()
+    val stream = remember(scope, sort) {
+        PhotoStream { scope.photoSource.observePhotos(sort) }
     }
 
-    GalleryTimelineFrame(
-        stream = stream,
-        onPhotoTap = { photoId, backingIds ->
-            scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = stringResource(R.string.photos_top_title)) },
+                actions = {
+                    SortOverflowAction(
+                        sort = sort,
+                        onSortChanged = { newSort ->
+                            coroutineScope.launch {
+                                scope.sortPreferences.setPhotosSort(newSort)
+                            }
+                        },
+                    )
+                },
+            )
         },
         modifier = modifier.fillMaxSize(),
-    )
+    ) { innerPadding ->
+        GalleryTimelineFrame(
+            stream = stream,
+            onPhotoTap = { photoId, backingIds ->
+                scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        )
+    }
 }

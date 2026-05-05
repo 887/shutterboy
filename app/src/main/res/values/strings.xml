@@ -59,8 +59,22 @@
     <string name="cd_folder_detail_back">Back to Collections</string>
 
     <!-- Phase C.2 — Photos timeline. -->
+    <string name="photos_top_title">Photos</string>
     <string name="photos_empty_title">No photos yet</string>
     <string name="photos_empty_subtitle">Connect a folder via Settings → Library → Manage sources, or grant photo access if you haven\'t.</string>
+
+    <!-- Phase E.2 — sort sheet. -->
+    <string name="sort_sheet_title">Sort</string>
+    <string name="sort_axis_date_taken">Date taken</string>
+    <string name="sort_axis_date_added">Date added</string>
+    <string name="sort_axis_name">File name</string>
+    <string name="sort_axis_size">File size</string>
+    <string name="sort_direction_asc">Ascending</string>
+    <string name="sort_direction_desc">Descending</string>
+    <string name="sort_apply">Apply</string>
+    <string name="sort_overflow_label">Sort</string>
+    <string name="cd_sort_overflow">Sort options</string>
+    <string name="cd_more_options">More options</string>
 
     <!-- Phase C.6 — fullscreen viewer placeholder until Phase F lands the pager. -->
     <string name="viewer_placeholder_title">Viewer</string>

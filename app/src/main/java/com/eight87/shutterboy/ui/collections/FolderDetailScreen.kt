@@ -13,25 +13,30 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.FolderId
 import com.eight87.shutterboy.domain.SourceType
+import com.eight87.shutterboy.domain.sort.PhotoSort
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
+import com.eight87.shutterboy.ui.sort.SortOverflowAction
+import kotlinx.coroutines.launch
 
 /**
- * Phase D.2 — folder-scoped timeline. Same density-zoomed grid + scrubber
- * + sticky-banner stack as the Photos tab (via [GalleryTimelineFrame]),
- * filtered repository-side via `observePhotosInFolder(folderId)` (R.F.12
- * — never client-side `.filter`). TopAppBar title is the folder's
- * display name; falls back to a generic label while the folder lookup
- * is in flight.
+ * Phase D.2 + E.2 — folder-scoped timeline. Same density-zoomed grid +
+ * scrubber + sticky-banner stack as the Photos tab (via
+ * [GalleryTimelineFrame]), filtered repository-side via
+ * `observePhotosInFolder(folderId, sort)` (R.F.12). TopAppBar carries
+ * the folder display name + back arrow + a sort-overflow action that
+ * persists to the per-folder sort key (falls back to `collections_sort`
+ * when unset; see [com.eight87.shutterboy.data.settings.SortPreferences.observeFolderSort]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,9 +48,12 @@ fun FolderDetailScreen(
     val folderId = remember(destination) { FolderId(destination.folderIdValue) }
     val folder by scope.folderSource.observeFolder(folderId)
         .collectAsStateWithLifecycle(initialValue = null)
+    val sort: PhotoSort by scope.sortPreferences.observeFolderSort(folderId)
+        .collectAsStateWithLifecycle(initialValue = PhotoSort.Default)
+    val coroutineScope = rememberCoroutineScope()
     val title = folder?.displayName ?: stringResource(R.string.folder_detail_title_default)
-    val stream = remember(scope, folderId) {
-        PhotoStream { sort -> scope.photoSource.observePhotosInFolder(folderId, sort) }
+    val stream = remember(scope, folderId, sort) {
+        PhotoStream { scope.photoSource.observePhotosInFolder(folderId, sort) }
     }
 
     Scaffold(
@@ -59,6 +67,16 @@ fun FolderDetailScreen(
                             contentDescription = stringResource(R.string.cd_folder_detail_back),
                         )
                     }
+                },
+                actions = {
+                    SortOverflowAction(
+                        sort = sort,
+                        onSortChanged = { newSort ->
+                            coroutineScope.launch {
+                                scope.sortPreferences.setFolderSort(folderId, newSort)
+                            }
+                        },
+                    )
                 },
             )
         },

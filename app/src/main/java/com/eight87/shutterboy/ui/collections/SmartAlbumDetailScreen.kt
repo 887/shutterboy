@@ -25,11 +25,14 @@ import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 /**
  * Phase D.3 — smart-album-scoped timeline. Same density-zoomed grid +
  * scrubber + sticky-banner stack as the Photos tab (via
- * [GalleryTimelineFrame]), filtered via `observeSmartAlbum(id)` (sort
- * ignored — smart albums have a fixed order in v1). TopAppBar title is
- * the album's localised label. An unrecognised storageKey (e.g. a
- * destination round-tripped through `SavedStateHandle` from an older
- * build) renders the back-button + a generic title and an empty body.
+ * [GalleryTimelineFrame]), filtered via `observeSmartAlbum(id)`. Smart
+ * albums have a fixed v1 order so no sort overflow lands here yet
+ * (Phase E.2 keyed `smart_album_sort__$id` is a follow-up once the
+ * smart-album DAO methods accept ORDER BY).
+ *
+ * An unrecognised `storageKey` (e.g. a destination round-tripped through
+ * `SavedStateHandle` from an older build) renders the back-button + a
+ * generic title and an empty body.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +67,7 @@ fun SmartAlbumDetailScreen(
             return@Scaffold
         }
         val stream = remember(scope, albumId) {
-            PhotoStream { _ -> scope.smartAlbumSource.observeSmartAlbum(albumId) }
+            PhotoStream { scope.smartAlbumSource.observeSmartAlbum(albumId) }
         }
         GalleryTimelineFrame(
             stream = stream,
@@ -77,4 +80,3 @@ fun SmartAlbumDetailScreen(
         )
     }
 }
-

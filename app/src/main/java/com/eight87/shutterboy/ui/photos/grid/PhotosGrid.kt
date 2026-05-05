@@ -25,7 +25,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
-import com.eight87.shutterboy.domain.sort.PhotoSort
 
 /**
  * Phase C.2 + C.3 + C.4 + C.5 + D.3.5 — Photos timeline body.
@@ -52,13 +51,12 @@ import com.eight87.shutterboy.domain.sort.PhotoSort
 @Composable
 internal fun PhotosGrid(
     stream: PhotoStream,
-    sort: PhotoSort,
     level: PhotosZoomLevel,
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
     emptyState: (@Composable (Modifier) -> Unit)? = null,
 ) {
-    val photos by stream.observe(sort)
+    val photos by stream.observe()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (photos.isEmpty()) {

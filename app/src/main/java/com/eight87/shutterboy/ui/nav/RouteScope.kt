@@ -5,6 +5,7 @@ import com.eight87.shutterboy.AppGraph
 import com.eight87.shutterboy.data.repo.FolderSource
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.repo.SmartAlbumSource
+import com.eight87.shutterboy.data.settings.SortPreferences
 
 /**
  * R.E.1 — bundle of dependencies handed to every per-destination
@@ -26,4 +27,5 @@ interface RouteScope {
     val photoSource: PhotoSource
     val folderSource: FolderSource
     val smartAlbumSource: SmartAlbumSource
+    val sortPreferences: SortPreferences
 }
