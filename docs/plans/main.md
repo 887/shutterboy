@@ -96,7 +96,7 @@ The headline feature. Bottom-nav scaffold lands here, then the Photos tab on top
 
 ---
 
-## Phase E — Custom sorting + custom order — shipped in commits `f63f208` (E.2 + partial E.5)
+## Phase E — Custom sorting + custom order — shipped in commits `f63f208` (E.2 + partial E.5), `ef76a80` (E.4 + E.5)
 
 Per-tab + per-folder sort persistence; drag-reorder for the smart-album chip row and the folders grid order.
 
