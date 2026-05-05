@@ -56,12 +56,13 @@ internal fun PhotosGrid(
     level: PhotosZoomLevel,
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
+    emptyState: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val photos by stream.observe(sort)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (photos.isEmpty()) {
-        EmptyPhotosState(modifier = modifier)
+        if (emptyState != null) emptyState(modifier) else EmptyPhotosState(modifier = modifier)
         return
     }
 

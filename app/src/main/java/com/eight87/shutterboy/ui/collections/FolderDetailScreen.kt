@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.FolderId
+import com.eight87.shutterboy.domain.SourceType
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
@@ -63,6 +64,7 @@ fun FolderDetailScreen(
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
+        val sourceType = folder?.sourceType ?: SourceType.DEVICE
         GalleryTimelineFrame(
             stream = stream,
             onPhotoTap = { photoId, backingIds ->
@@ -71,6 +73,7 @@ fun FolderDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
+            emptyState = { mod -> EmptyFolderState(sourceType = sourceType, modifier = mod) },
         )
     }
 }

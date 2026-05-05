@@ -28,6 +28,7 @@ fun GalleryTimelineFrame(
     stream: PhotoStream,
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
+    emptyState: (@Composable (Modifier) -> Unit)? = null,
 ) {
     var accumulator by remember { mutableStateOf(ZoomAccumulator()) }
     val transformable = rememberTransformableState { zoomChange, _, _ ->
@@ -41,5 +42,6 @@ fun GalleryTimelineFrame(
         modifier = modifier
             .fillMaxSize()
             .transformable(state = transformable),
+        emptyState = emptyState,
     )
 }

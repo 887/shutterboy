@@ -49,6 +49,10 @@
     <string name="collections_empty_title">No folders yet</string>
     <string name="collections_empty_subtitle">Photos appear here grouped by folder once a scan picks them up.</string>
     <string name="folder_detail_title_default">Folder</string>
+    <string name="folder_empty_title">This folder is empty</string>
+    <string name="folder_empty_subtitle">Photos added to this folder show up here once a scan picks them up.</string>
+    <string name="folder_revoked_title">Folder access was revoked</string>
+    <string name="folder_revoked_subtitle">Re-grant access from Settings → Library → Manage sources to bring this folder back.</string>
     <string name="smart_album_detail_title_unknown">Smart album</string>
     <string name="cd_collections_chip">Smart album chip</string>
     <string name="cd_collections_folder_tile">Folder tile</string>
