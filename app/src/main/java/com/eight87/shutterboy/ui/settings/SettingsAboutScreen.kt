@@ -1,16 +1,18 @@
 package com.eight87.shutterboy.ui.settings
 
 import android.content.Intent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,16 +35,25 @@ import androidx.core.net.toUri
 import com.eight87.shutterboy.BuildConfig
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
+import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 
 /**
- * Phase C.x — About sub-page. Single page hosting build identity, license,
- * GitHub link, OSS-acknowledgments placeholder, and the build-version
- * easter-egg tap counter (3 taps within 2 s reveals
- * `R.drawable.easter_egg_tiger`). Mirrors tonearmboy D.16.4 + D.16.5.
+ * Phase C.x — About sub-page. Renders inside the same M3 Expressive
+ * [SettingsCard] / [SettingsRow] primitives every other settings surface uses
+ * (mirrors tonearmboy D.16.4) so chrome lines up across the app.
  *
- * The 'Settings' tab placeholder navigates here on a single tap until Phase I
- * builds the M3 Expressive grouped-cards root with this page underneath
- * Settings → Library → About.
+ * Two cards:
+ *  - **Build** — version + SHA + date row (the easter-egg tap target).
+ *  - **Source** — License row (opens MIT alert dialog), GitHub row (opens
+ *    repo in the browser), Open-source acknowledgments row (placeholder
+ *    until Phase L).
+ *
+ * The build-version row hosts the tap counter; three taps within
+ * [EASTER_EGG_WINDOW_MS] reveal the fullscreen tiger artwork via
+ * [EasterEggDialog].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +64,7 @@ fun SettingsAboutScreen(
     val context = LocalContext.current
     val easterEgg = rememberEasterEggBindings()
     var showLicenseDialog by remember { mutableStateOf(false) }
+    val githubUrl = stringResource(R.string.about_github_url)
 
     Scaffold(
         topBar = {
@@ -75,14 +87,22 @@ fun SettingsAboutScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(horizontal = SettingsDimens.PagePadding),
+            verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
         ) {
-            // App identity block.
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Identity heading — sits above the first card, aligned to the
+            // page padding so it lines up with the card's title-column.
+            Column(
+                modifier = Modifier.padding(
+                    top = SettingsDimens.GroupTitleTopPadding,
+                    bottom = 4.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 Text(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = stringResource(R.string.about_app_tagline),
@@ -91,41 +111,46 @@ fun SettingsAboutScreen(
                 )
             }
 
-            // Version row — the tap target for the easter egg.
-            AboutRow(
-                label = stringResource(R.string.about_version_label),
-                value = stringResource(
-                    R.string.about_version_format,
-                    versionName(context),
-                    BuildConfig.GIT_SHA,
-                    BuildConfig.BUILD_DATE,
-                ),
-                onTap = easterEgg.onVersionTap,
-            )
+            // Build card — version row is the easter-egg tap target.
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Outlined.Numbers,
+                    label = stringResource(R.string.about_version_label),
+                    subtitle = stringResource(
+                        R.string.about_version_format,
+                        versionName(context),
+                        BuildConfig.GIT_SHA,
+                        BuildConfig.BUILD_DATE,
+                    ),
+                    onClick = easterEgg.onVersionTap,
+                )
+            }
 
-            // License row — opens a Material 3 alert dialog with the MIT body.
-            AboutRow(
-                label = stringResource(R.string.about_license_row_label),
-                value = stringResource(R.string.about_license_row_value),
-                onTap = { showLicenseDialog = true },
-            )
-
-            // GitHub row — fires an ACTION_VIEW intent for the repo URL.
-            val githubUrl = stringResource(R.string.about_github_url)
-            AboutRow(
-                label = stringResource(R.string.about_github_row_label),
-                value = stringResource(R.string.about_github_row_value),
-                onTap = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, githubUrl.toUri()))
-                },
-            )
-
-            // OSS acknowledgments — placeholder until Phase L.
-            AboutRow(
-                label = stringResource(R.string.about_oss_row_label),
-                value = stringResource(R.string.about_oss_row_subtitle),
-                onTap = null,
-            )
+            // Source card — License + GitHub + OSS acknowledgments.
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Outlined.Article,
+                    label = stringResource(R.string.about_license_row_label),
+                    subtitle = stringResource(R.string.about_license_row_value),
+                    onClick = { showLicenseDialog = true },
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    icon = Icons.Outlined.Code,
+                    label = stringResource(R.string.about_github_row_label),
+                    subtitle = stringResource(R.string.about_github_row_value),
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, githubUrl.toUri()))
+                    },
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    icon = Icons.Outlined.Favorite,
+                    label = stringResource(R.string.about_oss_row_label),
+                    subtitle = stringResource(R.string.about_oss_row_subtitle),
+                    onClick = null,
+                )
+            }
         }
     }
 
@@ -151,33 +176,6 @@ fun SettingsAboutScreen(
 
     if (easterEgg.revealed) {
         EasterEggDialog(onDismiss = easterEgg.onDismiss)
-    }
-}
-
-@Composable
-private fun AboutRow(
-    label: String,
-    value: String,
-    onTap: (() -> Unit)?,
-) {
-    val rowModifier = Modifier
-        .fillMaxWidth()
-        .let { if (onTap != null) it.clickable(onClick = onTap) else it }
-        .padding(vertical = 8.dp)
-    Column(
-        modifier = rowModifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

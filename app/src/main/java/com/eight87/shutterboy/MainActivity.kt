@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.eight87.shutterboy.theme.MyApplicationTheme
+import com.eight87.shutterboy.theme.ShutterboyTheme
 import com.eight87.shutterboy.ui.nav.ShutterboyApp
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         val graph = (application as ShutterboyApplication).graph
 
         setContent {
-            MyApplicationTheme {
+            ShutterboyTheme {
                 ShutterboyApp(graph = graph)
             }
         }
