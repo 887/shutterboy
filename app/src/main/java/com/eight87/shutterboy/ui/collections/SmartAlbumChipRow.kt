@@ -48,6 +48,7 @@ private val ChipSize = 104.dp
  */
 @Composable
 internal fun SmartAlbumChipRow(
+    albums: List<SmartAlbumId>,
     covers: Map<SmartAlbumId, Photo?>,
     onChipTap: (SmartAlbumId) -> Unit,
     onManageTap: () -> Unit,
@@ -58,7 +59,7 @@ internal fun SmartAlbumChipRow(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(SmartAlbumId.defaultOrder, key = { it.storageKey }) { id ->
+        items(albums, key = { it.storageKey }) { id ->
             SmartAlbumChip(
                 id = id,
                 cover = covers[id],

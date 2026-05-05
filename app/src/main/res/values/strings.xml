@@ -58,6 +58,15 @@
     <string name="cd_collections_folder_tile">Folder tile</string>
     <string name="cd_folder_detail_back">Back to Collections</string>
 
+    <!-- Phase E.4 — reorder dialogs + Collections overflow. -->
+    <string name="collections_overflow_reorder_smart_albums">Reorder smart albums</string>
+    <string name="collections_overflow_reorder_folders">Reorder folders</string>
+    <string name="collections_reorder_smart_albums_title">Reorder smart albums</string>
+    <string name="collections_reorder_folders_title">Reorder folders</string>
+    <string name="collections_reorder_apply">Apply</string>
+    <string name="collections_reorder_cancel">Cancel</string>
+    <string name="cd_drag_handle">Drag to reorder</string>
+
     <!-- Phase C.2 — Photos timeline. -->
     <string name="photos_top_title">Photos</string>
     <string name="photos_empty_title">No photos yet</string>

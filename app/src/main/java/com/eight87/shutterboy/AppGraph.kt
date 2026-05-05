@@ -18,6 +18,8 @@ import com.eight87.shutterboy.data.repo.SmartAlbumSource
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
+import com.eight87.shutterboy.data.settings.CustomOrderPreferences
+import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
 import com.eight87.shutterboy.data.settings.SortPreferences
@@ -87,4 +89,8 @@ class AppGraph(applicationContext: Context) {
 
     /** Phase E.2 — DataStore-backed sort persistence. */
     val sortPreferences: SortPreferences = DataStoreSortPreferences(appCtx.shutterboyPrefs)
+
+    /** Phase E.4 — DataStore-backed user-pinned ordering of chip row + folder grid. */
+    val customOrderPreferences: CustomOrderPreferences =
+        DataStoreCustomOrderPreferences(appCtx.shutterboyPrefs)
 }

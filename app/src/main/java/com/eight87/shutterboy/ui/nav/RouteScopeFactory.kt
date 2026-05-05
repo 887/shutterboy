@@ -24,6 +24,7 @@ fun rememberRouteScope(
             override val folderSource = graph.folderSource
             override val smartAlbumSource = graph.smartAlbumSource
             override val sortPreferences = graph.sortPreferences
+            override val customOrderPreferences = graph.customOrderPreferences
         }
     }
 }
