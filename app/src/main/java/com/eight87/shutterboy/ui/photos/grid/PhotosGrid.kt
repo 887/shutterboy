@@ -23,16 +23,16 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.domain.sort.PhotoSort
 
 /**
- * Phase C.2 + C.3 + C.4 + C.5 — Photos timeline body. `LazyVerticalGrid`
- * reading from the narrow [PhotoSource] facet (R.A locked). Density-zoom
- * (C.3) drives column count + per-cell shape via [PhotosZoomLevel];
- * pinch-to-cycle is wired by the caller (`PhotosScreen`) so this
+ * Phase C.2 + C.3 + C.4 + C.5 + D.3.5 — Photos timeline body.
+ * `LazyVerticalGrid` reading from a strategy-supplied [PhotoStream] (R.D
+ * engine-and-strategy locked — Photos / FolderDetail / SmartAlbumDetail
+ * all delegate). Density-zoom (C.3) drives column count + per-cell shape
+ * via [PhotosZoomLevel]; pinch-to-cycle is wired by the caller so this
  * composable stays declarative.
  *
  * Inline month-year bands at [PhotosZoomLevel.Items] (Aves pattern,
@@ -51,13 +51,13 @@ import com.eight87.shutterboy.domain.sort.PhotoSort
  */
 @Composable
 internal fun PhotosGrid(
-    photoSource: PhotoSource,
+    stream: PhotoStream,
     sort: PhotoSort,
     level: PhotosZoomLevel,
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val photos by photoSource.observePhotos(sort)
+    val photos by stream.observe(sort)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (photos.isEmpty()) {

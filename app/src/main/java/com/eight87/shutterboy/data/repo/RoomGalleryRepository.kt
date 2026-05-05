@@ -102,6 +102,22 @@ class RoomGalleryRepository(
     override fun observeFolder(id: FolderId): Flow<Folder?> =
         folderDao.observeById(id.value).map { it?.toDomain() }
 
+    override fun observeFolderCovers(): Flow<Map<FolderId, Photo>> =
+        folderDao.observeAll().map { folderRows ->
+            val coverIdToFolder: Map<Long, FolderId> = folderRows
+                .mapNotNull { it.coverPhotoId?.let { cover -> cover to FolderId(it.id) } }
+                .toMap()
+            if (coverIdToFolder.isEmpty()) {
+                emptyMap()
+            } else {
+                val photos = photoDao.byIds(coverIdToFolder.keys.toList())
+                photos.associate { entity ->
+                    val folderId = coverIdToFolder.getValue(entity.id)
+                    folderId to entity.toDomain()
+                }
+            }
+        }
+
     // --- SmartAlbumSource (B.6 sealed dispatch) ---
 
     override fun observeSmartAlbum(id: SmartAlbumId): Flow<List<Photo>> =

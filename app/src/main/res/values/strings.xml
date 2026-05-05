@@ -36,8 +36,23 @@
     <string name="cd_nav_collections">Collections tab</string>
     <string name="cd_nav_settings">Settings tab</string>
 
-    <!-- Phase C — placeholder titles until D/I fill in. -->
-    <string name="collections_placeholder_title">Collections lands in Phase D</string>
+    <!-- Phase D — Collections root + folder/smart-album detail. -->
+    <string name="collections_section_smart_albums">Smart albums</string>
+    <string name="collections_section_folders">Folders</string>
+    <string name="collections_chip_camera">Camera</string>
+    <string name="collections_chip_screenshots">Screenshots</string>
+    <string name="collections_chip_favorites">Favorites</string>
+    <string name="collections_chip_recents">Recents</string>
+    <string name="collections_chip_manage">Manage</string>
+    <string name="collections_manage_snackbar">Manage sources lands in Phase I.3</string>
+    <string name="collections_folder_count">%1$d photos</string>
+    <string name="collections_empty_title">No folders yet</string>
+    <string name="collections_empty_subtitle">Photos appear here grouped by folder once a scan picks them up.</string>
+    <string name="folder_detail_title_default">Folder</string>
+    <string name="smart_album_detail_title_unknown">Smart album</string>
+    <string name="cd_collections_chip">Smart album chip</string>
+    <string name="cd_collections_folder_tile">Folder tile</string>
+    <string name="cd_folder_detail_back">Back to Collections</string>
 
     <!-- Phase C.2 — Photos timeline. -->
     <string name="photos_empty_title">No photos yet</string>

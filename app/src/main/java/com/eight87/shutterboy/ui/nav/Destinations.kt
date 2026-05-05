@@ -58,5 +58,25 @@ data class PhotoViewer(
     val backingIds: List<Long>,
 ) : Destination
 
+/**
+ * Phase D.2 — folder detail. Pushed from a folder tile tap on the
+ * Collections root. Body is the same density-zoomed timeline as the
+ * Photos tab, filtered to `observePhotosInFolder(folderId)`. `FolderId` is
+ * a `value class` so we serialize the underlying [Long] and reconstruct
+ * at the screen.
+ */
+@Serializable
+data class FolderDetail(val folderIdValue: Long) : Destination
+
+/**
+ * Phase D.3 — smart-album detail. Pushed from a chip tap on the
+ * Collections root. Body is the same density-zoomed timeline as the
+ * Photos tab, filtered to `observeSmartAlbum(id)`. The `SmartAlbumId`
+ * sealed type is round-tripped through [SmartAlbumId.storageKey] /
+ * [SmartAlbumId.fromStorageKey].
+ */
+@Serializable
+data class SmartAlbumDetail(val storageKey: String) : Destination
+
 /** The three top-level destinations a bottom-nav tap can route to. */
 internal val rootDestinations: List<Destination> = listOf(Photos, Collections, Settings)
