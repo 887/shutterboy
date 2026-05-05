@@ -10,19 +10,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.eight87.shutterboy.domain.sort.PhotoSort
+import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.photos.grid.PhotosGrid
 import com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel
 import com.eight87.shutterboy.ui.photos.grid.ZoomAccumulator
 
 /**
- * Phase C.2 + C.3 — Photos tab body. Scaffold + dispatch only (R.D ceiling
- * ~200 LOC; this file is well under). Sub-pieces (grid, bands, cover tiles,
- * empty-state, zoom-level enum) live under `ui/photos/grid/`.
+ * Phase C.2 + C.3 + C.6 — Photos tab body. Scaffold + dispatch only (R.D
+ * ceiling ~200 LOC; this file is well under). Sub-pieces (grid, bands,
+ * cover tiles, scrubber, sticky-header banner, empty-state, zoom-level
+ * enum) live under `ui/photos/grid/`.
  *
  * Owns the [PhotosZoomLevel] state and the pinch-to-cycle gesture handler;
  * routes the level into [PhotosGrid] which dispatches per-cell rendering.
- * Year-scrubber (C.4) layers in next.
+ * Tap → push [PhotoViewer] with the tapped id + the current backing list
+ * (Phase F replaces the placeholder body).
  */
 @Composable
 fun PhotosScreen(
@@ -38,10 +41,8 @@ fun PhotosScreen(
         photoSource = scope.photoSource,
         sort = PhotoSort.Default,
         level = accumulator.level,
-        onPhotoTap = { _ ->
-            // Phase F wires the fullscreen viewer route. For now the tap is
-            // a no-op so the grid renders cleanly without dragging in unwired
-            // navigation.
+        onPhotoTap = { photoId, backingIds ->
+            scope.backStack.push(PhotoViewer(photoId.value, backingIds))
         },
         modifier = modifier
             .fillMaxSize()

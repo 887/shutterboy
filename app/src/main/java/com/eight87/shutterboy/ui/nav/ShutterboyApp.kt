@@ -69,6 +69,7 @@ fun ShutterboyApp(graph: AppGraph) {
                 entry<Collections> { it.Register(scope) }
                 entry<Settings> { it.Register(scope) }
                 entry<SettingsAbout> { it.Register(scope) }
+                entry<PhotoViewer> { it.Register(scope) }
             },
         )
     }
@@ -96,5 +97,5 @@ private fun navIconLabelCd(
     )
     // Pushed-not-rooted destinations should never reach the bottom-nav icon
     // resolver; the entry exhaustiveness is structural only.
-    SettingsAbout -> error("$dest is not a bottom-nav root destination")
+    SettingsAbout, is PhotoViewer -> error("$dest is not a bottom-nav root destination")
 }

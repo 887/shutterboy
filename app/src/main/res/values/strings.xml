@@ -43,6 +43,12 @@
     <string name="photos_empty_title">No photos yet</string>
     <string name="photos_empty_subtitle">Connect a folder via Settings → Library → Manage sources, or grant photo access if you haven\'t.</string>
 
+    <!-- Phase C.6 — fullscreen viewer placeholder until Phase F lands the pager. -->
+    <string name="viewer_placeholder_title">Viewer</string>
+    <string name="viewer_placeholder_id">Photo id %1$d</string>
+    <string name="viewer_placeholder_backing_count">Backing list: %1$d photos</string>
+    <string name="viewer_placeholder_phase_note">Phase F replaces this with the fullscreen pager + EXIF panel.</string>
+
     <!-- Phase C.x — Settings tab placeholder until Phase I builds the M3 Expressive root. -->
     <string name="settings_root_about_row_label">About</string>
     <string name="settings_root_about_row_subtitle">Build, license, GitHub, easter egg</string>

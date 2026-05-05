@@ -245,3 +245,86 @@ private fun buildYearsTimeline(photos: List<Photo>, zone: ZoneId): List<Timeline
     flushYear()
     return out
 }
+
+/**
+ * Phase C.4 — pointer used by [YearScrubber]. Pairs a year with the
+ * timeline index of the first item belonging to that year. Markers are
+ * emitted in timeline order: a `ByDateTaken(DESC)` input produces
+ * newest-year-first markers, top of the strip = top of the timeline.
+ */
+data class YearMarker(val year: Int, val timelineIndex: Int)
+
+/**
+ * Walk a flat [TimelineDisplayItem] list once, emitting one [YearMarker]
+ * per distinct year at the index of that year's first occurrence. Pure
+ * logic so the scrubber can be tested without Compose. Items that don't
+ * carry a year ([TimelineDisplayItem.PhotoCell] at Items density does, via
+ * the preceding [TimelineDisplayItem.MonthYearBand]) are skipped here —
+ * the band that opened the year already produced the marker.
+ */
+internal fun extractYearMarkers(timeline: List<TimelineDisplayItem>): List<YearMarker> {
+    val markers = mutableListOf<YearMarker>()
+    var lastYear: Int? = null
+    timeline.forEachIndexed { idx, item ->
+        val y = item.yearOrNull() ?: return@forEachIndexed
+        if (y != lastYear) {
+            markers += YearMarker(y, idx)
+            lastYear = y
+        }
+    }
+    return markers
+}
+
+private fun TimelineDisplayItem.yearOrNull(): Int? = when (this) {
+    is TimelineDisplayItem.MonthYearBand -> yearMonth.year
+    is TimelineDisplayItem.YearBand -> year
+    is TimelineDisplayItem.PhotoCell -> null
+    is TimelineDisplayItem.DayCell -> date.year
+    is TimelineDisplayItem.MonthCell -> yearMonth.year
+    is TimelineDisplayItem.YearCell -> year
+}
+
+/**
+ * Map a [0..1] drag fraction to the marker at that fraction of the strip.
+ * Empty markers → null. Fractions are clamped, so an out-of-range gesture
+ * jumps to the nearest end.
+ */
+internal fun yearAtFraction(markers: List<YearMarker>, fraction: Float): YearMarker? {
+    if (markers.isEmpty()) return null
+    val clamped = fraction.coerceIn(0f, 1f)
+    val idx = kotlin.math.round(clamped * (markers.size - 1)).toInt()
+    return markers[idx.coerceIn(0, markers.size - 1)]
+}
+
+/**
+ * Phase C.5 — derive the sticky-header label for the visible range's
+ * first item. Walks back from [visibleIndex] to the most recent band /
+ * tile that carries a date and formats it according to [level]:
+ * `MAY 2026` at Items, `2026` at Days/Months/Years. Pure logic so the
+ * banner can be tested without Compose.
+ */
+internal fun stickyHeaderLabel(
+    timeline: List<TimelineDisplayItem>,
+    visibleIndex: Int,
+    level: PhotosZoomLevel,
+    locale: Locale = Locale.getDefault(),
+): String? {
+    if (timeline.isEmpty() || visibleIndex < 0) return null
+    val clamped = visibleIndex.coerceAtMost(timeline.size - 1)
+    for (i in clamped downTo 0) {
+        when (val item = timeline[i]) {
+            is TimelineDisplayItem.MonthYearBand ->
+                return if (level == PhotosZoomLevel.Items) {
+                    formatMonthBand(item.yearMonth, locale)
+                } else {
+                    formatYearBand(item.yearMonth.year)
+                }
+            is TimelineDisplayItem.YearBand -> return formatYearBand(item.year)
+            is TimelineDisplayItem.DayCell -> return formatYearBand(item.date.year)
+            is TimelineDisplayItem.MonthCell -> return formatYearBand(item.yearMonth.year)
+            is TimelineDisplayItem.YearCell -> return formatYearBand(item.year)
+            is TimelineDisplayItem.PhotoCell -> Unit // keep walking
+        }
+    }
+    return null
+}

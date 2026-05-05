@@ -43,5 +43,20 @@ data object Settings : Destination
 @Serializable
 data object SettingsAbout : Destination
 
+/**
+ * Phase C.6 — fullscreen viewer route. Pushed from a thumbnail / cover-tile
+ * tap on the Photos timeline (and, in later phases, from Collections detail
+ * screens, Search results, and the Slideshow). Carries the tapped photo's
+ * id plus the backing list of photo ids for the receiving `HorizontalPager`.
+ *
+ * Phase F replaces the placeholder body with the actual pager + chrome +
+ * EXIF panel + delete / share / edit-handoff. The route shape stays stable.
+ */
+@Serializable
+data class PhotoViewer(
+    val photoIdValue: Long,
+    val backingIds: List<Long>,
+) : Destination
+
 /** The three top-level destinations a bottom-nav tap can route to. */
 internal val rootDestinations: List<Destination> = listOf(Photos, Collections, Settings)

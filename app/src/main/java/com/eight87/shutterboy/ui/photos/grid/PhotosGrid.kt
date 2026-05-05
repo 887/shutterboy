@@ -3,15 +3,19 @@ package com.eight87.shutterboy.ui.photos.grid
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -25,21 +29,32 @@ import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.domain.sort.PhotoSort
 
 /**
- * Phase C.2 + C.3 — Photos timeline body. `LazyVerticalGrid` reading from
- * the narrow [PhotoSource] facet (R.A locked). Density-zoom (C.3) drives
- * column count + per-cell shape via [PhotosZoomLevel]; pinch-to-cycle is
- * wired by the caller (`PhotosScreen`) so this composable stays declarative.
+ * Phase C.2 + C.3 + C.4 + C.5 — Photos timeline body. `LazyVerticalGrid`
+ * reading from the narrow [PhotoSource] facet (R.A locked). Density-zoom
+ * (C.3) drives column count + per-cell shape via [PhotosZoomLevel];
+ * pinch-to-cycle is wired by the caller (`PhotosScreen`) so this
+ * composable stays declarative.
  *
  * Inline month-year bands at [PhotosZoomLevel.Items] (Aves pattern,
  * scroll-with-content, no overlay-pin — locked in C.2). Year bands at
  * `.Days` and `.Months`. No bands at `.Years` (each year is a hero tile).
+ *
+ * Overlays composed in the same `Box`:
+ *   - [YearScrubber] — right-edge draggable strip, reveal-on-scroll (C.4).
+ *   - [StickyHeaderBanner] — top-centred translucent label that fades in
+ *     while scrolling and out when the scroll settles (C.5).
+ *
+ * Tap on a thumbnail / cover-tile fires [onPhotoTap] with the tapped id +
+ * the backing id list (every Photo currently in the grid, in display
+ * order) so the receiving viewer route can drive a `HorizontalPager`
+ * (Phase F lands the actual viewer; C.6 wires the placeholder route).
  */
 @Composable
 internal fun PhotosGrid(
     photoSource: PhotoSource,
     sort: PhotoSort,
     level: PhotosZoomLevel,
-    onPhotoTap: (PhotoId) -> Unit,
+    onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val photos by photoSource.observePhotos(sort)
@@ -51,89 +66,105 @@ internal fun PhotosGrid(
     }
 
     val locale = LocalConfiguration.current.locales.get(0) ?: java.util.Locale.getDefault()
-    val timeline = buildTimeline(photos, level)
+    val timeline = remember(photos, level) { buildTimeline(photos, level) }
+    val markers = remember(timeline) { extractYearMarkers(timeline) }
+    val backingIds = remember(photos) { photos.map { it.id.value } }
+    val gridState = rememberLazyGridState()
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(level.columns),
-        modifier = modifier
-            .fillMaxSize()
-            .animateContentSize(),
-        contentPadding = PaddingValues(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        timeline.forEachIndexed { index, item ->
-            when (item) {
-                is TimelineDisplayItem.MonthYearBand ->
-                    item(
-                        span = { GridItemSpan(maxLineSpan) },
-                        key = "band-month-${item.yearMonth}",
-                        contentType = "band_month_year",
-                    ) { MonthYearBand(yearMonth = item.yearMonth) }
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Fixed(level.columns),
+            modifier = Modifier
+                .fillMaxSize()
+                .animateContentSize(),
+            contentPadding = PaddingValues(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            timeline.forEach { item ->
+                when (item) {
+                    is TimelineDisplayItem.MonthYearBand ->
+                        item(
+                            span = { GridItemSpan(maxLineSpan) },
+                            key = "band-month-${item.yearMonth}",
+                            contentType = "band_month_year",
+                        ) { MonthYearBand(yearMonth = item.yearMonth) }
 
-                is TimelineDisplayItem.YearBand ->
-                    item(
-                        span = { GridItemSpan(maxLineSpan) },
-                        key = "band-year-${item.year}",
-                        contentType = "band_year",
-                    ) { YearBand(year = item.year) }
+                    is TimelineDisplayItem.YearBand ->
+                        item(
+                            span = { GridItemSpan(maxLineSpan) },
+                            key = "band-year-${item.year}",
+                            contentType = "band_year",
+                        ) { YearBand(year = item.year) }
 
-                is TimelineDisplayItem.PhotoCell ->
-                    item(
-                        key = "photo-${item.photo.id.value}",
-                        contentType = "photo_thumbnail",
-                    ) {
-                        PhotoThumbnail(
-                            photo = item.photo,
-                            onTap = { onPhotoTap(item.photo.id) },
-                        )
-                    }
+                    is TimelineDisplayItem.PhotoCell ->
+                        item(
+                            key = "photo-${item.photo.id.value}",
+                            contentType = "photo_thumbnail",
+                        ) {
+                            PhotoThumbnail(
+                                photo = item.photo,
+                                onTap = { onPhotoTap(item.photo.id, backingIds) },
+                            )
+                        }
 
-                is TimelineDisplayItem.DayCell ->
-                    item(
-                        key = "day-${item.date}",
-                        contentType = "tile_day",
-                    ) {
-                        CoverTile(
-                            cover = item.cover,
-                            label = formatDayTile(item.date, locale),
-                            photoCount = item.photoCount,
-                            onClick = { onPhotoTap(item.cover.id) },
-                        )
-                    }
+                    is TimelineDisplayItem.DayCell ->
+                        item(
+                            key = "day-${item.date}",
+                            contentType = "tile_day",
+                        ) {
+                            CoverTile(
+                                cover = item.cover,
+                                label = formatDayTile(item.date, locale),
+                                photoCount = item.photoCount,
+                                onClick = { onPhotoTap(item.cover.id, backingIds) },
+                            )
+                        }
 
-                is TimelineDisplayItem.MonthCell ->
-                    item(
-                        key = "month-${item.yearMonth}",
-                        contentType = "tile_month",
-                    ) {
-                        CoverTile(
-                            cover = item.cover,
-                            label = formatMonthTile(item.yearMonth, locale),
-                            photoCount = item.photoCount,
-                            onClick = { onPhotoTap(item.cover.id) },
-                        )
-                    }
+                    is TimelineDisplayItem.MonthCell ->
+                        item(
+                            key = "month-${item.yearMonth}",
+                            contentType = "tile_month",
+                        ) {
+                            CoverTile(
+                                cover = item.cover,
+                                label = formatMonthTile(item.yearMonth, locale),
+                                photoCount = item.photoCount,
+                                onClick = { onPhotoTap(item.cover.id, backingIds) },
+                            )
+                        }
 
-                is TimelineDisplayItem.YearCell ->
-                    item(
-                        span = { GridItemSpan(maxLineSpan) },
-                        key = "year-${item.year}",
-                        contentType = "tile_year",
-                    ) {
-                        CoverTile(
-                            cover = item.cover,
-                            label = formatYearBand(item.year),
-                            photoCount = item.photoCount,
-                            aspectRatio = 16f / 9f,
-                            onClick = { onPhotoTap(item.cover.id) },
-                        )
-                    }
+                    is TimelineDisplayItem.YearCell ->
+                        item(
+                            span = { GridItemSpan(maxLineSpan) },
+                            key = "year-${item.year}",
+                            contentType = "tile_year",
+                        ) {
+                            CoverTile(
+                                cover = item.cover,
+                                label = formatYearBand(item.year),
+                                photoCount = item.photoCount,
+                                aspectRatio = 16f / 9f,
+                                onClick = { onPhotoTap(item.cover.id, backingIds) },
+                            )
+                        }
+                }
             }
-            // [index] is not used directly — the per-item `key` already drives
-            // diff stability; suppress unused-warning by referencing it.
-            @Suppress("UNUSED_EXPRESSION") index
         }
+
+        StickyHeaderBanner(
+            timeline = timeline,
+            gridState = gridState,
+            level = level,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+
+        YearScrubber(
+            markers = markers,
+            gridState = gridState,
+            modifier = Modifier.align(Alignment.CenterEnd),
+        )
     }
 }
 
