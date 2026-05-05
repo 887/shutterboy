@@ -71,7 +71,7 @@ Room schema + MediaStore.Images scanner + EXIF cache + multi-source SAF + reposi
 
 ---
 
-## Phase C — App chrome + Photos tab + density zoom + year scrubber — shipped in commits `08e1ee0` (C.1), `10981ae` (C.2), `12f9d98` (C.3)
+## Phase C — App chrome + Photos tab + density zoom + year scrubber — shipped in commits `08e1ee0` (C.1), `10981ae` (C.2), `12f9d98` (C.3), `7baf56e` (C.4 + C.5 + C.6 + C.7)
 
 The headline feature. Bottom-nav scaffold lands here, then the Photos tab on top of it.
 
