@@ -5,21 +5,24 @@
         Shutterboy runs the SplashScreen API as the launch theme so the
         cold-boot frame hands off cleanly to Compose without a white
         flash. The Android 12+ SplashScreen icon area is a hard-coded
-        circle, which clips the square launcher artwork to its inscribed
-        circle — hiding the camera body / corners. To show the full
-        square design at cold start we skip the windowSplashScreen* icon
-        items entirely and draw a layer-list windowBackground: launcher
-        background colour underneath, the foreground bitmap centred on
-        top. installSplashScreen() in MainActivity still hands off
-        cleanly even when the icon items are absent.
+        circle that clips the icon bitmap to its inscribed circle —
+        there's no system attribute to opt out. Workaround: the
+        ic_launcher_splash mipmaps are pre-shrunk to 70.7 % (1/√2) of
+        the original launcher foreground inside transparent padding,
+        so the system circle exactly inscribes the full shrunk design
+        and the user sees the entire artwork at cold start.
 
         - postSplashScreenTheme: the regular Shutterboy theme that
           MainActivity continues to render under once Compose mounts.
-        - android:windowBackground: the layer-list described above.
+        - windowSplashScreenBackground / windowSplashScreenIconBackgroundColor:
+          launcher background colour painted under and behind the icon.
+        - windowSplashScreenAnimatedIcon: the pre-shrunk launcher art.
     -->
     <style name="Theme.Shutterboy" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/Theme.Shutterboy.Main</item>
-        <item name="android:windowBackground">@drawable/splash_window_background</item>
+        <item name="windowSplashScreenBackground">@color/launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_splash</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/launcher_background</item>
     </style>
 
     <style name="Theme.Shutterboy.Main" parent="android:Theme.Material.Light.NoActionBar">
