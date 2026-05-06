@@ -6,6 +6,12 @@ Modern Android photo gallery, sibling app to [`tonearmboy`](https://github.com/8
 
 **SOLID discipline is locked into every phase below.** Cross-cutting standing rules + per-phase pre-emption mapping live in [`refactor-solid.md`](refactor-solid.md). Self-check against the cross-cutting rules (ISP narrow facets, DIP no wrong-direction imports, OCP sealed types, SRP file-size heuristics, no `SettingsSnapshot`, composition root) before ticking any phase header.
 
+**Cold-start performance is a standing contract.** Maintenance rules + the Baseline Profile work item live in [`cold-start-perf.md`](cold-start-perf.md). Self-check against the standing rules (MainActivity ≤30 lines, `setContent { }` shallow, `collectAsStateWithLifecycle` not `collectAsState`, phase-aware `Modifier.offset { }` / `Modifier.graphicsLayer { }`, no `BoxWithConstraints` for screen size, lazy `key = { }` always set) before ticking any phase header that adds or modifies UI composables. Baseline Profile generation is scheduled as L.5 below.
+
+**M3 Expressive migration is scheduled** in [`m3-expressive.md`](m3-expressive.md) — its Phase A–D should land **before main.md Phase I (Settings)** so the Settings catalog ships M3E from day one. Phase F.x of that plan locks the M3E touchpoints for main.md Phases F / G / H / I / J / K so each ships M3E-ready instead of getting re-migrated later.
+
+**Open-source licenses surface** is scheduled in [`oss-licenses.md`](oss-licenses.md) — its Phase A (Licensee plugin + generated `artifacts.json`) is independent and can land any time; Phase B–C feed into main.md Phase I.6 (About sub-page → "Open-source acknowledgments").
+
 Reference screenshots in `docs/reference/screenshots/`:
 
 - **`oneplus-gallery/`** — 2018-vintage public crops (tabbed chrome + photo viewer + Set-as sheet). Confirms the high-level tab structure but predates the year-scrubber and density-zoom features. Sourced from a Gadget Hacks tutorial.
@@ -182,9 +188,11 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 - [ ] **L.2** `scripts/push-test-photos.sh` — `adb push test-photos/. /sdcard/DCIM/shutterboy-test/` + media-scanner kick.
 - [ ] **L.3** `scripts/gallery-smoke-test.sh` — exercise scan + Photos tab + density zoom + year scrubber + folder open + viewer pager + delete consent + multi-select bulk delete. Maestro-compatible YAML at `.maestro/gallery-smoke.yaml` for portability.
 - [ ] **L.4** `scripts/ui-smoke-test.sh` — exercise tabs, settings, search, slideshow.
-- [ ] **L.5** First production release: `scripts/build-release-apk.sh --gh-release` → `v1.0-<sha7>` on `https://github.com/887/shutterboy/releases`. Obtainium picks it up via the README's deep-link.
-- [ ] **L.6** README "Status" line flips to "v1.0 shipped" with the release URL.
-- [ ] **L.7** Update `.maestro/README.md` (create if needed) with the smoke-test invocation pattern.
+- [ ] **L.5** **Baseline Profile** — add the `androidx.baselineprofile` Gradle plugin + a sibling `:baselineprofile` benchmark module; record the cold-boot path (`launch → photos timeline visible`) via `MacrobenchmarkRule` and generate `app/src/main/baseline-prof.txt`; add `androidx.profileinstaller:profileinstaller` to the app module; wire profile generation into `scripts/build-release-apk.sh` so every tagged release ships with a fresh profile. Typically 25–35% cold-start reduction on its own. Detailed sub-steps in [`cold-start-perf.md`](cold-start-perf.md) Phase F.
+- [ ] **L.6** **Cold-start regression check** before tagging the release: `adb shell am force-stop com.eight87.shutterboy && adb shell am start -W -n com.eight87.shutterboy/.MainActivity` × 5 runs on the AVD; median must stay under 1300 ms (per `cold-start-perf.md` Phase G.1). Block the release if median crosses the threshold; investigate via the standing rules in that plan.
+- [ ] **L.7** First production release: `scripts/build-release-apk.sh --gh-release` → `v1.0-<sha7>` on `https://github.com/887/shutterboy/releases`. Obtainium picks it up via the README's deep-link.
+- [ ] **L.8** README "Status" line flips to "v1.0 shipped" with the release URL.
+- [ ] **L.9** Update `.maestro/README.md` (create if needed) with the smoke-test invocation pattern.
 
 ---
 
