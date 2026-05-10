@@ -17,6 +17,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,6 +41,14 @@ fun ShutterboyApp(graph: AppGraph) {
     val backStack = remember { ShutterboyBackStack(rootKey = Photos) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberRouteScope(graph = graph, backStack = backStack, snackbar = snackbar)
+
+    // incremental-scan first-collect hook — gates the cold-start rescan on
+    // MediaStore.getGeneration() + the SAF tree fingerprint. Runs post-first-
+    // frame in a LaunchedEffect so the splash dismiss isn't blocked and the
+    // critical path stays clean (cold-start-perf A.2).
+    LaunchedEffect(Unit) {
+        graph.libraryScanner.scanIfChanged()
+    }
 
     Scaffold(
         bottomBar = {
