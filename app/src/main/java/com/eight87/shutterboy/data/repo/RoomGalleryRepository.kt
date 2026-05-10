@@ -21,9 +21,11 @@ import com.eight87.shutterboy.data.db.toDomain
 import com.eight87.shutterboy.data.db.toEntity
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
+import com.eight87.shutterboy.data.scan.MediaStoreGeneration
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.scan.ScannedPhoto
 import com.eight87.shutterboy.data.settings.ScanConfigSource
+import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.domain.DeleteRequest
 import com.eight87.shutterboy.domain.Folder
 import com.eight87.shutterboy.domain.FolderId
@@ -63,6 +65,7 @@ class RoomGalleryRepository(
     private val exifEnricher: ExifEnricher,
     private val safSourceManager: SafSourceManager,
     private val scanConfig: ScanConfigSource,
+    private val scanGate: ScanGatePreferences,
 ) : PhotoSource,
     FolderSource,
     SmartAlbumSource,
@@ -166,60 +169,99 @@ class RoomGalleryRepository(
 
     override suspend fun runScan(): LibrarySnapshot {
         _scanProgress.value = ScanProgress.Running(processed = 0, total = null)
-        return runCatching {
-            // 1. Scan device media-store + SAF trees
-            val device = mediaStoreScanner.scanDeviceMediaStore()
-            val safUris = scanConfig.safSourceUris.first()
-            val saf = safSourceManager.scanSafTrees(safUris)
-
-            val combinedPhotos: List<ScannedPhoto> = device.photos + saf.photos
-            val combinedFolders = device.folders + saf.folders
-
-            // 2. Diff vs cache: only new photos need EXIF; existing rows keep cached EXIF.
-            val cachedIds = photoDao.allIds().toSet()
-            val toEnrich = combinedPhotos.filter { it.id !in cachedIds }
-            val enriched = exifEnricher.enrichBatch(toEnrich)
-            val byId = combinedPhotos.associateBy { it.id }.toMutableMap()
-            for (e in enriched) byId[e.id] = e
-
-            // 3. Map to entities
-            val photoEntities = byId.values.map { it.toEntity() }
-            val folderEntities = combinedFolders.map { f ->
-                val photoCount = combinedPhotos.count { it.folderId == f.id }
-                val cover = combinedPhotos.firstOrNull { it.folderId == f.id }?.id
-                FolderEntity(
-                    id = f.id,
-                    displayName = f.displayName,
-                    sourceType = if (f.source == ScannedPhoto.ScanSource.SAF_TREE) "SAF" else "DEVICE",
-                    safTreeUri = f.safTreeUri?.toString(),
-                    photoCount = photoCount,
-                    coverPhotoId = cover,
-                )
+        return runCatching { executeScan() }
+            .onSuccess { snap -> _scanProgress.value = ScanProgress.Done(snap.deltaCount) }
+            .getOrElse { e ->
+                _scanProgress.value = ScanProgress.Failed(e.message ?: e::class.simpleName ?: "scan failed")
+                LibrarySnapshot(photos = emptyList(), folders = emptyList(), deltaCount = 0)
             }
+    }
 
-            // 4. Apply delta
-            val seenIds = photoEntities.map(PhotoEntity::id).toSet()
-            val toDeletePhotos = (cachedIds - seenIds).toList()
-            photoDao.replaceWithDelta(toUpsert = photoEntities, toDelete = toDeletePhotos)
+    override suspend fun scanIfChanged(): LibrarySnapshot {
+        val volume = MediaStore.VOLUME_EXTERNAL_PRIMARY
+        val currentGen = MediaStoreGeneration.current(context, volume)
+        val persistedGen = scanGate.observeMediaStoreGeneration(volume).first()
+        val safUris = scanConfig.safSourceUris.first()
+        val currentSaf = safSourceManager.fingerprint(safUris)
+        val persistedSaf = scanGate.observeSafFingerprint().first()
 
-            val cachedFolderIds = folderDao.allIds().toSet()
-            val seenFolderIds = folderEntities.map(FolderEntity::id).toSet()
-            val toDeleteFolders = cachedFolderIds - seenFolderIds
-            folderDao.upsertAll(folderEntities)
-            for (id in toDeleteFolders) folderDao.deleteById(id)
+        val mediaStoreMatches =
+            currentGen != MediaStoreGeneration.ALWAYS_RESCAN && currentGen == persistedGen
+        val safMatches = currentSaf == persistedSaf
 
-            val deltaCount = photoEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
-            val snap = LibrarySnapshot(
-                photos = photoEntities.map { it.toDomain() },
-                folders = folderEntities.map { it.toDomain() },
-                deltaCount = deltaCount,
-            )
-            _scanProgress.value = ScanProgress.Done(deltaCount)
+        if (mediaStoreMatches && safMatches) {
+            _scanProgress.value = ScanProgress.Done(0)
+            return LibrarySnapshot(photos = emptyList(), folders = emptyList(), deltaCount = 0)
+        }
+
+        _scanProgress.value = ScanProgress.Running(processed = 0, total = null)
+        return try {
+            val snap = executeScan()
+            // Persist tokens ONLY after the scan succeeds — a crashed scan
+            // must re-run next boot.
+            scanGate.setMediaStoreGeneration(volume, currentGen)
+            scanGate.setSafFingerprint(currentSaf)
+            _scanProgress.value = ScanProgress.Done(snap.deltaCount)
             snap
-        }.getOrElse { e ->
+        } catch (e: Throwable) {
             _scanProgress.value = ScanProgress.Failed(e.message ?: e::class.simpleName ?: "scan failed")
             LibrarySnapshot(photos = emptyList(), folders = emptyList(), deltaCount = 0)
         }
+    }
+
+    override suspend fun forceRescan(): LibrarySnapshot {
+        scanGate.clear()
+        return scanIfChanged()
+    }
+
+    private suspend fun executeScan(): LibrarySnapshot {
+        // 1. Scan device media-store + SAF trees
+        val device = mediaStoreScanner.scanDeviceMediaStore()
+        val safUris = scanConfig.safSourceUris.first()
+        val saf = safSourceManager.scanSafTrees(safUris)
+
+        val combinedPhotos: List<ScannedPhoto> = device.photos + saf.photos
+        val combinedFolders = device.folders + saf.folders
+
+        // 2. Diff vs cache: only new photos need EXIF; existing rows keep cached EXIF.
+        val cachedIds = photoDao.allIds().toSet()
+        val toEnrich = combinedPhotos.filter { it.id !in cachedIds }
+        val enriched = exifEnricher.enrichBatch(toEnrich)
+        val byId = combinedPhotos.associateBy { it.id }.toMutableMap()
+        for (e in enriched) byId[e.id] = e
+
+        // 3. Map to entities
+        val photoEntities = byId.values.map { it.toEntity() }
+        val folderEntities = combinedFolders.map { f ->
+            val photoCount = combinedPhotos.count { it.folderId == f.id }
+            val cover = combinedPhotos.firstOrNull { it.folderId == f.id }?.id
+            FolderEntity(
+                id = f.id,
+                displayName = f.displayName,
+                sourceType = if (f.source == ScannedPhoto.ScanSource.SAF_TREE) "SAF" else "DEVICE",
+                safTreeUri = f.safTreeUri?.toString(),
+                photoCount = photoCount,
+                coverPhotoId = cover,
+            )
+        }
+
+        // 4. Apply delta
+        val seenIds = photoEntities.map(PhotoEntity::id).toSet()
+        val toDeletePhotos = (cachedIds - seenIds).toList()
+        photoDao.replaceWithDelta(toUpsert = photoEntities, toDelete = toDeletePhotos)
+
+        val cachedFolderIds = folderDao.allIds().toSet()
+        val seenFolderIds = folderEntities.map(FolderEntity::id).toSet()
+        val toDeleteFolders = cachedFolderIds - seenFolderIds
+        folderDao.upsertAll(folderEntities)
+        for (id in toDeleteFolders) folderDao.deleteById(id)
+
+        val deltaCount = photoEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
+        return LibrarySnapshot(
+            photos = photoEntities.map { it.toDomain() },
+            folders = folderEntities.map { it.toDomain() },
+            deltaCount = deltaCount,
+        )
     }
 
     override fun scanProgress(): Flow<ScanProgress> = _scanProgress

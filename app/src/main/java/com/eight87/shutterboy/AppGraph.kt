@@ -20,8 +20,10 @@ import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
+import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
+import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -65,6 +67,10 @@ class AppGraph(applicationContext: Context) {
         override val safSourceUris: Flow<Set<String>> = flowOf(emptySet())
     }
 
+    /** Phase incremental-scan A.2 + A.3 — cold-start gate persistence. */
+    private val scanGate: ScanGatePreferences =
+        DataStoreScanGatePreferences(appCtx.shutterboyPrefs)
+
     private val repository = RoomGalleryRepository(
         context = appCtx,
         photoDao = database.photos(),
@@ -75,6 +81,7 @@ class AppGraph(applicationContext: Context) {
         exifEnricher = exifEnricher,
         safSourceManager = safSourceManager,
         scanConfig = scanConfig,
+        scanGate = scanGate,
     )
 
     // Eight narrow facets — UI consumes whichever it needs, never the wholesale repo.

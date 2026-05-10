@@ -9,6 +9,7 @@ import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.settings.ScanConfigSource
+import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.domain.FolderId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -55,12 +56,21 @@ class FolderCoversTest {
             exifEnricher = ExifEnricher(ctx),
             safSourceManager = SafSourceManager(ctx),
             scanConfig = scanConfig,
+            scanGate = NoopScanGate,
         )
     }
 
     @After
     fun tearDown() {
         db.close()
+    }
+
+    private object NoopScanGate : ScanGatePreferences {
+        override fun observeMediaStoreGeneration(volume: String) = flowOf(null as Long?)
+        override suspend fun setMediaStoreGeneration(volume: String, token: Long) {}
+        override fun observeSafFingerprint() = flowOf(emptyMap<String, Int>())
+        override suspend fun setSafFingerprint(map: Map<String, Int>) {}
+        override suspend fun clear() {}
     }
 
     private fun makePhoto(id: Long, folderId: Long): PhotoEntity = PhotoEntity(

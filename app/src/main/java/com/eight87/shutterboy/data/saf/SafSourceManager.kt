@@ -57,6 +57,37 @@ class SafSourceManager(
     }
 
     /**
+     * Phase incremental-scan A.3 — cheap fingerprint per tree. Recursive
+     * count of image-typed leaves, no dimension reads, no EXIF, no
+     * `ScannedPhoto` allocation. Persisted alongside the MediaStore
+     * generation token so the cold-start gate can ask "did any SAF tree
+     * change?" without doing a full scan. Trees that are no longer
+     * permission-held count as 0.
+     */
+    suspend fun fingerprint(treeUris: Set<String>): Map<String, Int> = withContext(Dispatchers.IO) {
+        if (treeUris.isEmpty()) return@withContext emptyMap<String, Int>()
+        val out = LinkedHashMap<String, Int>(treeUris.size)
+        for (treeUriStr in treeUris) {
+            val treeUri = runCatching { Uri.parse(treeUriStr) }.getOrNull()
+            val tree = treeUri?.let { DocumentFile.fromTreeUri(context, it) }
+            out[treeUriStr] = if (tree == null) 0 else countImageLeaves(tree)
+        }
+        out
+    }
+
+    private fun countImageLeaves(node: DocumentFile): Int {
+        var n = 0
+        for (child in node.listFiles()) {
+            n += when {
+                child.isDirectory -> countImageLeaves(child)
+                child.isFile && (child.type ?: "").startsWith("image/") -> 1
+                else -> 0
+            }
+        }
+        return n
+    }
+
+    /**
      * Walk a [DocumentFile] subtree recursively, appending image-typed leaves
      * to [out]. Returns true if at least one image was found (so the caller
      * knows whether to register a folder row for this tree).
