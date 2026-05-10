@@ -14,13 +14,13 @@ This plan is paired with [`cold-start-perf.md`](cold-start-perf.md). The
 cold-start plan is preventive standing rules; this plan is a one-shot
 delta of work plus a standing maintenance rule.
 
-## Phase A — generation-token plumbing — shipped in commit `<PENDING>`
+## Phase A — generation-token plumbing — shipped in commit `962ebdb`
 
 - [x] **A.1** Add a `data/scan/MediaStoreGeneration.kt` thin wrapper: `fun current(context: Context, volume: String = MediaStore.VOLUME_EXTERNAL_PRIMARY): Long = MediaStore.getGeneration(context, volume)`. Single-purpose, no logic — keeps the API-26-vs-30 surface in one place. `MediaStore.getGeneration` requires API 29+; on API 26-28 the wrapper returns `-1L` (sentinel: always rescan).
 - [x] **A.2** Persist the last-observed generation token in DataStore as `media_store_generation_<volumeName>`. Live alongside the existing settings prefs (`shutterboy_settings`) — a separate prefs file isn't worth it. — `ScanGatePreferences` interface + `DataStoreScanGatePreferences` impl behind `Context.shutterboyPrefs`.
 - [x] **A.3** Persist the last-observed SAF tree fingerprint set: `Map<safTreeUri, lastChildCount>`. SAF doesn't have a generation API, so a coarse "fingerprint = recursive image-leaf count" is the cheapest reliable cache invalidator. — `SafSourceManager.fingerprint(treeUris)` does a count-only recursive walk (no dimension reads, no `ScannedPhoto` allocation); persisted as `saf_fingerprint` string under `uri=count;uri=count` wire format. Malformed entries dropped silently on decode.
 
-## Phase B — wire it into `LibraryRepository` — shipped in commit `<PENDING>`
+## Phase B — wire it into `LibraryRepository` — shipped in commit `962ebdb`
 
 - [x] **B.1** `RoomGalleryRepository.scanIfChanged()` — entry point that replaces the unconditional `scan()` call on first `observePhotos` collection. Compares `MediaStoreGeneration.current()` against persisted token + SAF fingerprints against persisted map. If both match, return without touching the scanner. If either differs, run the full scan, then persist the fresh tokens at the end (NOT at the start — a crashed scan must re-run next boot). — `LibraryScanner` interface gains `scanIfChanged()` + `forceRescan()` alongside the existing `runScan()`. Implementation extracts the scan body into a private `executeScan()` that throws, so the gate path can persist tokens only on success (not via `runCatching.getOrElse`-swallowed failures).
 - [ ] **B.2** `ContentObserver` on `MediaStore.Images.Media.EXTERNAL_CONTENT_URI` (already exists) keeps its existing role — it triggers an in-session rescan when the user adds a photo via another app. It doesn't replace the cold-start gate; it complements it.
