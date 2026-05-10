@@ -34,3 +34,4 @@ test-photos/
 
 # Release artifacts (rebuildable via scripts/build-release-apk.sh)
 release/
+.claude/scheduled_tasks.lock
