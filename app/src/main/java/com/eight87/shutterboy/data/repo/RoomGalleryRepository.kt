@@ -21,6 +21,7 @@ import com.eight87.shutterboy.data.db.toDomain
 import com.eight87.shutterboy.data.db.toEntity
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
+import com.eight87.shutterboy.data.scan.MediaImagesPermission
 import com.eight87.shutterboy.data.scan.MediaStoreGeneration
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.scan.ScannedPhoto
@@ -198,8 +199,16 @@ class RoomGalleryRepository(
         return try {
             val snap = executeScan()
             // Persist tokens ONLY after the scan succeeds — a crashed scan
-            // must re-run next boot.
-            scanGate.setMediaStoreGeneration(volume, currentGen)
+            // must re-run next boot. Persist the MediaStore generation token
+            // ONLY when the read permission is granted: a permission-denied
+            // scan returns 0 rows silently, so persisting the token would
+            // poison the gate and we'd never rescan after the user grants
+            // the permission later. The SAF fingerprint is permission-
+            // independent (per-tree URI grants are persistent) and always
+            // persisted.
+            if (MediaImagesPermission.isGranted(context)) {
+                scanGate.setMediaStoreGeneration(volume, currentGen)
+            }
             scanGate.setSafFingerprint(currentSaf)
             _scanProgress.value = ScanProgress.Done(snap.deltaCount)
             snap
