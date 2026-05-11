@@ -23,7 +23,7 @@ delta of work plus a standing maintenance rule.
 ## Phase B — wire it into `LibraryRepository` — shipped in commit `962ebdb`
 
 - [x] **B.1** `RoomGalleryRepository.scanIfChanged()` — entry point that replaces the unconditional `scan()` call on first `observePhotos` collection. Compares `MediaStoreGeneration.current()` against persisted token + SAF fingerprints against persisted map. If both match, return without touching the scanner. If either differs, run the full scan, then persist the fresh tokens at the end (NOT at the start — a crashed scan must re-run next boot). — `LibraryScanner` interface gains `scanIfChanged()` + `forceRescan()` alongside the existing `runScan()`. Implementation extracts the scan body into a private `executeScan()` that throws, so the gate path can persist tokens only on success (not via `runCatching.getOrElse`-swallowed failures).
-- [ ] **B.2** `ContentObserver` on `MediaStore.Images.Media.EXTERNAL_CONTENT_URI` (already exists) keeps its existing role — it triggers an in-session rescan when the user adds a photo via another app. It doesn't replace the cold-start gate; it complements it.
+- [x] **B.2** `ContentObserver` on `MediaStore.Images.Media.EXTERNAL_CONTENT_URI` (already exists) keeps its existing role — it triggers an in-session rescan when the user adds a photo via another app. It doesn't replace the cold-start gate; it complements it. — verified: the existing observer wiring is untouched by this plan; cold-start gate and in-session observer live in different windows by design (see D.3).
 - [x] **B.3** **Hard rule: never scan twice on cold start.** The bug `50f1d6b` fixed in tonearmboy was the repository firing a scan on first DAO subscription *and* the activity firing one on `onCreate`. Audit for double-entry before B.1 lands — there should be exactly one `scanIfChanged()` call site, owned by the repository's lazy first-collect path. — first-collect hook landed: `LaunchedEffect(Unit) { graph.libraryScanner.scanIfChanged() }` at the root of `ShutterboyApp`. Single call site, runs post-first-frame off the cold-start critical path (cold-start-perf A.2). No other scan triggers exist; future Settings → Rescan UI (Phase I.3) MUST route through `forceRescan()`, never `runScan()` directly.
 
 **Permission-gated token persistence** (fixed): the MediaStore generation token is persisted only when `MediaImagesPermission.isGranted(context)` returns true at the end of the scan. A permission-denied scan returns 0 rows silently from the MediaStore cursor; persisting the token in that state would poison the gate and the next boot would skip the scan even after the user grants the permission. The SAF fingerprint stays permission-independent (per-tree URI grants are persistent) and is always persisted. Net effect: granting the permission later → next boot sees no persisted MediaStore token → full rescan fires once → token persists for steady-state operation. Centralised helper: `data/scan/MediaImagesPermission.kt`.
@@ -36,13 +36,18 @@ delta of work plus a standing maintenance rule.
 - [ ] **C.3** AVD smoke: cold-boot the app twice in a row with no library changes between boots. Second boot's `logcat -s shutterboy:*` should show "skipped scan, generation unchanged"; cold-start time should drop by 100–400 ms depending on library size.
 - [ ] **C.4** AVD smoke: add a photo via the camera app between boots; second boot should NOT skip — scanner runs, new photo lands in the grid.
 
-## Phase D — standing rule (maintenance contract)
+## Phase D — standing rule (maintenance contract) — shipped in commit `95748b2`
 
-- [ ] **D.1** **The cold-start path runs `scanIfChanged()`, not `scan()`.** Any new entry point that bypasses the gate is a regression. Add a comment to `scan()` documenting it as the force-rescan / test-only entrypoint.
-- [ ] **D.2** **Token persistence happens after success, not before.** A scan that throws halfway must re-run next boot.
-- [ ] **D.3** **The `ContentObserver` and the cold-start gate are independent.** Don't try to clever-merge them — they serve different windows (in-session vs cross-boot).
+- [x] **D.1** **The cold-start path runs `scanIfChanged()`, not `scan()`.** Any new entry point that bypasses the gate is a regression. — `LibraryScanner.runScan()` retained as the force-rescan / test-only entrypoint; production cold-start path is the `LaunchedEffect(Unit) { scanIfChanged() }` hook at `ShutterboyApp` root, and the Settings → Library → "Rescan photos" UI (Phase I.3) routes through `forceRescan()` (which itself delegates to `scanIfChanged()` after clearing the gate).
+- [x] **D.2** **Token persistence happens after success, not before.** A scan that throws halfway must re-run next boot. — `RoomGalleryRepository.scanIfChanged()` extracts `executeScan()` that throws; persistence only runs after the try-block returns successfully. A thrown scan falls into the catch branch, leaves the persisted tokens untouched, and the next boot re-runs. MediaStore-token persistence is further gated on `MediaImagesPermission.isGranted(context)` so a permission-denied scan doesn't poison the gate either.
+- [x] **D.3** **The `ContentObserver` and the cold-start gate are independent.** Don't try to clever-merge them — they serve different windows (in-session vs cross-boot). The observer keeps its existing role unchanged by this plan.
 
-## Status
+## Status: in progress — Phases A, B, D shipped; Phase C verification pending
 
-Pending — no sub-steps shipped. Targeted to land before Phase F so the
-viewer's cold-deeplink path benefits from the gate.
+Phases A + B (plumbing + wiring) and Phase D (standing rules) shipped
+in commits `962ebdb` and `95748b2`. Phase C verification still open:
+C.1 unit test shipped, C.2 deferred behind a small seam-refactor on
+`MediaStoreGeneration`, C.3 / C.4 are AVD smoke tests requiring the
+emulator + a granted `READ_MEDIA_IMAGES` permission. The gate is live
+on the cold-start path either way; C.3 / C.4 are confirmation, not
+gating.
