@@ -44,6 +44,7 @@ fun ShutterboyTheme(
     val colorScheme = resolveBaseScheme(darkTheme = darkTheme, baseTheme = baseTheme)
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        shapes = ShutterboyShapes,
         typography = Typography,
         content = content,
     )
