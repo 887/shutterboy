@@ -11,21 +11,26 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.expressiveLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.eight87.shutterboy.data.settings.BaseTheme
 
 /**
- * Material 3 Expressive theme for shutterboy. Three layers:
+ * Material 3 Expressive theme for shutterboy. The base [ColorScheme] is
+ * determined by [baseTheme]:
  *
- * 1. **Dynamic color (Material You) on API 31+** — when [dynamicColor] is true
- *    the colour scheme is sourced from the system wallpaper-derived palette.
- *    Default on; Phase I.2 will surface a `ThemeSettings.dynamicColor` toggle.
- * 2. **Brand seed fallback** on API < 31 — burnt-orange primary, warm-copper
- *    secondary, slate-blue tertiary. Light mode uses
- *    [expressiveLightColorScheme] which produces the wider surface-tier ladder
- *    (`surfaceContainerLow…High`) M3E needs; dark mode stays on
- *    [darkColorScheme] (no `expressiveDarkColorScheme` ships in 1.5.0-alpha18).
- * 3. **System dark / light** — picked up via [isSystemInDarkTheme]. Phase I.2
- *    will surface a `ThemeSettings.theme: System | Light | Dark` override.
+ *  - [BaseTheme.DefaultAndroid] — Material You / dynamic colour on API 31+,
+ *    falls back to the shutterboy brand palette on older devices.
+ *  - [BaseTheme.DefaultColors] — the static shutterboy brand palette regardless
+ *    of API.
+ *  - [BaseTheme.PureBlack] — same primary colours as DefaultAndroid but with
+ *    `surface` / `background` collapsed to pure black for AMOLED displays.
+ *  - [BaseTheme.Custom] — a `ColorScheme` derived from a user-picked seed
+ *    colour via the in-app HSV picker.
+ *
+ * Light mode uses [expressiveLightColorScheme] which produces the wider
+ * surface-tier ladder (`surfaceContainerLow…High`) M3E needs; dark mode stays
+ * on [darkColorScheme] (no `expressiveDarkColorScheme` ships yet).
  *
  * Wrapped in [MaterialExpressiveTheme] so M3E motion / typography / shape
  * defaults (rounded XL group shapes, faster spring motion) apply.
@@ -33,10 +38,10 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 fun ShutterboyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    baseTheme: BaseTheme = BaseTheme.Default,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = resolveColorScheme(darkTheme = darkTheme, dynamicColor = dynamicColor)
+    val colorScheme = resolveBaseScheme(darkTheme = darkTheme, baseTheme = baseTheme)
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         typography = Typography,
@@ -46,15 +51,33 @@ fun ShutterboyTheme(
 
 /**
  * Pure colour-scheme picker — split out so a Robolectric test can verify the
- * three-way pick logic without instantiating the full theme.
+ * four-way pick logic without instantiating the full theme.
  */
 @Composable
-internal fun resolveColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme {
-    if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val context = LocalContext.current
-        return if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+internal fun resolveBaseScheme(darkTheme: Boolean, baseTheme: BaseTheme): ColorScheme {
+    val dynamicAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    return when (baseTheme) {
+        BaseTheme.DefaultAndroid -> {
+            if (dynamicAvailable) {
+                val context = LocalContext.current
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            } else {
+                if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
+            }
+        }
+        BaseTheme.DefaultColors ->
+            if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
+        BaseTheme.PureBlack -> {
+            val foundation = if (dynamicAvailable) {
+                val context = LocalContext.current
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            } else {
+                if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
+            }
+            foundation.copy(background = Color.Black, surface = Color.Black)
+        }
+        is BaseTheme.Custom -> deriveCustomScheme(baseTheme.seedRgb, darkTheme)
     }
-    return if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
 }
 
 // m3-expressive B.2 — don't collapse `background` AND `surface` onto the
