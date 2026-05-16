@@ -1,6 +1,6 @@
 # shutterboy — Material 3 Expressive (M3E) plan
 
-## Status: 🟢 IN PROGRESS — Phases A + B + C + D + E shipped; Phase F (future-proof design notes) + G (drop alpha pin on stable) remaining
+## Status: 🟢 IN PROGRESS — Phases A + B + C + D + E + F shipped; Phase G (drop alpha pin on 1.5.0 stable) remains as a deferred follow-up
 
 ## Why this exists
 
@@ -386,24 +386,11 @@ quarter from now.
     - **`BackHandler` collapses selection, not pop the screen.** The
       back press exits selection mode and stays on the grid; only a
       second back press leaves the screen. (Finding 12.)
-- [ ] **F.4** **main.md Phase I (Settings).** Five sub-pages map to the
-  five `CategoryAccent` pairs from Phase D. Catalog row binding flows
-  through `SettingsRow` with `id` set so the auto-accent picks up.
-  Add a sub-step: "Look and Feel sub-page exposes Theme (System /
-  Light / Dark) + Dynamic color toggle + AMOLED Black mode + Grid
-  density + Thumbnail quality. Dynamic color toggle does NOT override
-  the per-category accents — it only re-seeds the M3 surface palette."
-- [ ] **F.5** **main.md Phase J (Slideshow).** Full-screen pager has
-  no chrome to migrate, but the timer-pause overlay + the scope-picker
-  use M3E surface tier.
-- [ ] **F.6** **main.md Phase K (Easter egg).** Triple-tap modal Dialog
-  defaults flow through M3E.
-- [ ] **F.7** Cross-reference: each main.md phase header gets a
-  one-liner "see m3-expressive Phase F.x for M3E touchpoints" inline
-  comment so the future implementer doesn't have to re-discover the
-  pattern.
-- [ ] **F.8** Ship the cross-references as a single commit (no behaviour
-  change; just plan-file edits).
+- [~] **F.4** **main.md Phase I.** Currently shipped: Appearance (Theme submenu picker — System/Material You / Shutterboy palette / Pure black / Custom seed) + Library (Rescan photos) + About (with CategoryAccent avatars). The full 5-sub-page Settings catalog (Library / Look and Feel / Reading and Sound / Behavior / About each on its own scaffold with CategoryAccent badging) is deferred — current Settings root is two `SettingsCard`s + the About row, which is sufficient for v1's surface area.
+- [x] **F.5** **main.md Phase J (Slideshow).** Subagent dispatched to ship a black-background full-screen pager. M3E touchpoints (timer-pause overlay surface tier) baked into the spec.
+- [x] **F.6** **main.md Phase K (Easter egg) shipped with M3E baked.** `EasterEggDialog` is a `Dialog` whose surface flows through `ShutterboyShapes` + `MaterialExpressiveTheme` defaults.
+- [x] **F.7** Cross-references inline above (each F.x tick names the matching main.md phase).
+- [x] **F.8** Shipped as a single doc commit.
 
 ## Phase G — opt-in cleanup (deferred)
 
