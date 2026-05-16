@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Article
-import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -114,7 +114,8 @@ fun SettingsAboutScreen(
             // Build card — version row is the easter-egg tap target.
             SettingsCard {
                 SettingsRow(
-                    icon = Icons.Outlined.Numbers,
+                    id = "settings_about_version",
+                    icon = Icons.Filled.Numbers,
                     label = stringResource(R.string.about_version_label),
                     subtitle = stringResource(
                         R.string.about_version_format,
@@ -129,14 +130,16 @@ fun SettingsAboutScreen(
             // Source card — License + GitHub + OSS acknowledgments.
             SettingsCard {
                 SettingsRow(
-                    icon = Icons.Outlined.Article,
+                    id = "settings_about_license",
+                    icon = Icons.AutoMirrored.Filled.Article,
                     label = stringResource(R.string.about_license_row_label),
                     subtitle = stringResource(R.string.about_license_row_value),
                     onClick = { showLicenseDialog = true },
                 )
                 SettingsRowDivider()
                 SettingsRow(
-                    icon = Icons.Outlined.Code,
+                    id = "settings_about_github",
+                    icon = Icons.Filled.Code,
                     label = stringResource(R.string.about_github_row_label),
                     subtitle = stringResource(R.string.about_github_row_value),
                     onClick = {
@@ -145,7 +148,8 @@ fun SettingsAboutScreen(
                 )
                 SettingsRowDivider()
                 SettingsRow(
-                    icon = Icons.Outlined.Favorite,
+                    id = "settings_about_oss",
+                    icon = Icons.Filled.Favorite,
                     label = stringResource(R.string.about_oss_row_label),
                     subtitle = stringResource(R.string.about_oss_row_subtitle),
                     onClick = null,

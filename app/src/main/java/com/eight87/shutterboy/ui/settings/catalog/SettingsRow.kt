@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.eight87.shutterboy.theme.CategoryAccent
+import com.eight87.shutterboy.theme.accentFor
 
 /**
  * One row inside a [SettingsCard]. Always has a leading icon (the Android
@@ -28,6 +30,14 @@ import androidx.compose.ui.unit.dp
  * Tap the whole row when [onClick] is supplied; rows without a click target
  * (informational rows like the Open-source acknowledgments placeholder) skip
  * the [Modifier.clickable] entirely.
+ *
+ * m3-expressive Phase D — when [accent] or [id] is supplied, the leading
+ * glyph is wrapped in a [CategoryAvatar] (40-dp coloured circle). Per
+ * m3-expressive Finding 4, the auto-accent fallback fires here at the
+ * row composable, not at every call site: pass `id` and the catalog
+ * binding picks up the colour without per-row wiring. Rows that opt
+ * out of the avatar (neither [accent] nor [id]) render the old
+ * monochrome glyph for callers that haven't migrated yet.
  */
 @Composable
 fun SettingsRow(
@@ -37,7 +47,10 @@ fun SettingsRow(
     subtitle: String? = null,
     trailing: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
+    id: String? = null,
+    accent: CategoryAccent? = null,
 ) {
+    val resolvedAccent: CategoryAccent? = accent ?: id?.let { accentFor(it) }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -49,12 +62,20 @@ fun SettingsRow(
             .heightIn(min = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(SettingsDimens.IconSize),
-        )
+        if (resolvedAccent != null) {
+            CategoryAvatar(
+                icon = icon,
+                accent = resolvedAccent,
+                contentDescription = null,
+            )
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(SettingsDimens.IconSize),
+            )
+        }
         Spacer(Modifier.size(SettingsDimens.IconLabelGap))
         Column(
             modifier = Modifier.weight(1f),

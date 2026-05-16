@@ -113,7 +113,12 @@ private fun SmartAlbumChip(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.surface,
+                // m3-expressive B.1 — label sits on top of a dark scrim over a
+                // photo cover; needs to be readable in both light and dark
+                // schemes. `colorScheme.surface` was near-black in dark and
+                // disappeared. White stays legible against the 0.35-alpha
+                // scrim regardless of underlying scheme.
+                color = Color.White,
                 textAlign = TextAlign.Start,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

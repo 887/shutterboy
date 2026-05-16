@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -49,7 +49,8 @@ fun SettingsScreen(
     ) {
         SettingsCard {
             SettingsRow(
-                icon = Icons.Outlined.Info,
+                id = "settings_about_root",
+                icon = Icons.Filled.Info,
                 label = stringResource(R.string.settings_root_about_row_label),
                 subtitle = stringResource(R.string.settings_root_about_row_subtitle),
                 trailing = {
