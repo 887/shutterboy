@@ -90,6 +90,8 @@
     <string name="viewer_empty">No photos</string>
     <string name="cd_viewer_back">Back</string>
     <string name="cd_viewer_info">Photo info</string>
+    <string name="cd_viewer_share">Share photo</string>
+    <string name="viewer_share_chooser_title">Share via</string>
     <string name="viewer_info_title">Info</string>
     <string name="viewer_info_filename">File name</string>
     <string name="viewer_info_capture_date">Captured</string>

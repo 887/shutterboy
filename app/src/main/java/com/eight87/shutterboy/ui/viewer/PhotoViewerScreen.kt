@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
+import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -112,6 +114,7 @@ internal fun PhotoViewerContent(
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
 
     var infoVisible by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     // F.2 — chrome toggle. Single tap on a page flips this; auto-hide
     // after CHROME_AUTO_HIDE_MS of no chrome-toggle interaction.
     var chromeVisible by remember { mutableStateOf(true) }
@@ -206,6 +209,30 @@ internal fun PhotoViewerContent(
                         }
                     },
                     actions = {
+                        // F.5 — Share via Intent.ACTION_SEND + chooser.
+                        IconButton(
+                            onClick = {
+                                currentPhoto?.let { photo ->
+                                    val share = Intent(Intent.ACTION_SEND).apply {
+                                        type = photo.mimeType
+                                        putExtra(Intent.EXTRA_STREAM, photo.contentUri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    context.startActivity(
+                                        Intent.createChooser(
+                                            share,
+                                            context.getString(R.string.viewer_share_chooser_title),
+                                        ),
+                                    )
+                                }
+                            },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Share,
+                                contentDescription = stringResource(R.string.cd_viewer_share),
+                            )
+                        }
                         IconButton(
                             onClick = { infoVisible = true },
                             enabled = currentPhoto != null,
