@@ -12,28 +12,38 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
+import android.app.Activity
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,8 +63,11 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eight87.shutterboy.R
+import com.eight87.shutterboy.data.repo.PhotoDeleter
 import com.eight87.shutterboy.data.repo.PhotoSource
+import com.eight87.shutterboy.domain.DeleteRequest
 import com.eight87.shutterboy.domain.Photo
+import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
 import kotlinx.coroutines.flow.flowOf
@@ -92,6 +105,7 @@ fun PhotoViewerScreen(
         backingIds = destination.backingIds,
         initialPhotoId = destination.photoIdValue,
         photoSource = scope.photoSource,
+        photoDeleter = scope.photoDeleter,
         onBack = { scope.backStack.pop() },
         modifier = modifier,
     )
@@ -107,14 +121,20 @@ internal fun PhotoViewerContent(
     backingIds: List<Long>,
     initialPhotoId: Long,
     photoSource: PhotoSource,
+    photoDeleter: PhotoDeleter? = null,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val initialPage = backingIds.indexOf(initialPhotoId).coerceAtLeast(0)
-    val pageCount = backingIds.size.coerceAtLeast(0)
-    val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
+    // F.4 — backing-ids becomes a mutableStateList so a settled delete
+    // removes the row in place; the pager's pageCount lambda reads
+    // .size reactively, so the pager re-counts on mutation.
+    val pagerIds = remember { mutableStateListOf<Long>().apply { addAll(backingIds) } }
+    val initialPage = pagerIds.indexOf(initialPhotoId).coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = initialPage) { pagerIds.size }
 
     var infoVisible by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     // F.2 — chrome toggle. Single tap on a page flips this; auto-hide
     // after CHROME_AUTO_HIDE_MS of no chrome-toggle interaction.
@@ -178,9 +198,42 @@ internal fun PhotoViewerContent(
         }
     }
 
+    // F.4 — backing-list mutator. Called both after a settled API 30+
+    // system-consent intent (RESULT_OK) and after the API 26-28 direct
+    // delete returns. Computes the next pager position via the pure
+    // helper so the math has unit-test coverage.
+    val applyDeletion: (Long) -> Unit = { deletedId ->
+        val result = ViewerBackingListMath.removeId(
+            list = pagerIds.toList(),
+            deletedId = deletedId,
+            currentPosition = pagerState.currentPage,
+        )
+        pagerIds.clear()
+        pagerIds.addAll(result.newList)
+        if (result.newPosition < 0) {
+            onBack()
+        } else {
+            coroutineScope.launch { pagerState.scrollToPage(result.newPosition) }
+        }
+    }
+
+    // F.4 — pending-delete-id holds the id whose system-consent intent we
+    // launched on API 30+, so the result callback can apply the deletion
+    // when the user confirms the system dialog.
+    var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
+    val deleteConsentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        val pending = pendingDeleteId
+        pendingDeleteId = null
+        if (result.resultCode == Activity.RESULT_OK && pending != null) {
+            applyDeletion(pending)
+        }
+    }
+
     // Current page's photo — reactive read, drives both the TopAppBar title
     // and the info-sheet body.
-    val currentId: Long? = backingIds.getOrNull(pagerState.currentPage)
+    val currentId: Long? = pagerIds.getOrNull(pagerState.currentPage)
     val currentPhotoFlow = remember(currentId) {
         if (currentId == null) flowOf(null) else photoSource.observePhotoById(currentId)
     }
@@ -258,6 +311,17 @@ internal fun PhotoViewerContent(
                                 contentDescription = stringResource(R.string.cd_viewer_edit),
                             )
                         }
+                        // F.4 — Delete via MediaStore consent (API 30+) /
+                        // direct delete (API 26-28). Confirm dialog first.
+                        IconButton(
+                            onClick = { showDeleteConfirm = true },
+                            enabled = currentPhoto != null && photoDeleter != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Delete,
+                                contentDescription = stringResource(R.string.cd_viewer_delete),
+                            )
+                        }
                         IconButton(
                             onClick = { infoVisible = true },
                             enabled = currentPhoto != null,
@@ -284,7 +348,7 @@ internal fun PhotoViewerContent(
                 .nestedScroll(dismissConnection)
                 .testTag(VIEWER_PAGER_TAG),
         ) {
-            if (pageCount == 0) {
+            if (pagerIds.isEmpty()) {
                 Text(
                     text = stringResource(R.string.viewer_empty),
                     color = MaterialTheme.colorScheme.onSurface,
@@ -296,7 +360,7 @@ internal fun PhotoViewerContent(
                     pageSize = PageSize.Fill,
                     modifier = Modifier.fillMaxSize(),
                 ) { page ->
-                    val pageId = backingIds[page]
+                    val pageId = pagerIds[page]
                     PhotoPage(
                         photoId = pageId,
                         photoSource = photoSource,
@@ -318,6 +382,50 @@ internal fun PhotoViewerContent(
                 onDismiss = { infoVisible = false },
             )
         }
+    }
+
+    // F.4 — single-photo confirm dialog. Bulk delete (H.3) uses a
+    // typed-confirm dialog with a TextField; single-photo delete relies
+    // on the system MediaStore consent dialog for the second tap and so
+    // only needs a simple Cancel / Delete confirm here.
+    if (showDeleteConfirm) {
+        val targetId = currentId
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.viewer_delete_dialog_title)) },
+            text = { Text(stringResource(R.string.viewer_delete_dialog_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirm = false
+                        val id = targetId
+                        val deleter = photoDeleter
+                        if (id != null && deleter != null) {
+                            coroutineScope.launch {
+                                when (val req = deleter.deletePhotos(listOf(PhotoId(id)))) {
+                                    is DeleteRequest.Consent -> {
+                                        pendingDeleteId = id
+                                        val isr = IntentSenderRequest
+                                            .Builder(req.intentSender.intentSender)
+                                            .build()
+                                        deleteConsentLauncher.launch(isr)
+                                    }
+                                    is DeleteRequest.Immediate -> {
+                                        if (req.deletedCount > 0) applyDeletion(id)
+                                    }
+                                    is DeleteRequest.Failure -> Unit
+                                }
+                            }
+                        }
+                    },
+                ) { Text(stringResource(R.string.viewer_delete_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.viewer_delete_cancel))
+                }
+            },
+        )
     }
 }
 

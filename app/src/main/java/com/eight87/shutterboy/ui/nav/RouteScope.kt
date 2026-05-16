@@ -30,6 +30,7 @@ interface RouteScope {
 
     // Narrow facet reads — destinations consume these instead of the wholesale graph.
     val photoSource: PhotoSource
+    val photoDeleter: PhotoDeleter
     val folderSource: FolderSource
     val smartAlbumSource: SmartAlbumSource
     val photoSearch: PhotoSearch
