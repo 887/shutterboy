@@ -60,6 +60,9 @@ class SelectionHolder internal constructor(initial: SelectionState) {
     fun exit() { state = state.exit() }
     fun selectAll(allIds: Collection<PhotoId>) { state = state.selectAll(allIds) }
     fun deselectAll() { state = state.deselectAll() }
+
+    /** Convenience: the current selected-id set, or empty when [SelectionState.Idle]. */
+    fun selectedIds(): Set<PhotoId> = (state as? SelectionState.Active)?.selectedIds ?: emptySet()
 }
 
 @Composable

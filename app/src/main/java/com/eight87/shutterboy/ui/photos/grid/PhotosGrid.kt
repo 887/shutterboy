@@ -1,30 +1,25 @@
 package com.eight87.shutterboy.ui.photos.grid
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
+import com.eight87.shutterboy.ui.multiselect.SelectionState
+import com.eight87.shutterboy.ui.multiselect.isSelected
 
 /**
  * Phase C.2 + C.3 + C.4 + C.5 + D.3.5 — Photos timeline body.
@@ -55,7 +50,10 @@ internal fun PhotosGrid(
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
     emptyState: (@Composable (Modifier) -> Unit)? = null,
+    selectionState: SelectionState = SelectionState.Idle,
+    onPhotoLongPress: (PhotoId) -> Unit = {},
 ) {
+    val inSelectionMode = selectionState is SelectionState.Active
     val photos by stream.observe()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -104,7 +102,10 @@ internal fun PhotosGrid(
                         ) {
                             PhotoThumbnail(
                                 photo = item.photo,
+                                selected = selectionState.isSelected(item.photo.id),
+                                inSelectionMode = inSelectionMode,
                                 onTap = { onPhotoTap(item.photo.id, backingIds) },
+                                onLongPress = { onPhotoLongPress(item.photo.id) },
                             )
                         }
 
@@ -167,19 +168,3 @@ internal fun PhotosGrid(
     }
 }
 
-@Composable
-private fun PhotoThumbnail(
-    photo: Photo,
-    onTap: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    AsyncImage(
-        model = photo.contentUri,
-        contentDescription = photo.displayName,
-        contentScale = ContentScale.Crop,
-        modifier = modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(2.dp))
-            .clickable(onClick = onTap),
-    )
-}

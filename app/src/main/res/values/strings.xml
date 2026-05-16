@@ -148,6 +148,14 @@
     <string name="multiselect_delete_confirm_label">Confirm</string>
     <string name="multiselect_delete_cancel_label">Cancel</string>
 
+    <!-- Phase H.2 — selection mode top bar + tile chrome. -->
+    <string name="multiselect_selected_count">%1$d selected</string>
+    <string name="multiselect_select_all">Select all</string>
+    <string name="multiselect_close">Done</string>
+    <string name="multiselect_delete">Delete</string>
+    <string name="cd_multiselect_checkmark">Selected</string>
+    <string name="cd_multiselect_close">Exit selection mode</string>
+
     <!-- About sub-page (mirrors tonearmboy D.16.4 + D.16.5 easter egg). -->
     <string name="about_title">About</string>
     <string name="about_app_tagline">Modern photo gallery for Android</string>
