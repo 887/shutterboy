@@ -307,20 +307,20 @@ baseline-M3 tokens.
   current usage; patch if drifted.
 - [ ] **C.6** Ship + tick.
 
-## Phase D — `CategoryAccent` + per-row avatars
+## Phase D — `CategoryAccent` + per-row avatars — shipped in commit `<PHASE_D>`
 
 **Why:** the actual coloured-circle avatar wiring. Lands ahead of
 Phase I (Settings) so the catalog rows pick up avatars from day one.
 
-- [ ] **D.1** Add `theme/CategoryAccent.kt`:
+- [x] **D.1** Add `theme/CategoryAccent.kt`:
   ```kotlin
   data class CategoryAccent(val container: Color, val onContainer: Color)
   ```
   Co-locate with the theme.
-- [ ] **D.2** Define five accent pairs per the table above, dark +
+- [x] **D.2** Define five accent pairs per the table above, dark +
   light variants. Document the "no dynamic-color override" decision
   inline.
-- [ ] **D.3** Add `theme/AccentFor.kt`:
+- [x] **D.3** Add `theme/AccentFor.kt`:
   ```kotlin
   internal fun accentFor(id: String, isDark: Boolean): CategoryAccent
   ```
@@ -331,7 +331,7 @@ Phase I (Settings) so the catalog rows pick up avatars from day one.
   doesn't match — non-Settings callers (a hand-rolled empty-state
   badge) can still render through the same primitive without a
   category.
-- [ ] **D.4** Add `ui/settings/catalog/CategoryAvatar.kt`:
+- [x] **D.4** Add `ui/settings/catalog/CategoryAvatar.kt`:
   ```kotlin
   @Composable
   fun CategoryAvatar(
@@ -343,19 +343,24 @@ Phase I (Settings) so the catalog rows pick up avatars from day one.
   ```
   `Box(Modifier.size(40.dp).clip(CircleShape).background(accent.container))`
   + centred 24-dp filled icon, tint `accent.onContainer`.
-- [ ] **D.5** Add the auto-accent fallback to `SettingsRow.kt` per
+- [x] **D.5** Add the auto-accent fallback to `SettingsRow.kt` per
   Finding 4: `accent: CategoryAccent? = null` and `id: String? = null`
   parameters; resolve internally as `accent ?: id?.let { accentFor(it,
   isSystemInDarkTheme()) }`. Direct callers stay one-arg; the catalog
   binding pipeline gets the avatar for free.
-- [ ] **D.6** Sweep `Icons.Outlined.*` → `Icons.Filled.*` at the
+- [x] **D.6** Sweep `Icons.Outlined.*` → `Icons.Filled.*` at the
   settings-row leading-icon layer only (about-page rows + future I.2 /
   I.3 / I.4 / I.5 / I.6 catalog rows). Do **not** touch icons inside
   the sort sheet, the reorder dialog, the photo viewer chrome, the
-  EXIF panel, or the bottom-nav glyphs.
+  EXIF panel, or the bottom-nav glyphs. SettingsScreen About row →
+  `Icons.Filled.Info`; SettingsAboutScreen rows → `Icons.Filled.Numbers`,
+  `Icons.AutoMirrored.Filled.Article`, `Icons.Filled.Code`,
+  `Icons.Filled.Favorite`. `ArrowBack` nav glyph stays outlined (it's
+  TopAppBar chrome, not an avatar).
 - [ ] **D.7** AVD smoke: open About; confirm row icons render as
-  coloured filled circles, not transparent outlined glyphs.
-- [ ] **D.8** Ship + tick.
+  coloured filled circles, not transparent outlined glyphs. Deferred —
+  no AVD attached to this worktree; parent merge will smoke.
+- [x] **D.8** Ship + tick.
 
 ## Phase E — sweep the rest of the chrome
 
