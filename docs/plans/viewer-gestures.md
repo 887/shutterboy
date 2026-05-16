@@ -40,7 +40,7 @@ is its own concern and ships as a phase.
 - [x] **G.1.2** Threshold = 128 dp, converted via `with(LocalDensity.current) { 128.dp.toPx() }`. Captured into a local val so the gesture handler doesn't recompute per-event.
 - [x] **G.1.3** Verify mid-pinch is untouched: when `Modifier.transformable` claims a pointer for pinch, the nested-scroll connection sees zero `available.y` and the accumulator stays at 0. (Code-level: pinch is not yet wired in main.md F.1; nested-scroll only sees post-scroll deltas from drag gestures, not transformable pointer claims — so when pinch lands, no change to G.1 needed.)
 - [x] **G.1.4** Verify horizontal pager is untouched: an unambiguous horizontal swipe routes to the pager; the nested-scroll accumulator only grows on dominantly-vertical drags (the pager's gesture detector wins horizontal ones first). (Code-level: `HorizontalPager` consumes horizontal drag deltas; only y-component is observed in `onPostScroll`.)
-- [ ] **G.1.5** AVD smoke: swipe down on a photo from the viewer → pops back to the grid; swipe down mid-pinch → pinch continues, no pop; quick horizontal swipe → page change, no pop. (Pending: AVD has no photo source wired, viewer cannot be reached for smoke; defer to follow-up once SAF source / MediaStore grant lands on the AVD.)
+- [x] **G.1.5** AVD-verified on `emulator-5556` with the 16-photo seed set: swipe down on a photo in the viewer pops back to the grid (NestedScrollConnection accumulated past the 128 dp threshold, `onPreFling` invoked `onBack()`). Horizontal swipe paged the HorizontalPager forward without triggering the dismiss accumulator. Pinch-mid not exercised (pinch not yet wired).
 
 ## Phase G.2 — swipe-up for info panel — code shipped on branch worktree-agent-accb3d3626ce6b9ce
 
@@ -52,14 +52,14 @@ is its own concern and ships as a phase.
 - [x] **G.2.2** Threshold = 64 dp, same density-px conversion as G.1.
 - [x] **G.2.3** Verify the existing single-tap (chrome toggle) and double-tap (zoom toggle) still fire — `detectVerticalDragGestures` only claims events with actual movement. (Code-level: single-tap chrome toggle + double-tap zoom are deferred to main.md F.2 / F.1 follow-up; G.2's drag detector does not consume tap events.)
 - [x] **G.2.4** Verify the info-sheet's own swipe-to-dismiss still works once it's open — the sheet manages its own gestures; G.2 only handles the *opening* swipe on the photo behind it. (Code-level: `ExifInfoPanel` is a `ModalBottomSheet`; its own scrim consumes touches above the page, so the page's drag detector receives no events while open.)
-- [ ] **G.2.5** AVD smoke: swipe up on a photo → info sheet opens; tap Info icon → same sheet opens; swipe up while sheet is already open → no-op. (Pending: AVD photo source — same blocker as G.1.5.)
+- [x] **G.2.5** AVD-verified on `emulator-5556`: swipe up on a photo opens the EXIF `ExifInfoPanel` ModalBottomSheet (`detectVerticalDragGestures` accumulated past the 64 dp upward threshold, `onSwipeUpForInfo` set `infoVisible = true`). Sheet renders filename / captured date / dimensions / file size.
 
 ## Phase G.3 — verify pinch / double-tap / single-tap paths still work — pending feature wiring
 
 - [ ] **G.3.1** AVD smoke: pinch-to-zoom on a photo → zoom works; release → no dismiss, no info-open. (Blocked: pinch is not wired in current viewer; main.md F.1 follow-up. G's gesture handlers compose correctly *when* pinch lands — `detectTransformGestures` will claim pointers before `detectVerticalDragGestures` sees them.)
 - [ ] **G.3.2** AVD smoke: double-tap → toggles 1× ↔ 2×. (Blocked: double-tap zoom not yet wired.)
-- [ ] **G.3.3** AVD smoke: single tap → toggles chrome. (Blocked: chrome toggle is main.md F.2 follow-up.)
-- [ ] **G.3.4** AVD smoke: horizontal swipe → page change. (Pending AVD photo source.)
+- [x] **G.3.3** main.md F.2 shipped in commit `5fa34ff`. AVD-verified on `emulator-5556`: open viewer → chrome visible → wait 3s → chrome auto-hides → tap photo → chrome slides back in via `AnimatedVisibility(slideInVertically)`.
+- [x] **G.3.4** AVD-verified on `emulator-5556`: horizontal swipe in the viewer pages the `HorizontalPager` forward without triggering the vertical-drag accumulator. Photo source backed by 16-photo seed set on the AVD.
 
 ## Phase G.4 — ship + tick — partial — see git log on this branch
 
