@@ -119,6 +119,12 @@
     <string name="dialog_confirm">Confirm</string>
     <string name="dialog_cancel">Cancel</string>
 
+    <!-- Phase H.3 — bulk delete typed-confirm dialog. -->
+    <string name="multiselect_delete_dialog_title">Delete %1$d photos?</string>
+    <string name="multiselect_delete_dialog_body">This cannot be undone. Type the number to confirm.</string>
+    <string name="multiselect_delete_confirm_label">Confirm</string>
+    <string name="multiselect_delete_cancel_label">Cancel</string>
+
     <!-- About sub-page (mirrors tonearmboy D.16.4 + D.16.5 easter egg). -->
     <string name="about_title">About</string>
     <string name="about_app_tagline">Modern photo gallery for Android</string>
