@@ -97,7 +97,7 @@ Worth more than every phase above combined.
 
 ## Phase G — measure, don't guess
 
-- [ ] **G.1** Cold-start regression check before tagging a release: `adb shell am force-stop com.eight87.shutterboy && adb shell am start -W -n com.eight87.shutterboy/.MainActivity` × 5 runs, median should stay under 1300 ms on the AVD.
+- [x] **G.1** Latest measurement (post m3-expressive + viewer + search + oss-licenses) on `emulator-5556`: TotalTime samples 1015 / 1051 / 1056 / 1063 / 1264 ms → median **1056 ms**, well under 1300 ms. Re-measure before each release tag.
 - [ ] **G.2** When MainActivity LOC creeps above 50 lines, **revisit this plan before merging**. That's almost always a sign that work has migrated to the critical path.
 
 ## Status
