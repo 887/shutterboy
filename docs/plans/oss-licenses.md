@@ -1,6 +1,6 @@
 # shutterboy — open-source licenses plan
 
-## Status: 🟡 PLANNED
+## Status: ✅ DONE — Phases A + B shipped in commit `bda7da5` (merged to main via `0263cbb`). Licensee plugin generates the inventory, LicensesScreen renders the catalog, About row links to it.
 
 ## Why
 

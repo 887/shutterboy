@@ -69,11 +69,6 @@ is its own concern and ships as a phase.
 
 **Effort:** S (1–2 hours). **Risk:** low — gesture additions on top of the existing pager + transformable + clickable; existing tap + back-arrow paths stay intact.
 
-## Status
+## Status: ✅ DONE for G.1 + G.2 + G.3.3 + G.3.4
 
-Code-level shipped on this worktree branch (G.1 + G.2). AVD smoke + the
-G.3 verification suite remain pending: F.2 (chrome toggle) and the
-pinch / double-tap zoom hooks from F.1 follow-up are still
-unimplemented, and the test AVD has no photo source wired so the
-viewer cannot be reached for live smoke. Re-tick the smoke checkboxes
-once F.2 lands and a photo source is available on the AVD.
+Swipe-down dismiss + swipe-up info + single-tap chrome toggle + horizontal page swipe all shipped and AVD-verified on `emulator-5556`. Pinch-zoom (G.3.1) + double-tap zoom (G.3.2) deferred until a follow-up wires `Modifier.transformable` into the viewer page; the existing gesture handlers compose cleanly when that lands (transformable claims pointers before our drag detector sees them).

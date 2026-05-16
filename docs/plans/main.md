@@ -1,6 +1,6 @@
 # shutterboy — build plan
 
-## Status: in progress — Phases 0 → E shipped; Phase F (viewer) next
+## Status: in progress — Phases 0 → F.{1-6} + G + H.scaffold + I.3 + J (dispatched) + K.{1,3} + L.1-L.4 + L.6 + L.7 shipped; remaining: F.7 shared-element transition, F.8 extra delete tests, H full integration (dispatched), K.2 launcher polish, L.5 Baseline Profile, L.8 first release
 
 Modern Android photo gallery, sibling app to [`tonearmboy`](https://github.com/887/tonearmboy). Reference UX target: the OxygenOS 15/16 Gallery — Photos / Collections / Explore tab structure, pinch-zoom density levels (Years → Months → Days → Items), year-timeline fast scrubber, smart albums, multi-select bulk actions. Same minimalist scope discipline as tonearmboy: read-only viewer, no cloud, no editing, no video playback, no ML.
 
