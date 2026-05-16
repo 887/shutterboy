@@ -182,4 +182,8 @@
     <string name="licenses_row_supporting">Inventory of every shipped dependency</string>
     <string name="cd_licenses_back">Back</string>
     <string name="licenses_unknown_spdx">Unknown SPDX: %1$s</string>
+
+    <!-- Phase J — Slideshow. -->
+    <string name="slideshow_paused">Paused</string>
+    <string name="cd_slideshow_back">Exit slideshow</string>
 </resources>

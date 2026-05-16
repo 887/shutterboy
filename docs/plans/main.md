@@ -188,12 +188,12 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 
 ---
 
-## Phase J — Slideshow
+## Phase J — Slideshow — J.1 + J.4 shipped
 
-- [ ] **J.1** `ui/slideshow/SlideshowScreen.kt` — full-screen `HorizontalPager` advancing on a timer (default 4 s, settings-controlled). Tap to pause, tap again to resume. Back-button exits.
-- [ ] **J.2** Optional Ken Burns effect — slow zoom + pan during each photo's dwell; togglable in Settings → Photos → Slideshow style.
-- [ ] **J.3** Scope picker — slideshow can run over Folder / Smart album / Search results. Launched from the overflow menu of the matching screen.
-- [ ] **J.4** Robolectric: timer advances pager; pause stops the timer without losing position; Ken Burns disabled = static photo.
+- [x] **J.1** `ui/slideshow/SlideshowScreen.kt` — full-screen `HorizontalPager` advancing on a timer (default 4 s). Tap to pause, tap again to resume. Back-button exits. Route `Slideshow(backingIds)` registered in `Destinations.kt` + `ui/nav/routes/SlideshowRoutes.kt` + entry in `ShutterboyApp.kt`. "Paused" badge in `SlideshowOverlay.kt`. Settings-controlled dwell deferred (default 4 s constant for now).
+- [ ] **J.2** Optional Ken Burns effect — slow zoom + pan during each photo's dwell; togglable in Settings → Photos → Slideshow style. **DEFERRED** — landing the screen + route first; Ken Burns is additive and arrives once the J.1 surface is settled.
+- [ ] **J.3** Scope picker — slideshow can run over Folder / Smart album / Search results. Launched from the overflow menu of the matching screen. **DEFERRED** — sibling H-agent is mid-flight on Photos / FolderDetail / SmartAlbumDetail selection mode; J.3 lands after H settles so the overflow integration doesn't fight the in-progress selection-mode rewire.
+- [x] **J.4** Robolectric: `SlideshowAdvanceMathTest` covers next-page math (N+1 mod M, wraparound, empty edge) and `SlideshowScreenSmokeTest` mounts the screen with a 3-photo fake `PhotoSource`, asserts the first page renders, simulates a tap, asserts the paused badge appears. Ken Burns coverage moves with J.2.
 
 ---
 

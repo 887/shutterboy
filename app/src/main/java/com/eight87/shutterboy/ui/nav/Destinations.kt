@@ -94,5 +94,14 @@ data class FolderDetail(val folderIdValue: Long) : Destination
 @Serializable
 data class SmartAlbumDetail(val storageKey: String) : Destination
 
+/**
+ * Phase J.1 — fullscreen slideshow route. Pushed (eventually, J.3) from
+ * the overflow menu of Photos / FolderDetail / SmartAlbumDetail / Search.
+ * Carries the backing photo-id list the [HorizontalPager] iterates over.
+ * No `initialPhotoId` — slideshows start at page 0 of the scope.
+ */
+@Serializable
+data class Slideshow(val backingIds: List<Long>) : Destination
+
 /** The three top-level destinations a bottom-nav tap can route to. */
 internal val rootDestinations: List<Destination> = listOf(Photos, Collections, Settings)
