@@ -35,7 +35,6 @@ interface RouteScope {
     val smartAlbumSource: SmartAlbumSource
     val photoSearch: PhotoSearch
     val libraryScanner: LibraryScanner
-    val photoDeleter: PhotoDeleter
     val sortPreferences: SortPreferences
     val customOrderPreferences: CustomOrderPreferences
     val themePreferences: ThemePreferences
