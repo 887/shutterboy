@@ -92,6 +92,11 @@
     <string name="viewer_share_chooser_title">Share via</string>
     <string name="cd_viewer_edit">Edit photo</string>
     <string name="viewer_edit_chooser_title">Edit with</string>
+    <string name="cd_viewer_delete">Delete photo</string>
+    <string name="viewer_delete_dialog_title">Delete this photo?</string>
+    <string name="viewer_delete_dialog_body">It will be moved to the system trash. You can restore it from Files for 30 days.</string>
+    <string name="viewer_delete_confirm">Delete</string>
+    <string name="viewer_delete_cancel">Cancel</string>
     <string name="viewer_info_title">Info</string>
     <string name="viewer_info_filename">File name</string>
     <string name="viewer_info_capture_date">Captured</string>
