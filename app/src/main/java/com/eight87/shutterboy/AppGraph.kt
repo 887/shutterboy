@@ -22,9 +22,11 @@ import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
+import com.eight87.shutterboy.data.settings.DataStoreThemePreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
+import com.eight87.shutterboy.data.settings.ThemePreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -100,4 +102,8 @@ class AppGraph(applicationContext: Context) {
     /** Phase E.4 — DataStore-backed user-pinned ordering of chip row + folder grid. */
     val customOrderPreferences: CustomOrderPreferences =
         DataStoreCustomOrderPreferences(appCtx.shutterboyPrefs)
+
+    /** BaseTheme picker — Material You / brand / pure black / custom seed. */
+    val themePreferences: ThemePreferences =
+        DataStoreThemePreferences(appCtx.shutterboyPrefs)
 }

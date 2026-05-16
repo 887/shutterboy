@@ -1,5 +1,6 @@
 package com.eight87.shutterboy.ui.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import com.eight87.shutterboy.ui.nav.SettingsAbout
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.sections.AppearanceSection
 
 /**
  * Phase C.x — Settings tab body. M3 Expressive grouped-cards shape mirroring
@@ -46,7 +48,9 @@ fun SettingsScreen(
                 top = SettingsDimens.CardSpacing,
                 bottom = SettingsDimens.CardSpacing,
             ),
+        verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
     ) {
+        AppearanceSection(themePreferences = scope.themePreferences)
         SettingsCard {
             SettingsRow(
                 icon = Icons.Outlined.Info,

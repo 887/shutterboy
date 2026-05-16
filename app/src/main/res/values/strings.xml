@@ -96,6 +96,19 @@
     <string name="settings_root_about_row_subtitle">Build, license, GitHub, easter egg</string>
     <string name="cd_settings_back">Back</string>
 
+    <!-- BaseTheme picker — ported from tonearmboy. -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_appearance_theme">Theme</string>
+    <string name="settings_appearance_default_android">Material You (system)</string>
+    <string name="settings_appearance_default_colors">Shutterboy palette</string>
+    <string name="settings_appearance_pure_black">Pure black</string>
+    <string name="settings_appearance_custom">Custom seed colour</string>
+    <string name="settings_appearance_pick_colour">Pick a seed colour</string>
+
+    <!-- Shared dialog affordances. -->
+    <string name="dialog_confirm">Confirm</string>
+    <string name="dialog_cancel">Cancel</string>
+
     <!-- About sub-page (mirrors tonearmboy D.16.4 + D.16.5 easter egg). -->
     <string name="about_title">About</string>
     <string name="about_app_tagline">Modern photo gallery for Android</string>
