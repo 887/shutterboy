@@ -48,7 +48,7 @@ decides whether to remove it.
 
 ---
 
-## Phase B — Sort-aware label derivation — shipped in commit `PENDING`
+## Phase B — Sort-aware label derivation — shipped in commit `037bd07`
 
 - [x] **B.1** New pure helper `ui/photos/grid/SectionLabel.kt` — `fun sectionLabelFor(sort: PhotoSort, photo: Photo, locale: Locale, zone, sizeBucketLabels): String`. Cases: `ByDateTaken` / `ByDateAdded` → re-uses `formatMonthBand` (`MAY 2026` form); `ByName` → first letter of `displayName` locale-uppercased, `#` for non-letter / empty leading char (leading-article strip deferred to post-T.E); `BySize` → bucket label resolved via `SizeBucketLabels` value class (caller passes resolved `R.string.photos_size_bucket_*` strings; struct defaults to English for tests).
 - [x] **B.2** New pure helper `ui/photos/grid/SectionStarts.kt` — `fun sectionStartsFrom(timeline, sort, locale, zone, sizeBucketLabels): List<Pair<Int, String>>`. Date axes emit at each `MonthYearBand` / `YearBand` (covers Items + Days+ densities — `YearBand` is the density-collapse path consistent with `stickyHeaderLabel`). Name + Size axes walk `PhotoCell` / tile cover photos and emit at each label transition.
