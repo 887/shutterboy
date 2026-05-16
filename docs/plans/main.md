@@ -199,9 +199,9 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 
 ## Phase K — Easter egg + launcher icon polish
 
-- [ ] **K.1** Easter egg — triple-tap the build version row in Settings → About reveals a fullscreen modal `Dialog` showing `R.drawable.easter_egg_tiger`. 70% black scrim background. Tap-outside or back-button dismiss. Mirror tonearmboy's `EasterEggController` (tap counter + window-lapse reset + repeatable reveal).
+- [x] **K.1** Easter egg shipped (`EasterEggController.kt` + `EasterEggDialog` + `rememberEasterEggBindings()` wired into `SettingsAboutScreen.kt`). Triple-tap the build version row reveals the tiger drawable in a modal Dialog with a black scrim; tap-outside / back-button dismiss; pure-Kotlin state machine matches tonearmboy's window-lapse + repeatable reveal spec.
 - [ ] **K.2** Launcher icon polish pass. Confirm the tiger cutout + Pentax composition reads at 48×48; refine the monochrome themed-icon layer for Android 13+; verify the splash screen icon and the launcher icon stay visually consistent.
-- [ ] **K.3** Robolectric: tap counter behaviour matches tonearmboy's spec (single tap, reveal at three taps, repeatable, window-lapse reset, mixed pattern).
+- [x] **K.3** `EasterEggControllerTest` shipped — exercises the pure `afterTap` state machine across single tap, reveal at 3, repeatable reveal, window-lapse reset, mixed pattern.
 
 ---
 
