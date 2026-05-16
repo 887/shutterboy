@@ -370,19 +370,9 @@ landed yet. Locking M3E patterns into the *plan* for those phases
 means we ship them M3E-ready instead of paying a second migration
 quarter from now.
 
-- [ ] **F.1** **main.md Phase F (Viewer).** Add a sub-step note: top
-  bar + bottom action row use M3E surface tokens against the photo
-  background; favorite / share / info / delete icons stay
-  `Icons.Outlined.*` since they're chrome glyphs, not avatars.
-  EXIF info `ModalBottomSheet` inherits expressive defaults.
-- [ ] **F.2** **main.md Phase G (Search).** Pill-shaped search field
-  uses M3E `extraLarge` shape + `surfaceContainerHigh` container
-  (search field is a "lifted" element above the results list). Filter
-  chips: `FilterChip` with M3E selected-container token.
-- [ ] **F.3** **main.md Phase H (Multi-select).** Selection chrome top
-  bar = `surfaceContainerHigh` (it's the lifted-mode bar). Bottom
-  action bar = same. Selection count Badge inherits expressive
-  container. **Three concrete patterns absorbed from tonearmboy
+- [x] **F.1** **main.md Phase F (Viewer) shipped with M3E baked.** Verified post-merge — viewer `TopAppBar` reads on `surface`, chrome icons are `Icons.Outlined.*` (Info / Share / Edit / Delete-to-land), `ExifInfoPanel` ModalBottomSheet inherits expressive surface tier + 28dp extraLarge corner from `ShutterboyShapes`.
+- [x] **F.2** **main.md Phase G (Search) shipped with M3E baked.** Verified post-merge — `SearchScreen` field uses `extraLarge` pill shape on `surfaceContainerHigh`, `FilterChip`s inherit M3E selected-container defaults.
+- [~] **F.3** **main.md Phase H — partial.** Scaffold (SelectionState + TypedConfirmDeleteDialog) shipped. Full integration (selection bar at `surfaceContainerHigh`, tile-selection visuals with 3dp pinned border + 0.55 alpha dim + CheckCircle badge, BackHandler collapse-not-pop) tracked under a separate subagent dispatch in flight. **Three concrete patterns absorbed from tonearmboy
   `7876789`** (do these in main.md Phase H):
     - **Active-state colour stays pinned, not theme-derived.** The
       selected-tile accent + selection-bar tint resolve to a stable
