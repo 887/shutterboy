@@ -115,6 +115,13 @@
     <string name="settings_appearance_custom">Custom seed colour</string>
     <string name="settings_appearance_pick_colour">Pick a seed colour</string>
 
+    <!-- Phase I.3 — Library section + Rescan photos row. -->
+    <string name="settings_section_library">Library</string>
+    <string name="settings_library_rescan">Rescan photos</string>
+    <string name="settings_library_rescan_subtitle">Force a fresh scan</string>
+    <string name="settings_library_rescan_in_progress">Rescanning…</string>
+    <string name="settings_library_rescan_complete">Rescan complete — %1$d photos</string>
+
     <!-- Shared dialog affordances. -->
     <string name="dialog_confirm">Confirm</string>
     <string name="dialog_cancel">Cancel</string>
