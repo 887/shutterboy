@@ -35,6 +35,14 @@ data object Collections : Destination
 data object Settings : Destination
 
 /**
+ * Phase G — fullscreen search overlay. Pushed from the Photos TopAppBar
+ * search icon. Pill-shaped search field at the top, filter chip row, results
+ * grid below; recent searches below the field when it's empty + focused.
+ */
+@Serializable
+data object Search : Destination
+
+/**
  * Phase C.x — About sub-page (mirrors tonearmboy D.16.4 + D.16.5). Pushed onto
  * the Settings tab from the placeholder root row until Phase I builds the full
  * M3 Expressive grouped-cards Settings root with About underneath

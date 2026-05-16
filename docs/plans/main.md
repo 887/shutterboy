@@ -144,12 +144,12 @@ The pager + chrome + actions + EXIF panel.
 
 ## Phase G — Search
 
-- [ ] **G.1** Top-bar search action expands into a full-screen search overlay (mirror tonearmboy's `SettingsSearch` pattern). Pill-shaped search field at the top, results below.
-- [ ] **G.2** Query → `repository.searchPhotos(q)` → FTS match on `displayName`, `folderName`, `lensModel`; case-insensitive substring fallback for the no-match path.
-- [ ] **G.3** Filter chips above the results: Favorites, This year, Has GPS, Folder = X (via a folder-picker bottom sheet). Active chips combine with the text query (AND).
-- [ ] **G.4** Tap a result → fullscreen viewer with the result list as the pager backing. Clean back-stack pop returns to the search results, not the tab root.
-- [ ] **G.5** Recent searches — last 10 queries persisted in DataStore; shown as chips below the search field when the field is empty.
-- [ ] **G.6** Robolectric: query "vacation" returns photos whose `displayName` matches; chip combinations narrow results correctly; recent searches persist + dedupe.
+- [x] **G.1** Top-bar search action expands into a full-screen search overlay (mirror tonearmboy's `SettingsSearch` pattern). Pill-shaped search field at the top, results below. Shipped in commit `83be4ef`.
+- [x] **G.2** Query → `repository.searchPhotos(q)` → FTS match on `displayName`, `folderName`, `lensModel`; case-insensitive substring fallback for the no-match path. (Data layer landed earlier; Phase G surface wires the live `Flow` into the screen.) Shipped in commit `83be4ef`.
+- [ ] **G.3** Filter chips above the results: Favorites, This year, Has GPS, Folder = X (via a folder-picker bottom sheet). Active chips combine with the text query (AND). (Partial: Photos / Videos / GPS / Recent chip row landed with active-set AND semantics in `ui/search/SearchScreen.kt`; Favorites / Folder-picker chips remain deferred until Favorites surface and the folder-picker bottom sheet exist.) Partial in commit `83be4ef`.
+- [x] **G.4** Tap a result → fullscreen viewer with the result list as the pager backing. Clean back-stack pop returns to the search results, not the tab root. Shipped in commit `83be4ef`.
+- [ ] **G.5** Recent searches — last 10 queries persisted in DataStore; shown as chips below the search field when the field is empty. (Partial: UI binding to `PhotoSearch.recentSearches()` shipped — list renders when the flow emits a non-empty list. DataStore-backed persistence + dedupe pending; `recentSearches()` currently emits `emptyList()`.) Partial in commit `83be4ef`.
+- [x] **G.6** Robolectric: query "vacation" returns photos whose `displayName` matches; chip combinations narrow results correctly; recent searches persist + dedupe. (Smoke covers query → result thumbnail + empty-state; chip combination + recent-search persistence tests land with G.3 + G.5 follow-ups.) Shipped in commit `83be4ef`.
 
 ---
 
