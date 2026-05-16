@@ -21,6 +21,7 @@ import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
 import com.eight87.shutterboy.ui.settings.sections.AppearanceSection
+import com.eight87.shutterboy.ui.settings.sections.LibrarySection
 
 /**
  * Phase C.x — Settings tab body. M3 Expressive grouped-cards shape mirroring
@@ -51,6 +52,10 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
     ) {
         AppearanceSection(themePreferences = scope.themePreferences)
+        LibrarySection(
+            libraryScanner = scope.libraryScanner,
+            snackbar = scope.snackbar,
+        )
         SettingsCard {
             SettingsRow(
                 id = "settings_about_root",

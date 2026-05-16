@@ -3,6 +3,7 @@ package com.eight87.shutterboy.ui.nav
 import androidx.compose.material3.SnackbarHostState
 import com.eight87.shutterboy.AppGraph
 import com.eight87.shutterboy.data.repo.FolderSource
+import com.eight87.shutterboy.data.repo.LibraryScanner
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.repo.SmartAlbumSource
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
@@ -29,6 +30,7 @@ interface RouteScope {
     val photoSource: PhotoSource
     val folderSource: FolderSource
     val smartAlbumSource: SmartAlbumSource
+    val libraryScanner: LibraryScanner
     val sortPreferences: SortPreferences
     val customOrderPreferences: CustomOrderPreferences
     val themePreferences: ThemePreferences
