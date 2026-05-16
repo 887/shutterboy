@@ -8,6 +8,7 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.ksp)
   alias(libs.plugins.room)
+  alias(libs.plugins.licensee)
 }
 
 // Capture build-time metadata for the About screen (Phase I.6).
@@ -68,6 +69,37 @@ android {
 
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+// oss-licenses Phase A — Licensee plugin generates a build-time inventory of
+// every dependency that ships in the `releaseRuntimeClasspath`. Allowlist is
+// report-only in v1 (no `failOnDisallowed`). EPL-1.0 junit is whitelisted at
+// the artifact level because it's test-scope only and never reaches the APK.
+licensee {
+    allow("Apache-2.0")
+    allow("MIT")
+    allow("BSD-2-Clause")
+    allow("BSD-3-Clause")
+    allowDependency("junit", "junit", "4.13.2") {
+        because("EPL-1.0; test-scope only, not shipped")
+    }
+}
+
+// Copy the Licensee-generated `artifacts.json` into the app's assets so the
+// LicensesScreen can read it at runtime via AssetManager. Wired as a
+// dependency of both `mergeReleaseAssets` and `mergeDebugAssets` so every
+// fresh build keeps the inventory in sync with the resolved classpath.
+val copyLicenseeInventory by tasks.registering(Copy::class) {
+    val src = layout.buildDirectory.file("reports/licensee/androidRelease/artifacts.json")
+    val dst = layout.projectDirectory.dir("src/main/assets/licenses")
+    from(src)
+    into(dst)
+    dependsOn("licenseeAndroidRelease")
+}
+
+afterEvaluate {
+    tasks.matching { it.name == "mergeReleaseAssets" || it.name == "mergeDebugAssets" }
+        .configureEach { dependsOn(copyLicenseeInventory) }
 }
 
 kotlin {

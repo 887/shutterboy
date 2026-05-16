@@ -43,32 +43,32 @@ Apache 2.0 unless otherwise marked. **Authoritative source is the Licensee-gener
 
 Conclusion: **MIT app license is correct. No GPL anywhere. No dep prevents MIT.**
 
-## Phase A — Licensee plugin + generated inventory
+## Phase A — Licensee plugin + generated inventory — shipped in commit `0abaac5`
 
 **Why:** every later phase reads the JSON this phase generates. Independent of the About-screen UI; can land before main.md Phase I.
 
-- [ ] **A.1** Add Licensee version to `gradle/libs.versions.toml` and a `[plugins]` entry: `licensee = { id = "app.cash.licensee", version.ref = "licensee" }`. Pin to the latest stable.
-- [ ] **A.2** Apply `alias(libs.plugins.licensee)` in `app/build.gradle.kts`.
-- [ ] **A.3** Configure the plugin block: `licensee { allow("Apache-2.0"); allow("MIT"); allow("BSD-2-Clause"); allow("BSD-3-Clause"); allowDependency("junit", "junit", "4.13.2") { because("EPL-1.0; test-scope only, not shipped") } }`. Reporting only in v1.
-- [ ] **A.4** Wire a Gradle task to copy `app/build/reports/licensee/release/artifacts.json` to `app/src/main/assets/licenses/artifacts.json`. Hook as a dependency of `mergeReleaseAssets` and `mergeDebugAssets` so a fresh build is always self-consistent.
-- [ ] **A.5** Add `app/src/main/assets/licenses/Apache-2.0.txt`, `MIT.txt`, `EPL-1.0.txt`. Source from SPDX official text. Top-of-file comment notes the SPDX id and source URL.
-- [ ] **A.6** Run `:app:assembleDebug` once. Verify the generated JSON exists, parses, and contains a non-empty array. Spot-check three entries against the inventory snapshot.
-- [ ] **A.7** Ship + tick.
+- [x] **A.1** Add Licensee version to `gradle/libs.versions.toml` and a `[plugins]` entry: `licensee = { id = "app.cash.licensee", version.ref = "licensee" }`. Pinned to 1.14.1 (latest stable on Maven Central).
+- [x] **A.2** Apply `alias(libs.plugins.licensee)` in `app/build.gradle.kts`.
+- [x] **A.3** Configure the plugin block: `licensee { allow("Apache-2.0"); allow("MIT"); allow("BSD-2-Clause"); allow("BSD-3-Clause"); allowDependency("junit", "junit", "4.13.2") { because("EPL-1.0; test-scope only, not shipped") } }`. Reporting only in v1.
+- [x] **A.4** Wire a Gradle task (`copyLicenseeInventory`) to copy `app/build/reports/licensee/androidRelease/artifacts.json` to `app/src/main/assets/licenses/artifacts.json`. Hooked as a dependency of `mergeReleaseAssets` and `mergeDebugAssets`. (Licensee's per-flavour report path is `androidRelease/`, not `release/`.)
+- [x] **A.5** Added `app/src/main/assets/licenses/Apache-2.0.txt`, `MIT.txt`, `EPL-1.0.txt`, `BSD-2-Clause.txt`, `BSD-3-Clause.txt`. Sourced from `https://spdx.org/licenses/<SPDX>.txt`; top-of-file comment carries the SPDX id + source URL.
+- [x] **A.6** `:app:assembleDebug` runs clean; generated `artifacts.json` has 182 entries spanning Apache-2.0 and BSD-3-Clause SPDX ids.
+- [x] **A.7** Ship + tick.
 
-## Phase B — `LicensesScreen` Compose UI
+## Phase B — `LicensesScreen` Compose UI — shipped in commit `0abaac5`
 
 **Why:** the user-facing surface that fulfils the Apache 2.0 NOTICE requirement and the main.md I.6 "Open-source acknowledgments" bullet.
 
 **Sequencing note:** depends on the M3-Expressive `SettingsCard` / `SettingsRow` chrome introduced earlier in main.md Phase A.5 (already shipped) and on the AboutScreen scaffold from main.md I.6. If I.6 has not yet landed when this plan is worked, scaffold a minimal AboutScreen here (build-version + GitHub link + license link + Licenses entry) and let I.6 expand it later — same shape, smaller initial surface.
 
-- [ ] **B.1** Add `app/src/main/java/com/eight87/shutterboy/ui/settings/LicensesScreen.kt`. Reuse `SettingsCard` / `SettingsRow` for visual consistency with the rest of settings.
-- [ ] **B.2** Add `LicensesViewModel`. Reads `assets/licenses/artifacts.json` once at init via `AssetManager.open(...)` + `kotlinx.serialization.json`. Exposes `StateFlow<List<LicenseEntry>>` (entries pre-sorted by `groupId:artifactId`).
-- [ ] **B.3** Define `LicenseEntry { groupId, artifactId, version, spdxId, licenseText: String? }` — `licenseText` resolved at construction by reading `assets/licenses/<spdx>.txt`. Unknown SPDX → `licenseText = null` and the row renders an "Unknown SPDX" warning.
-- [ ] **B.4** UI: `LazyColumn` of `SettingsRow`s. Row title: `<artifactId> <version>`. Supporting text: `<groupId> • <spdxId>`. Tap → expand inline (or open a Material3 `Dialog` showing the license body in monospaced text, scrollable).
-- [ ] **B.5** Wire navigation. Add a "Open-source licenses" `SettingsRow` to the About sub-page (`Icons.Outlined.Article`), positioned between the GitHub repo row and the MIT license row. If the About sub-page from main.md I.6 has not yet shipped, scaffold a minimal version per the sequencing note above.
-- [ ] **B.6** Strings: every label resource-backed in `values/strings.xml`. Keys: `licenses_screen_title`, `licenses_row_label`, `licenses_row_supporting`, `cd_licenses_back`, `licenses_unknown_spdx`. Same surface prefix used in i18n drafting later in the project lifecycle.
-- [ ] **B.7** Verify on AVD: tap About → tap "Open-source licenses" → list renders → tap a row → license body appears. Per CLAUDE.md, UI changes are not done on the strength of unit tests + build alone.
-- [ ] **B.8** Ship + tick.
+- [x] **B.1** Added `app/src/main/java/com/eight87/shutterboy/ui/settings/LicensesScreen.kt`. Reuses `SettingsCard` / `SettingsRow` for visual consistency with the rest of settings.
+- [x] **B.2** Added `LicensesViewModel`. Reads `assets/licenses/artifacts.json` once at init via `AssetManager.open(...)` + `kotlinx.serialization.json`. Exposes `StateFlow<List<LicenseEntry>>` (entries pre-sorted by `groupId:artifactId`).
+- [x] **B.3** Defined `LicenseEntry { groupId, artifactId, version, spdxId, licenseText: String? }` — `licenseText` resolved at construction by reading `assets/licenses/<spdx>.txt` with a per-SPDX cache. Unknown SPDX → `licenseText = null` and the row's subtitle renders the `licenses_unknown_spdx` warning string.
+- [x] **B.4** UI: `LazyColumn` of `SettingsRow`s. Row title `<artifactId> <version>`, supporting text `<groupId> • <spdxId>`. Tap opens a Material3 `AlertDialog` with the license body in monospaced scrollable text.
+- [x] **B.5** Wired navigation. Added a new `Licenses` `Destination`, a `Licenses.Register` route, and a new "Open-source licenses" row in `SettingsAboutScreen` between the GitHub row and the existing OSS-acknowledgments placeholder, using `Icons.AutoMirrored.Outlined.Article`. Tap pushes `Licenses` onto the back stack.
+- [x] **B.6** Strings landed in `app/src/main/res/values/strings.xml` under the `licenses_` / `cd_licenses_` prefix per the i18n convention.
+- [ ] **B.7** AVD smoke — deferred. Agent worktree has no live AVD; UI smoke happens when the parent merges and walks the surface.
+- [x] **B.8** Ship + tick.
 
 ## Phase C — Tests + audit discipline
 

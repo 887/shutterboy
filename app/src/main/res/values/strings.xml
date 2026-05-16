@@ -149,4 +149,11 @@
     <string name="about_oss_row_subtitle">Lands with Phase L release polish</string>
     <string name="cd_easter_egg_tiger">Tiger easter egg</string>
     <string name="cd_easter_egg_dismiss">Dismiss easter egg</string>
+
+    <!-- oss-licenses Phase B — Open-source licenses sub-page. -->
+    <string name="licenses_screen_title">Open-source licenses</string>
+    <string name="licenses_row_label">Open-source licenses</string>
+    <string name="licenses_row_supporting">Inventory of every shipped dependency</string>
+    <string name="cd_licenses_back">Back</string>
+    <string name="licenses_unknown_spdx">Unknown SPDX: %1$s</string>
 </resources>
