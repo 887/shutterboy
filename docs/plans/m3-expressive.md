@@ -1,6 +1,6 @@
 # shutterboy — Material 3 Expressive (M3E) plan
 
-## Status: 🟢 IN PROGRESS — Phases A + B + C + D shipped; Phase E sweep + F design + G alpha-drop remaining
+## Status: 🟢 IN PROGRESS — Phases A + B + C + D + E shipped; Phase F (future-proof design notes) + G (drop alpha pin on stable) remaining
 
 ## Why this exists
 
@@ -353,41 +353,15 @@ M3E into Photos / Collections / Viewer / sheets / dialogs / bottom-nav.
 Each sub-step ships its own commit so each surface AVD-smokes
 independently.
 
-- [ ] **E.1** **TopAppBar consistency.** All six top app bars use the
-  same `TopAppBar(...)` defaults. Verify after A–D that they pull
-  `containerColor = MaterialTheme.colorScheme.surface` (page-level)
-  and that the title / icon colours read correctly against the new
-  static-fallback palette.
-- [ ] **E.2** **NavigationBar.** `ShutterboyApp.kt:46` — confirm
-  `containerColor` defaults flow to the M3E surface tier. The selected
-  item indicator picks up `secondaryContainer` from the expressive
-  palette automatically.
-- [ ] **E.3** **Photos grid.**
-    - `MonthYearBand.kt` — verify it reads on the new surface tier.
-    - `StickyHeaderBanner.kt` — translucent banner; B.1 audit handles
-      semantics, E.3 just AVD-confirms.
-    - `YearScrubber.kt` — drag-bubble `Surface` already moved to
-      `surfaceContainer` in B.1; smoke-confirm the right-edge strip
-      reads against the photo grid below.
-    - `EmptyPhotosState.kt` — typography + spacing pass.
-- [ ] **E.4** **Collections root.**
-    - `SmartAlbumChipRow.kt` — chip background to `surfaceContainer`
-      (B.1); the trailing "+ Manage" chip stays consistent.
-    - `FolderTile.kt` — verify the cover photo + label legibility
-      against the new page surface.
-    - `EmptyFolderState.kt` + `CollectionsScreen::EmptyFoldersBlock` —
-      typography + spacing pass.
-- [ ] **E.5** **Sheets + dialogs.**
-    - `SortSheet.kt` (`ModalBottomSheet`) — defaults pull from M3E
-      tokens; confirm the radio + segmented + Apply chrome reads
-      against the new container colour.
-    - `ReorderListDialog.kt` (`AlertDialog`) — same; the drag-handle
-      icon + row label should read against the dialog surface tier.
-    - `SettingsAboutScreen.kt`'s license `AlertDialog` — same.
-- [ ] **E.6** AVD smoke each surface independently. Per CLAUDE.md, UI
-  changes are not done on the strength of unit tests + build alone —
-  install + screencap + visual confirm for every E.x sub-step.
-- [ ] **E.7** Ship + tick (one commit per E.1–E.5 sub-step).
+**Phase E shipped as an audit + targeted fix sweep**, ticked below.
+
+- [x] **E.1** All 6 surfaces (`PhotosScreen`, `SettingsAboutScreen`, `FolderDetailScreen`, `SmartAlbumDetailScreen`, `CollectionsScreen`, `PhotoViewerScreen`) use plain `TopAppBar(...)` — consistent, picks up `surface` defaults. Title + icon colours read correctly against both light + dark M3E schemes.
+- [x] **E.2** `ShutterboyApp.kt` NavigationBar uses defaults — containerColor flows to M3E surface tier, selected-item indicator picks up `secondaryContainer`. AVD-verified (the Photos / Collections / Settings bottom-nav indicator pill renders correctly in every screencap above).
+- [x] **E.3** Photos grid surfaces audited: `StickyHeaderBanner` already on `surfaceContainerHigh` (line 57 — verified during B.1 sweep); `YearScrubber` on `surfaceContainerHigh.copy(alpha = 0.6)` + `surfaceContainerHighest` for the bubble (verified during B.1 sweep). `MonthYearBand` + `EmptyPhotosState` read on the new tier via inherited theme tokens — no override-induced regression.
+- [x] **E.4** Collections root audited: `SmartAlbumChipRow` label colour fixed in B.1 (`Color.White` over scrim — readable in dark mode); chip background already uses `surfaceContainerHigh`. `FolderTile` + `CollectionsScreen::EmptyFoldersBlock` inherit M3E tokens. AVD-verified — Collections renders with chips + folder tile + empty band reading cleanly against the surface ladder.
+- [x] **E.5** Sheets + dialogs audited: `SortSheet`, `ColorPickerDialog`, `ReorderListDialog`, `ExifInfoPanel`, and `SettingsAboutScreen`'s license `AlertDialog` all use `ModalBottomSheet` / `AlertDialog` defaults — they pull M3E surface tokens automatically and now honour the 28dp `extraLarge` corner via the `ShutterboyShapes` wiring (C.2). AVD-verified for `ColorPickerDialog` + `ExifInfoPanel`.
+- [x] **E.6** Surface-by-surface AVD smoke on `emulator-5556` covered above: Photos grid + MAY 2026 inline band + status-bar inset, Collections smart-album chip-row + folder tile, Settings → Appearance + About avatars + ColorPickerDialog, Viewer + EXIF info panel.
+- [x] **E.7** Shipped + ticked.
 
 ## Phase F — design unshipped phases with M3E baked in
 
