@@ -16,6 +16,7 @@ import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -231,6 +232,30 @@ internal fun PhotoViewerContent(
                             Icon(
                                 imageVector = Icons.Outlined.Share,
                                 contentDescription = stringResource(R.string.cd_viewer_share),
+                            )
+                        }
+                        // F.6 — Edit handoff via Intent.ACTION_EDIT chooser.
+                        IconButton(
+                            onClick = {
+                                currentPhoto?.let { photo ->
+                                    val edit = Intent(Intent.ACTION_EDIT).apply {
+                                        setDataAndType(photo.contentUri, photo.mimeType)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                                    }
+                                    context.startActivity(
+                                        Intent.createChooser(
+                                            edit,
+                                            context.getString(R.string.viewer_edit_chooser_title),
+                                        ),
+                                    )
+                                }
+                            },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Edit,
+                                contentDescription = stringResource(R.string.cd_viewer_edit),
                             )
                         }
                         IconButton(
