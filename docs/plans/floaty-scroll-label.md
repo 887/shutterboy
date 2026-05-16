@@ -40,7 +40,7 @@ decides whether to remove it.
 
 ---
 
-## Phase A — Port the composable — shipped in commit `PENDING`
+## Phase A — Port the composable — shipped in commit `45357b6`
 
 - [x] **A.1** Copy `app/src/main/java/com/eight87/tonearmboy/ui/common/FastScrollbar.kt` → `app/src/main/java/com/eight87/shutterboy/ui/common/FastScrollbar.kt`. Rewrite the package + import lines. Keep both public overloads (`LazyListState` + `LazyGridState`) — shutterboy uses `LazyVerticalGrid` for the Photos timeline + folder + smart-album surfaces, `LazyColumn` may appear in Phase G search results. — tonearmboy-specific comments (NowPlaying / queue surfaces) rewritten to reference shutterboy's sticky-header + tile mix.
 - [x] **A.2** Confirm shutterboy's `RouteScope` / theming compiles against the ported file — `MaterialTheme.colorScheme.primary` / `.secondaryContainer` / `.onSurfaceVariant` are M3 standard, no rename needed. M3 Expressive (per `m3-expressive.md`) does not change these tokens. — `:app:compileDebugKotlin` clean.
