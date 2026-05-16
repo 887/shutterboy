@@ -20,7 +20,3 @@ val ShutterCopper80 = Color(0xFFE6C2A1)
 // Tertiary — muted slate-blue for cool accent (folders, smart-album chips).
 val ShutterSlate40 = Color(0xFF44627B)
 val ShutterSlate80 = Color(0xFFAAC9E5)
-
-// Surface family — warm charcoal in dark mode, bone-white in light mode.
-val ShutterCharcoal = Color(0xFF1A1717) // matches launcher_background
-val ShutterCharcoalLight = Color(0xFFFBF6F2)

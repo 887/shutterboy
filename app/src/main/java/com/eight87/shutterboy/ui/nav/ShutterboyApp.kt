@@ -12,6 +12,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -66,6 +67,9 @@ fun ShutterboyApp(graph: AppGraph) {
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
+        // m3-expressive B.5 — outer Scaffold yields the status-bar inset
+        // to inner-screen TopAppBars so the inset doesn't get double-applied.
+        contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
         NavDisplay(
             backStack = backStack.backStack,

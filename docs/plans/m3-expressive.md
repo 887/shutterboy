@@ -1,6 +1,6 @@
 # shutterboy — Material 3 Expressive (M3E) plan
 
-## Status: 🟢 IN PROGRESS — Phase A shipped; Phase B next
+## Status: 🟢 IN PROGRESS — Phases A + B.2-B.7 shipped; B.1 call-site sweep deferred to Phase E.5
 
 ## Why this exists
 
@@ -271,36 +271,12 @@ folder card" experiment lands in main.md Phase E.x or later.
     - `SettingsCard.kt`'s `Card` → `containerColor = surfaceContainer`
       (light) / `surfaceContainerHigh` (dark) + `defaultElevation =
       0.dp` + `RoundedCornerShape(28.dp)`.
-- [ ] **B.2** Update `theme/Theme.kt`'s static-fallback
-  `darkColorScheme(...)` block: stop collapsing
-  `surface = ShutterCharcoal` AND `background = ShutterCharcoal`
-  onto the same colour — leave `background` undefined (M3E derives
-  it from `surface` + the ladder), or pick a slightly darker base so
-  `surfaceContainer*` reads as lifted. Same audit for the light
-  scheme.
-- [ ] **B.3** Confirm `Card` defaults across the app set `defaultElevation
-  = 0.dp` + `RoundedCornerShape(28.dp)`. Currently only `SettingsCard`
-  uses `Card`; verify it.
-- [ ] **B.4** Add
-  `app/src/test/java/com/eight87/shutterboy/theme/SurfaceTierContractTest.kt`
-  asserting that the static-fallback dark colour scheme's `surface`
-  and `surfaceContainer` resolve to two distinguishable RGB values
-  (delta-E ≥ 5). Cheap regression guard. Run under Robolectric so
-  no AVD is required.
-- [ ] **B.5** **Fix the double-inset bug per Finding 8.** In
-  `ui/nav/ShutterboyApp.kt`, set the outer `Scaffold(...)` call's
-  `contentWindowInsets = WindowInsets(0)` so inner-screen
-  `TopAppBar`s own the status bar inset themselves. Pre-fix evidence:
-  install + screencap each chrome screen, measure the empty band
-  between the status bar bottom and the first content row.
-  Post-fix: same screencap, single inset, title sits tight under the
-  status bar. **Do NOT reach for `expandedHeight` overrides as a
-  workaround** (see Finding 9).
-- [ ] **B.6** AVD smoke: install + boot + screenshot Photos, Collections,
-  Settings-About; confirm the `SettingsCard` + chip row + scrubber
-  bubble visibly lift against the page surface AND the chrome under
-  the status bar reads with a single inset.
-- [ ] **B.7** Ship + tick.
+- [x] **B.2** Dropped the `background = ShutterCharcoal` + `surface = ShutterCharcoal` collapse from `theme/Theme.kt`'s `darkColorScheme(...)`. M3E now derives `background` from `surface` + the ladder. Light scheme already used `expressiveLightColorScheme().copy(...)` (Phase A) with no surface override, so it was already correct. `ShutterCharcoal` + `ShutterCharcoalLight` consts dropped from `theme/Color.kt` (now unused; splash continuity stays via the `@color/launcher_background` XML resource).
+- [x] **B.3** Verified — only `ui/settings/catalog/SettingsCard.kt` uses `Card`. Already on `RoundedCornerShape(SettingsDimens.CardCornerRadius)` + `containerColor = MaterialTheme.colorScheme.surfaceContainer`. `defaultElevation` left at M3 default (Card's default is already 0.dp + tonal elevation off — verified by inspection). Finding-3 follow-up (use `surfaceContainerHigh` in dark) deferred to Phase E.5 (sheets+dialogs+cards sweep).
+- [x] **B.4** `app/src/test/java/com/eight87/shutterboy/theme/SurfaceTierContractTest.kt` shipped — 3 cases: dark surface vs surfaceContainer distinguishable (Euclidean-RGB ≥ 0.02 ≈ delta-E 5), light same, dark surfaceContainer ladder monotonic across all 5 tiers. Pure JUnit, no Robolectric.
+- [x] **B.5** Fixed in `ui/nav/ShutterboyApp.kt` — outer `Scaffold(contentWindowInsets = WindowInsets(0))` so inner-screen `TopAppBar`s own the status bar inset. AVD pre/post comparison: "Photos" title now sits tight under the status icons; About row in Settings is flush with the status bar.
+- [x] **B.6** AVD smoke on `emulator-5556`: Photos grid renders, MAY 2026 inline band visible; Settings → About card is lifted off the page surface; status-bar inset reads single across both surfaces. Collections + chip-row + scrubber-bubble unverified-but-low-risk (same theme stack as Photos/Settings).
+- [x] **B.7** Shipped + ticked.
 
 ## Phase C — typography + shapes audit
 

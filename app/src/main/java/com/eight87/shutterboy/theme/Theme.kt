@@ -57,12 +57,13 @@ internal fun resolveColorScheme(darkTheme: Boolean, dynamicColor: Boolean): Colo
     return if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
 }
 
+// m3-expressive B.2 — don't collapse `background` AND `surface` onto the
+// same colour. Let M3E derive `background` from `surface` so the
+// surfaceContainer* ladder reads as lifted against the page.
 private val ShutterboyDarkColorScheme: ColorScheme = darkColorScheme(
     primary = ShutterOrange80,
     secondary = ShutterCopper80,
     tertiary = ShutterSlate80,
-    background = ShutterCharcoal,
-    surface = ShutterCharcoal,
 )
 
 // expressiveLightColorScheme() is no-arg in 1.5.0-alpha18 — overlay the
