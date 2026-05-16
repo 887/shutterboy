@@ -203,8 +203,8 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 
 ## Phase L — Release pipeline + v1.0
 
-- [ ] **L.1** `scripts/fetch-test-photos.sh` — pulls a small set of CC-licensed sample photos from a stable source (e.g. Unsplash CC0 collection or the user's own seed set hosted somewhere stable) into `test-photos/` (gitignored). Tag with synthetic EXIF (`exiftool -DateTimeOriginal=...`) covering at least three different years so the year-scrubber is exercised.
-- [ ] **L.2** `scripts/push-test-photos.sh` — `adb push test-photos/. /sdcard/DCIM/shutterboy-test/` + media-scanner kick.
+- [x] **L.1** `scripts/fetch-test-photos.sh` — pulls 15 photos from picsum.photos (public-domain placeholders) into `test-photos/`, EXIF-backdated across 2024–2026 (5 per year, distributed across months) so the year-scrubber + month bands exercise. Idempotent: existing files re-tagged, not re-fetched unless `--force` passed.
+- [x] **L.2** `scripts/push-test-photos.sh` — `adb push test-photos/. /sdcard/DCIM/shutterboy-test/` + `content call ... scan_volume` to kick the MediaScanner + `pm grant READ_MEDIA_IMAGES` best-effort. Accepts `--serial <id>` for multi-AVD setups. Reports the resulting MediaStore row count.
 - [ ] **L.3** `scripts/gallery-smoke-test.sh` — exercise scan + Photos tab + density zoom + year scrubber + folder open + viewer pager + delete consent + multi-select bulk delete. Maestro-compatible YAML at `.maestro/gallery-smoke.yaml` for portability.
 - [ ] **L.4** `scripts/ui-smoke-test.sh` — exercise tabs, settings, search, slideshow.
 - [ ] **L.5** **Baseline Profile** — add the `androidx.baselineprofile` Gradle plugin + a sibling `:baselineprofile` benchmark module; record the cold-boot path (`launch → photos timeline visible`) via `MacrobenchmarkRule` and generate `app/src/main/baseline-prof.txt`; add `androidx.profileinstaller:profileinstaller` to the app module; wire profile generation into `scripts/build-release-apk.sh` so every tagged release ships with a fresh profile. Typically 25–35% cold-start reduction on its own. Detailed sub-steps in [`cold-start-perf.md`](cold-start-perf.md) Phase F.
