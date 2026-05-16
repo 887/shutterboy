@@ -241,7 +241,7 @@ Out of scope: deriving accents from individual photo / folder cover
 art (would need per-row palette extraction). Revisit if a "tinted
 folder card" experiment lands in main.md Phase E.x or later.
 
-## Phase A — dependency + theme entry — shipped in commit `PENDING`
+## Phase A — dependency + theme entry — shipped in commit `8fcaf2c`
 
 **Why:** every later phase compiles against the expressive APIs.
 
