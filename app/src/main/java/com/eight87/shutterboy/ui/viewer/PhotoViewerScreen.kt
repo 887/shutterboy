@@ -1,6 +1,10 @@
 package com.eight87.shutterboy.ui.viewer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,11 +24,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -106,6 +112,15 @@ internal fun PhotoViewerContent(
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
 
     var infoVisible by remember { mutableStateOf(false) }
+    // F.2 — chrome toggle. Single tap on a page flips this; auto-hide
+    // after CHROME_AUTO_HIDE_MS of no chrome-toggle interaction.
+    var chromeVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(chromeVisible) {
+        if (chromeVisible) {
+            delay(CHROME_AUTO_HIDE_MS)
+            chromeVisible = false
+        }
+    }
 
     // G.1 + G.2 — gesture vocabulary: vertical drag below the pager's
     // claim threshold accumulates into one of two release actions
@@ -169,37 +184,43 @@ internal fun PhotoViewerContent(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = currentPhoto?.displayName
-                            ?: stringResource(R.string.viewer_loading_title),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_viewer_back),
+            AnimatedVisibility(
+                visible = chromeVisible,
+                enter = slideInVertically { -it },
+                exit = slideOutVertically { -it },
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = currentPhoto?.displayName
+                                ?: stringResource(R.string.viewer_loading_title),
+                            style = MaterialTheme.typography.titleMedium,
                         )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { infoVisible = true },
-                        enabled = currentPhoto != null,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = stringResource(R.string.cd_viewer_info),
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-            )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_viewer_back),
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { infoVisible = true },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = stringResource(R.string.cd_viewer_info),
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                )
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
@@ -231,6 +252,7 @@ internal fun PhotoViewerContent(
                         infoOpenThresholdPx = infoOpenThresholdPx,
                         onSwipeUpForInfo = { infoVisible = true },
                         onSwipeDownDismiss = onBack,
+                        onTap = { chromeVisible = !chromeVisible },
                     )
                 }
             }
@@ -255,6 +277,7 @@ private fun PhotoPage(
     infoOpenThresholdPx: Float,
     onSwipeUpForInfo: () -> Unit,
     onSwipeDownDismiss: () -> Unit,
+    onTap: () -> Unit,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
     val photo: Photo? by flow.collectAsState(initial = null)
@@ -270,6 +293,11 @@ private fun PhotoPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            // F.2 — single tap toggles chrome. Separate pointerInput so the
+            // tap detector doesn't fight the vertical drag detector below.
+            .pointerInput(photoId) {
+                detectTapGestures(onTap = { onTap() })
+            }
             .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx) {
                 detectVerticalDragGestures(
                     onDragStart = { dragAccumulator.floatValue = 0f },
@@ -325,3 +353,5 @@ private fun PhotoPage(
 
 internal const val VIEWER_PAGER_TAG = "viewer_pager"
 internal const val VIEWER_PAGE_TAG_PREFIX = "viewer_page_"
+// F.2 — chrome auto-hide after 3 s of no chrome-toggle interaction.
+private const val CHROME_AUTO_HIDE_MS: Long = 3000L
