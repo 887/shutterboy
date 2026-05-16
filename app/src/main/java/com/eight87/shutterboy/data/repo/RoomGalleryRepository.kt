@@ -101,6 +101,9 @@ class RoomGalleryRepository(
     override suspend fun photosByIds(ids: List<Long>): List<Photo> =
         photoDao.byIds(ids).map { it.toDomain() }
 
+    override fun observePhotoById(id: Long): Flow<Photo?> =
+        photoDao.observeById(id).map { it?.toDomain() }
+
     // --- FolderSource ---
 
     override fun observeFolders(): Flow<List<Folder>> =

@@ -28,6 +28,10 @@ interface PhotoDao {
     @Query("SELECT * FROM photos WHERE id IN (:ids)")
     suspend fun byIds(ids: List<Long>): List<PhotoEntity>
 
+    /** Phase F — single-photo reactive read for the fullscreen viewer pager. */
+    @Query("SELECT * FROM photos WHERE id = :id LIMIT 1")
+    fun observeById(id: Long): Flow<PhotoEntity?>
+
     /** Recents smart-album resolution — `dateTakenMs >= now - WINDOW_MS`. */
     @Query("SELECT * FROM photos WHERE date_taken_ms >= :sinceMs ORDER BY date_taken_ms DESC")
     fun observeRecents(sinceMs: Long): Flow<List<PhotoEntity>>
