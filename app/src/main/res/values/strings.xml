@@ -54,8 +54,6 @@
     <string name="folder_revoked_title">Folder access was revoked</string>
     <string name="folder_revoked_subtitle">Re-grant access from Settings → Library → Manage sources to bring this folder back.</string>
     <string name="smart_album_detail_title_unknown">Smart album</string>
-    <string name="cd_collections_chip">Smart album chip</string>
-    <string name="cd_collections_folder_tile">Folder tile</string>
     <string name="cd_folder_detail_back">Back to Collections</string>
 
     <!-- Phase E.4 — reorder dialogs + Collections overflow. -->
@@ -164,7 +162,6 @@
     <string name="about_oss_row_label">Open-source acknowledgments</string>
     <string name="about_oss_row_subtitle">Lands with Phase L release polish</string>
     <string name="cd_easter_egg_tiger">Tiger easter egg</string>
-    <string name="cd_easter_egg_dismiss">Dismiss easter egg</string>
 
     <!-- oss-licenses Phase B — Open-source licenses sub-page. -->
     <string name="licenses_screen_title">Open-source licenses</string>
