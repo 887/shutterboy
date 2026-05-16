@@ -93,6 +93,7 @@ fun ShutterboyApp(graph: AppGraph) {
                     entry<PhotoViewer> { it.Register(scope) }
                     entry<FolderDetail> { it.Register(scope) }
                     entry<SmartAlbumDetail> { it.Register(scope) }
+                    entry<Slideshow> { it.Register(scope) }
                 },
             )
         }
@@ -126,6 +127,7 @@ private fun navIconLabelCd(
     Licenses,
     is PhotoViewer,
     is FolderDetail,
-    is SmartAlbumDetail ->
+    is SmartAlbumDetail,
+    is Slideshow ->
         error("$dest is not a bottom-nav root destination")
 }
