@@ -71,22 +71,29 @@ fun ShutterboyApp(graph: AppGraph) {
         // to inner-screen TopAppBars so the inset doesn't get double-applied.
         contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
-        NavDisplay(
-            backStack = backStack.backStack,
-            onBack = { backStack.pop() },
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            entryProvider = entryProvider {
-                entry<Photos> { it.Register(scope) }
-                entry<Collections> { it.Register(scope) }
-                entry<Settings> { it.Register(scope) }
-                entry<SettingsAbout> { it.Register(scope) }
-                entry<PhotoViewer> { it.Register(scope) }
-                entry<FolderDetail> { it.Register(scope) }
-                entry<SmartAlbumDetail> { it.Register(scope) }
-            },
-        )
+        ) {
+            // Non-blocking scan progress signal — surfaces ScanProgress.Running
+            // as a thin indeterminate strip at the top of the app shell.
+            ScanProgressStrip(scanner = graph.libraryScanner)
+            NavDisplay(
+                backStack = backStack.backStack,
+                onBack = { backStack.pop() },
+                modifier = Modifier.fillMaxSize(),
+                entryProvider = entryProvider {
+                    entry<Photos> { it.Register(scope) }
+                    entry<Collections> { it.Register(scope) }
+                    entry<Settings> { it.Register(scope) }
+                    entry<SettingsAbout> { it.Register(scope) }
+                    entry<PhotoViewer> { it.Register(scope) }
+                    entry<FolderDetail> { it.Register(scope) }
+                    entry<SmartAlbumDetail> { it.Register(scope) }
+                },
+            )
+        }
     }
 }
 

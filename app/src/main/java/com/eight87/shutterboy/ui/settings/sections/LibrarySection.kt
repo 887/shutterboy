@@ -35,8 +35,16 @@ fun LibrarySection(
     LibrarySection(
         modifier = modifier,
         onRescan = {
+            // Two independent coroutines so the rescan starts immediately
+            // instead of waiting for `showSnackbar` to suspend-return. The
+            // ScanProgressStrip in the app shell observes the same
+            // LibraryScanner.scanProgress() Flow, so even if the user
+            // dismisses the snackbar, the progress bar still surfaces the
+            // in-flight scan.
             coroutineScope.launch {
                 snackbar.showSnackbar(inProgressMessage)
+            }
+            coroutineScope.launch {
                 val snapshot = libraryScanner.forceRescan()
                 snackbar.showSnackbar(completeMessageFormat.format(snapshot.photos.size))
             }
