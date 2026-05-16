@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Photo discovery: API 33+ uses READ_MEDIA_IMAGES, API <=32 uses READ_EXTERNAL_STORAGE.
+         MediaImagesPermission.kt picks the right one at runtime. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
     <application
         android:name=".ShutterboyApplication"
         android:allowBackup="true"

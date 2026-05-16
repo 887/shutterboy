@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.eight87.shutterboy.data.db.FolderDao
 import com.eight87.shutterboy.data.db.FolderEntity
@@ -191,8 +192,15 @@ class RoomGalleryRepository(
         val mediaStoreMatches =
             currentGen != MediaStoreGenerationSource.ALWAYS_RESCAN && currentGen == persistedGen
         val safMatches = currentSaf == persistedSaf
+        val permGranted = MediaImagesPermission.isGranted(context)
+        Log.i(
+            "shutterboy",
+            "scanIfChanged: currentGen=$currentGen persistedGen=$persistedGen " +
+                "mediaStoreMatches=$mediaStoreMatches safMatches=$safMatches permGranted=$permGranted",
+        )
 
         if (mediaStoreMatches && safMatches) {
+            Log.i("shutterboy", "scanIfChanged: skipped scan, gate matches")
             _scanProgress.value = ScanProgress.Done(0)
             return LibrarySnapshot(photos = emptyList(), folders = emptyList(), deltaCount = 0)
         }
@@ -200,6 +208,7 @@ class RoomGalleryRepository(
         _scanProgress.value = ScanProgress.Running(processed = 0, total = null)
         return try {
             val snap = executeScan()
+            Log.i("shutterboy", "scanIfChanged: scan complete deltaCount=${snap.deltaCount} photos=${snap.photos.size} folders=${snap.folders.size}")
             // Persist tokens ONLY after the scan succeeds — a crashed scan
             // must re-run next boot. Persist the MediaStore generation token
             // ONLY when the read permission is granted: a permission-denied
@@ -215,6 +224,7 @@ class RoomGalleryRepository(
             _scanProgress.value = ScanProgress.Done(snap.deltaCount)
             snap
         } catch (e: Throwable) {
+            Log.e("shutterboy", "scanIfChanged: scan failed", e)
             _scanProgress.value = ScanProgress.Failed(e.message ?: e::class.simpleName ?: "scan failed")
             LibrarySnapshot(photos = emptyList(), folders = emptyList(), deltaCount = 0)
         }
@@ -256,15 +266,18 @@ class RoomGalleryRepository(
             )
         }
 
-        // 4. Apply delta
-        val seenIds = photoEntities.map(PhotoEntity::id).toSet()
-        val toDeletePhotos = (cachedIds - seenIds).toList()
-        photoDao.replaceWithDelta(toUpsert = photoEntities, toDelete = toDeletePhotos)
-
+        // 4. Apply delta. FK order: upsert folders BEFORE photos (photos.folder_id
+        //    references folders.id), then delete dangling photos, then dangling
+        //    folders last so no photo still references one we're about to drop.
         val cachedFolderIds = folderDao.allIds().toSet()
         val seenFolderIds = folderEntities.map(FolderEntity::id).toSet()
         val toDeleteFolders = cachedFolderIds - seenFolderIds
         folderDao.upsertAll(folderEntities)
+
+        val seenIds = photoEntities.map(PhotoEntity::id).toSet()
+        val toDeletePhotos = (cachedIds - seenIds).toList()
+        photoDao.replaceWithDelta(toUpsert = photoEntities, toDelete = toDeletePhotos)
+
         for (id in toDeleteFolders) folderDao.deleteById(id)
 
         val deltaCount = photoEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
