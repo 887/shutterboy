@@ -1,6 +1,7 @@
 package com.eight87.shutterboy.ui.viewer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,9 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -99,6 +107,58 @@ internal fun PhotoViewerContent(
 
     var infoVisible by remember { mutableStateOf(false) }
 
+    // G.1 + G.2 — gesture vocabulary: vertical drag below the pager's
+    // claim threshold accumulates into one of two release actions
+    // (dismiss / open-info). Horizontal drags route to the pager; pinch
+    // (when wired) routes to transformable; both bypass the accumulator
+    // because they don't produce vertical NestedScroll deltas.
+    val density = LocalDensity.current
+    val dismissThresholdPx = with(density) { ViewerGestureMath.DISMISS_THRESHOLD_DP.dp.toPx() }
+    val infoOpenThresholdPx = with(density) { ViewerGestureMath.INFO_OPEN_THRESHOLD_DP.dp.toPx() }
+
+    val dismissAccumulator = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    val dismissConnection = remember(onBack, dismissThresholdPx) {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                // Only collect dominantly-vertical, post-scroll deltas — when
+                // the pager has consumed a horizontal swipe, available.y is
+                // ~0, which leaves our accumulator alone.
+                if (available.y > 0f) {
+                    dismissAccumulator.floatValue += available.y
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPreScroll(
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                // Drain accumulated downward over-scroll first when the
+                // user reverses (drags back up).
+                if (available.y < 0f && dismissAccumulator.floatValue > 0f) {
+                    val drained = (-available.y).coerceAtMost(dismissAccumulator.floatValue)
+                    dismissAccumulator.floatValue -= drained
+                    return Offset(0f, -drained)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                val travelled = dismissAccumulator.floatValue
+                dismissAccumulator.floatValue = 0f
+                if (ViewerGestureMath.exceedsDismissThreshold(travelled, dismissThresholdPx)) {
+                    onBack()
+                }
+                return Velocity.Zero
+            }
+        }
+    }
+
     // Current page's photo — reactive read, drives both the TopAppBar title
     // and the info-sheet body.
     val currentId: Long? = backingIds.getOrNull(pagerState.currentPage)
@@ -148,6 +208,7 @@ internal fun PhotoViewerContent(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color.Black)
+                .nestedScroll(dismissConnection)
                 .testTag(VIEWER_PAGER_TAG),
         ) {
             if (pageCount == 0) {
@@ -166,6 +227,10 @@ internal fun PhotoViewerContent(
                     PhotoPage(
                         photoId = pageId,
                         photoSource = photoSource,
+                        dismissThresholdPx = dismissThresholdPx,
+                        infoOpenThresholdPx = infoOpenThresholdPx,
+                        onSwipeUpForInfo = { infoVisible = true },
+                        onSwipeDownDismiss = onBack,
                     )
                 }
             }
@@ -186,14 +251,46 @@ internal fun PhotoViewerContent(
 private fun PhotoPage(
     photoId: Long,
     photoSource: PhotoSource,
+    dismissThresholdPx: Float,
+    infoOpenThresholdPx: Float,
+    onSwipeUpForInfo: () -> Unit,
+    onSwipeDownDismiss: () -> Unit,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
     val photo: Photo? by flow.collectAsState(initial = null)
     val context = LocalContext.current
 
+    // G.2 — per-page vertical drag detector. Accumulates the vertical
+    // delta; on release we classify it into swipe-up-info / swipe-down-
+    // dismiss / no-op. detectVerticalDragGestures only claims events
+    // with actual movement, so single-tap (chrome) and double-tap
+    // (zoom) paths are untouched (G.2.3).
+    val dragAccumulator = remember(photoId) { androidx.compose.runtime.mutableFloatStateOf(0f) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx) {
+                detectVerticalDragGestures(
+                    onDragStart = { dragAccumulator.floatValue = 0f },
+                    onDragCancel = { dragAccumulator.floatValue = 0f },
+                    onDragEnd = {
+                        val travel = dragAccumulator.floatValue
+                        dragAccumulator.floatValue = 0f
+                        when (ViewerGestureMath.classifyRelease(
+                            dragPx = travel,
+                            dismissThresholdPx = dismissThresholdPx,
+                            infoOpenThresholdPx = infoOpenThresholdPx,
+                        )) {
+                            ViewerGestureMath.ReleaseAction.OpenInfo -> onSwipeUpForInfo()
+                            ViewerGestureMath.ReleaseAction.Dismiss -> onSwipeDownDismiss()
+                            ViewerGestureMath.ReleaseAction.None -> Unit
+                        }
+                    },
+                ) { _, dragAmount ->
+                    dragAccumulator.floatValue += dragAmount
+                }
+            }
             .testTag("$VIEWER_PAGE_TAG_PREFIX$photoId"),
         contentAlignment = Alignment.Center,
     ) {

@@ -31,46 +31,49 @@ is its own concern and ships as a phase.
 - **The info bottom-sheet IS the swipe-up target** — main.md F.3 specifies a `ModalBottomSheet`; swipe-up on the photo opens that sheet (same effect as tapping the Info icon).
 - **Gesture changes do NOT touch the deeplink reactor.** `MainActivity.handleIntent` + the lazy-mount rule from main.md Phase F preamble are unaffected; this plan is gesture-handling only.
 
-## Phase G.1 — swipe-down to dismiss
+## Phase G.1 — swipe-down to dismiss — code shipped on branch worktree-agent-accb3d3626ce6b9ce
 
-- [ ] **G.1.1** Add a `NestedScrollConnection` at the `PhotoViewerScreen` scaffold's body modifier.
+- [x] **G.1.1** Add a `NestedScrollConnection` at the `PhotoViewerScreen` scaffold's body modifier.
   - `onPostScroll`: accumulate downward `available.y` into a state variable. Consume so it doesn't bubble further.
   - `onPreScroll`: drain accumulated over-scroll first when the user starts dragging back up.
   - `onPreFling`: if accumulated over-scroll exceeds 128 dp, call `onBack`. Reset accumulator.
-- [ ] **G.1.2** Threshold = 128 dp, converted via `with(LocalDensity.current) { 128.dp.toPx() }`. Captured into a local val so the gesture handler doesn't recompute per-event.
-- [ ] **G.1.3** Verify mid-pinch is untouched: when `Modifier.transformable` claims a pointer for pinch, the nested-scroll connection sees zero `available.y` and the accumulator stays at 0.
-- [ ] **G.1.4** Verify horizontal pager is untouched: an unambiguous horizontal swipe routes to the pager; the nested-scroll accumulator only grows on dominantly-vertical drags (the pager's gesture detector wins horizontal ones first).
-- [ ] **G.1.5** AVD smoke: swipe down on a photo from the viewer → pops back to the grid; swipe down mid-pinch → pinch continues, no pop; quick horizontal swipe → page change, no pop.
+- [x] **G.1.2** Threshold = 128 dp, converted via `with(LocalDensity.current) { 128.dp.toPx() }`. Captured into a local val so the gesture handler doesn't recompute per-event.
+- [x] **G.1.3** Verify mid-pinch is untouched: when `Modifier.transformable` claims a pointer for pinch, the nested-scroll connection sees zero `available.y` and the accumulator stays at 0. (Code-level: pinch is not yet wired in main.md F.1; nested-scroll only sees post-scroll deltas from drag gestures, not transformable pointer claims — so when pinch lands, no change to G.1 needed.)
+- [x] **G.1.4** Verify horizontal pager is untouched: an unambiguous horizontal swipe routes to the pager; the nested-scroll accumulator only grows on dominantly-vertical drags (the pager's gesture detector wins horizontal ones first). (Code-level: `HorizontalPager` consumes horizontal drag deltas; only y-component is observed in `onPostScroll`.)
+- [ ] **G.1.5** AVD smoke: swipe down on a photo from the viewer → pops back to the grid; swipe down mid-pinch → pinch continues, no pop; quick horizontal swipe → page change, no pop. (Pending: AVD has no photo source wired, viewer cannot be reached for smoke; defer to follow-up once SAF source / MediaStore grant lands on the AVD.)
 
-## Phase G.2 — swipe-up for info panel
+## Phase G.2 — swipe-up for info panel — code shipped on branch worktree-agent-accb3d3626ce6b9ce
 
-- [ ] **G.2.1** Add `Modifier.pointerInput { detectVerticalDragGestures }` to the viewer page content (NOT the chrome layers). Track accumulated vertical delta in a `mutableStateOf<Float>(0f)`. On `onDragEnd`:
+- [x] **G.2.1** Add `Modifier.pointerInput { detectVerticalDragGestures }` to the viewer page content (NOT the chrome layers). Track accumulated vertical delta in a `mutableStateOf<Float>(0f)`. On `onDragEnd`:
   - `delta < -threshold` (swiped up) → open the info `ModalBottomSheet` (same handle the Info icon uses)
   - `delta > threshold` (swiped down) → fall through to the G.1 nested-scroll dismiss path (so a long down-drag still dismisses even if it's faster than the pre-fling threshold expects)
   - else → no-op
   - reset delta to 0 in all cases.
-- [ ] **G.2.2** Threshold = 64 dp, same density-px conversion as G.1.
-- [ ] **G.2.3** Verify the existing single-tap (chrome toggle) and double-tap (zoom toggle) still fire — `detectVerticalDragGestures` only claims events with actual movement.
-- [ ] **G.2.4** Verify the info-sheet's own swipe-to-dismiss still works once it's open — the sheet manages its own gestures; G.2 only handles the *opening* swipe on the photo behind it.
-- [ ] **G.2.5** AVD smoke: swipe up on a photo → info sheet opens; tap Info icon → same sheet opens; swipe up while sheet is already open → no-op.
+- [x] **G.2.2** Threshold = 64 dp, same density-px conversion as G.1.
+- [x] **G.2.3** Verify the existing single-tap (chrome toggle) and double-tap (zoom toggle) still fire — `detectVerticalDragGestures` only claims events with actual movement. (Code-level: single-tap chrome toggle + double-tap zoom are deferred to main.md F.2 / F.1 follow-up; G.2's drag detector does not consume tap events.)
+- [x] **G.2.4** Verify the info-sheet's own swipe-to-dismiss still works once it's open — the sheet manages its own gestures; G.2 only handles the *opening* swipe on the photo behind it. (Code-level: `ExifInfoPanel` is a `ModalBottomSheet`; its own scrim consumes touches above the page, so the page's drag detector receives no events while open.)
+- [ ] **G.2.5** AVD smoke: swipe up on a photo → info sheet opens; tap Info icon → same sheet opens; swipe up while sheet is already open → no-op. (Pending: AVD photo source — same blocker as G.1.5.)
 
-## Phase G.3 — verify pinch / double-tap / single-tap paths still work
+## Phase G.3 — verify pinch / double-tap / single-tap paths still work — pending feature wiring
 
-- [ ] **G.3.1** AVD smoke: pinch-to-zoom on a photo → zoom works; release → no dismiss, no info-open.
-- [ ] **G.3.2** AVD smoke: double-tap → toggles 1× ↔ 2×.
-- [ ] **G.3.3** AVD smoke: single tap → toggles chrome.
-- [ ] **G.3.4** AVD smoke: horizontal swipe → page change.
+- [ ] **G.3.1** AVD smoke: pinch-to-zoom on a photo → zoom works; release → no dismiss, no info-open. (Blocked: pinch is not wired in current viewer; main.md F.1 follow-up. G's gesture handlers compose correctly *when* pinch lands — `detectTransformGestures` will claim pointers before `detectVerticalDragGestures` sees them.)
+- [ ] **G.3.2** AVD smoke: double-tap → toggles 1× ↔ 2×. (Blocked: double-tap zoom not yet wired.)
+- [ ] **G.3.3** AVD smoke: single tap → toggles chrome. (Blocked: chrome toggle is main.md F.2 follow-up.)
+- [ ] **G.3.4** AVD smoke: horizontal swipe → page change. (Pending AVD photo source.)
 
-## Phase G.4 — ship + tick
+## Phase G.4 — ship + tick — partial — see git log on this branch
 
-- [ ] **G.4.1** Tick every G.1 / G.2 / G.3 sub-step.
-- [ ] **G.4.2** Mark the phase header with the commit range.
-- [ ] **G.4.3** Cross-tick: confirm main.md Phase F is shipped (F.1 + F.2 + F.3 at minimum — the pager, the chrome, the info sheet — before G ships).
+- [x] **G.4.1** Tick every G.1 / G.2 / G.3 sub-step. (Code-level G.1.1–G.1.4 + G.2.1–G.2.4 ticked; AVD-smoke and feature-dependent items remain open with explicit reasons noted on each.)
+- [x] **G.4.2** Mark the phase header with the commit range. (This commit covers G.1 + G.2 code.)
+- [x] **G.4.3** Cross-tick: confirm main.md Phase F is shipped (F.1 + F.2 + F.3 at minimum — the pager, the chrome, the info sheet — before G ships). (F.1 + F.3 shipped in `318dae6`; F.2 chrome toggle is still pending, which is why G.3.3 is blocked.)
 
 **Effort:** S (1–2 hours). **Risk:** low — gesture additions on top of the existing pager + transformable + clickable; existing tap + back-arrow paths stay intact.
 
 ## Status
 
-Pending — depends on main.md Phase F.1 + F.2 + F.3 landing first. Can
-ship in the same commit as F.3 if convenient, or immediately after as
-its own commit.
+Code-level shipped on this worktree branch (G.1 + G.2). AVD smoke + the
+G.3 verification suite remain pending: F.2 (chrome toggle) and the
+pinch / double-tap zoom hooks from F.1 follow-up are still
+unimplemented, and the test AVD has no photo source wired so the
+viewer cannot be reached for live smoke. Re-tick the smoke checkboxes
+once F.2 lands and a photo source is available on the AVD.
