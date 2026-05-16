@@ -1,6 +1,6 @@
 # shutterboy — floaty scroll-label (fast-scrollbar port)
 
-## Status: in progress — Phase A shipped, Phase B pending
+## Status: in progress — Phases A + B shipped; Phase C wire-up + Phase D verification pending
 
 Port of tonearmboy's `FastScrollbar.kt` into shutterboy. tonearmboy
 shipped two relevant changes:
@@ -48,11 +48,11 @@ decides whether to remove it.
 
 ---
 
-## Phase B — Sort-aware label derivation
+## Phase B — Sort-aware label derivation — shipped in commit `PENDING`
 
-- [ ] **B.1** New pure helper `ui/photos/grid/SectionLabel.kt` — `fun sectionLabelFor(sort: PhotoSort, photo: Photo, locale: Locale): String`. Cases: `ByDateTaken` → `MMM yyyy` short form (`MAY 2026` at Items density, year alone at Days+); `ByDateAdded` → same; `ByName` → first letter of `displayName` after the leading-article strip (Phase A.4 design doc), uppercased, locale-aware; `BySize` → bucket label (`< 1 MB`, `1-5 MB`, `5-20 MB`, `> 20 MB`, locale-formatted via `R.string.photos_size_bucket_*`).
-- [ ] **B.2** New pure helper `ui/photos/grid/SectionStarts.kt` — `fun sectionStartsFrom(timeline: List<TimelineDisplayItem>, sort: PhotoSort): List<Pair<Int, String>>`. Walks the existing flat `timeline` (the same one `PhotosGrid` consumes via sealed dispatch on `TimelineDisplayItem`), groups by the per-axis label from B.1, emits `(timelineIndex, label)` for the first item of each run. Handles density: at Days / Months / Years densities, the section label collapses to the year token (consistent with `stickyHeaderLabel` from C.5).
-- [ ] **B.3** Robolectric tests `SectionLabelTest` (8 cases — one per (axis × edge case): null date-taken, leading-article strip, German locale uppercase, size-bucket boundaries) + `SectionStartsTest` (6 cases — empty timeline, single section, multi-section monotonic, non-monotonic, density collapse, sort-axis swap produces different starts on identical photo set).
+- [x] **B.1** New pure helper `ui/photos/grid/SectionLabel.kt` — `fun sectionLabelFor(sort: PhotoSort, photo: Photo, locale: Locale, zone, sizeBucketLabels): String`. Cases: `ByDateTaken` / `ByDateAdded` → re-uses `formatMonthBand` (`MAY 2026` form); `ByName` → first letter of `displayName` locale-uppercased, `#` for non-letter / empty leading char (leading-article strip deferred to post-T.E); `BySize` → bucket label resolved via `SizeBucketLabels` value class (caller passes resolved `R.string.photos_size_bucket_*` strings; struct defaults to English for tests).
+- [x] **B.2** New pure helper `ui/photos/grid/SectionStarts.kt` — `fun sectionStartsFrom(timeline, sort, locale, zone, sizeBucketLabels): List<Pair<Int, String>>`. Date axes emit at each `MonthYearBand` / `YearBand` (covers Items + Days+ densities — `YearBand` is the density-collapse path consistent with `stickyHeaderLabel`). Name + Size axes walk `PhotoCell` / tile cover photos and emit at each label transition.
+- [x] **B.3** Robolectric tests `SectionLabelTest` (9 cases — `ByDateTaken` MMM-yyyy, `ByDateAdded` uses dateAddedMs, `ByName` first-letter, `ByName` hash fallback for non-letter leading char, Turkish-locale uppercase, all 4 size buckets) + `SectionStartsTest` (6 cases — empty, Items density, Days density via YearBand, ByName transitions, BySize bucket transitions, sort-axis swap on identical input produces different starts). Both Robolectric-runner because `Uri.parse` is used in Photo construction.
 
 ---
 
