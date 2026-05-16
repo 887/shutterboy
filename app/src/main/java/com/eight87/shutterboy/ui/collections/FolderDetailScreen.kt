@@ -1,5 +1,6 @@
 package com.eight87.shutterboy.ui.collections
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,10 @@ import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.FolderId
 import com.eight87.shutterboy.domain.SourceType
 import com.eight87.shutterboy.domain.sort.PhotoSort
+import com.eight87.shutterboy.ui.multiselect.SelectionState
+import com.eight87.shutterboy.ui.multiselect.SelectionTopBar
+import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
+import com.eight87.shutterboy.ui.multiselect.rememberSelectionHolder
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
@@ -30,13 +35,12 @@ import com.eight87.shutterboy.ui.sort.SortOverflowAction
 import kotlinx.coroutines.launch
 
 /**
- * Phase D.2 + E.2 — folder-scoped timeline. Same density-zoomed grid +
+ * Phase D.2 + E.2 + H.2 — folder-scoped timeline. Same density-zoomed grid +
  * scrubber + sticky-banner stack as the Photos tab (via
  * [GalleryTimelineFrame]), filtered repository-side via
- * `observePhotosInFolder(folderId, sort)` (R.F.12). TopAppBar carries
- * the folder display name + back arrow + a sort-overflow action that
- * persists to the per-folder sort key (falls back to `collections_sort`
- * when unset; see [com.eight87.shutterboy.data.settings.SortPreferences.observeFolderSort]).
+ * `observePhotosInFolder(folderId, sort)`. TopAppBar carries the folder
+ * display name + back arrow + a sort-overflow action. Phase H.2 swaps the
+ * TopAppBar for a selection bar when selection mode is active.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,30 +59,52 @@ fun FolderDetailScreen(
     val stream = remember(scope, folderId, sort) {
         PhotoStream { scope.photoSource.observePhotosInFolder(folderId, sort) }
     }
+    val allPhotos by stream.observe().collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val selectionHolder = rememberSelectionHolder()
+    val deleteHandler = rememberSelectionDeleteHandler(scope.photoDeleter) {
+        selectionHolder.exit()
+    }
+
+    BackHandler(enabled = selectionHolder.state is SelectionState.Active) {
+        selectionHolder.exit()
+    }
+
+    deleteHandler.Render()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = title) },
-                navigationIcon = {
-                    IconButton(onClick = { scope.backStack.pop() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_folder_detail_back),
+            val active = selectionHolder.state
+            if (active is SelectionState.Active) {
+                SelectionTopBar(
+                    count = active.selectedIds.size,
+                    onClose = { selectionHolder.exit() },
+                    onSelectAll = { selectionHolder.selectAll(allPhotos.map { it.id }) },
+                    onDelete = { deleteHandler.request(active.selectedIds) },
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(text = title) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.backStack.pop() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_folder_detail_back),
+                            )
+                        }
+                    },
+                    actions = {
+                        SortOverflowAction(
+                            sort = sort,
+                            onSortChanged = { newSort ->
+                                coroutineScope.launch {
+                                    scope.sortPreferences.setFolderSort(folderId, newSort)
+                                }
+                            },
                         )
-                    }
-                },
-                actions = {
-                    SortOverflowAction(
-                        sort = sort,
-                        onSortChanged = { newSort ->
-                            coroutineScope.launch {
-                                scope.sortPreferences.setFolderSort(folderId, newSort)
-                            }
-                        },
-                    )
-                },
-            )
+                    },
+                )
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
@@ -86,8 +112,14 @@ fun FolderDetailScreen(
         GalleryTimelineFrame(
             stream = stream,
             onPhotoTap = { photoId, backingIds ->
-                scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+                if (selectionHolder.state is SelectionState.Active) {
+                    selectionHolder.toggle(photoId)
+                } else {
+                    scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+                }
             },
+            selectionState = selectionHolder.state,
+            onPhotoLongPress = { photoId -> selectionHolder.enterActive(photoId) },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),

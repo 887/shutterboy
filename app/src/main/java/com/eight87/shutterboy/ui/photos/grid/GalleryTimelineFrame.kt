@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.eight87.shutterboy.domain.PhotoId
+import com.eight87.shutterboy.ui.multiselect.SelectionState
 
 /**
  * Phase D.3.5 — engine wrapper that hosts the [PhotosZoomLevel] state +
@@ -27,6 +28,8 @@ fun GalleryTimelineFrame(
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
     emptyState: (@Composable (Modifier) -> Unit)? = null,
+    selectionState: SelectionState = SelectionState.Idle,
+    onPhotoLongPress: (PhotoId) -> Unit = {},
 ) {
     var accumulator by remember { mutableStateOf(ZoomAccumulator()) }
     val transformable = rememberTransformableState { zoomChange, _, _ ->
@@ -40,5 +43,7 @@ fun GalleryTimelineFrame(
             .fillMaxSize()
             .transformable(state = transformable),
         emptyState = emptyState,
+        selectionState = selectionState,
+        onPhotoLongPress = onPhotoLongPress,
     )
 }
