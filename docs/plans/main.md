@@ -14,8 +14,6 @@ Modern Android photo gallery, sibling app to [`tonearmboy`](https://github.com/8
 
 **Viewer gesture vocabulary is scheduled** in [`viewer-gestures.md`](viewer-gestures.md) — Phase F sibling plan covering swipe-down-to-dismiss, swipe-left/right between photos, swipe-up info panel. Sibling to tonearmboy's `swipe-gestures.md`.
 
-**Floaty scroll-label / fast-scrollbar port is scheduled** in [`floaty-scroll-label.md`](floaty-scroll-label.md) — port of tonearmboy's `FastScrollbar` (per-section letter chips on the right-edge track + draggable thumb + 800 ms linger fade) into shutterboy's gallery surfaces. References tonearmboy commits `40da803` (scroll-progress letter bubble) + `4e2ff73` (section-letter chips replacing single bubble). Sort-aware section keys (date → `MAY 2026`, name → `M`, size → bucket) per the standing rule above. Independent of Phase F; can land any time after E.6 (sort-aware section keys) is verified.
-
 **M3 Expressive migration is scheduled** in [`m3-expressive.md`](m3-expressive.md) — its Phase A–D should land **before main.md Phase I (Settings)** so the Settings catalog ships M3E from day one. Phase F.x of that plan locks the M3E touchpoints for main.md Phases F / G / H / I / J / K so each ships M3E-ready instead of getting re-migrated later.
 
 **Open-source licenses surface** is scheduled in [`oss-licenses.md`](oss-licenses.md) — its Phase A (Licensee plugin + generated `artifacts.json`) is independent and can land any time; Phase B–C feed into main.md Phase I.6 (About sub-page → "Open-source acknowledgments").
