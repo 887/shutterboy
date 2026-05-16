@@ -36,7 +36,6 @@ import com.eight87.shutterboy.data.settings.ThemePreferences
 import com.eight87.shutterboy.ui.settings.ColorPickerDialog
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
-import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 import kotlinx.coroutines.launch
 
 /**
@@ -74,21 +73,18 @@ fun AppearanceSection(
             onClick = { scope.launch { themePreferences.setBaseTheme(BaseTheme.DefaultAndroid) } },
             testTagName = "appearance_default_android",
         )
-        SettingsRowDivider()
         ThemeRadioRow(
             label = stringResource(R.string.settings_appearance_default_colors),
             selected = baseTheme is BaseTheme.DefaultColors,
             onClick = { scope.launch { themePreferences.setBaseTheme(BaseTheme.DefaultColors) } },
             testTagName = "appearance_default_colors",
         )
-        SettingsRowDivider()
         ThemeRadioRow(
             label = stringResource(R.string.settings_appearance_pure_black),
             selected = baseTheme is BaseTheme.PureBlack,
             onClick = { scope.launch { themePreferences.setBaseTheme(BaseTheme.PureBlack) } },
             testTagName = "appearance_pure_black",
         )
-        SettingsRowDivider()
         // Custom row — tapping opens the colour picker. Selecting it
         // commits the picked RGB; the trailing swatch surfaces the
         // current seed (or the placeholder default) at a glance.

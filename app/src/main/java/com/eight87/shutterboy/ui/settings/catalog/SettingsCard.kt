@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -11,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 /**
  * Material 3 card hosting a group of related rows. Renders with
@@ -41,14 +44,23 @@ fun SettingsCard(
                 ),
             )
         }
+        // m3-expressive Finding 3 — surfaceContainer is too quiet on
+        // AMOLED-leaning dark palettes. Use surfaceContainerHigh in dark so
+        // the card reads as lifted; light mode at surfaceContainer is fine.
+        val containerColor = if (isSystemInDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
         Card(
             shape = RoundedCornerShape(SettingsDimens.CardCornerRadius),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column { content() }
+            // m3-expressive C.4 — within-card row stacking is divider-less;
+            // a 2-dp gap is enough to read as separation when the surface tier
+            // is the lifted colour.
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) { content() }
         }
     }
 }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -101,21 +100,3 @@ fun SettingsRow(
     }
 }
 
-/**
- * Subtle in-card divider between consecutive [SettingsRow]s. Inset to align
- * with the row labels (skips the icon gutter) so the dividers read as
- * row-separators rather than full-card splits.
- */
-@Composable
-fun SettingsRowDivider() {
-    HorizontalDivider(
-        thickness = 1.dp,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.padding(
-            start = SettingsDimens.RowHorizontalPadding +
-                SettingsDimens.IconSize +
-                SettingsDimens.IconLabelGap,
-            end = SettingsDimens.RowHorizontalPadding,
-        ),
-    )
-}
