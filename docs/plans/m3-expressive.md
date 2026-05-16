@@ -307,7 +307,7 @@ baseline-M3 tokens.
   current usage; patch if drifted.
 - [ ] **C.6** Ship + tick.
 
-## Phase D — `CategoryAccent` + per-row avatars — shipped in commit `<PHASE_D>`
+## Phase D — `CategoryAccent` + per-row avatars — shipped in commits `87f65df` (code) + `74838b1` (plan tick)
 
 **Why:** the actual coloured-circle avatar wiring. Lands ahead of
 Phase I (Settings) so the catalog rows pick up avatars from day one.
