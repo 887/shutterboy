@@ -1,6 +1,6 @@
 # shutterboy — Material 3 Expressive (M3E) plan
 
-## Status: 🟡 PLANNED — Phase 0 inventory complete, Phase A next
+## Status: 🟢 IN PROGRESS — Phase A shipped; Phase B next
 
 ## Why this exists
 
@@ -241,35 +241,17 @@ Out of scope: deriving accents from individual photo / folder cover
 art (would need per-row palette extraction). Revisit if a "tinted
 folder card" experiment lands in main.md Phase E.x or later.
 
-## Phase A — dependency + theme entry
+## Phase A — dependency + theme entry — shipped in commit `PENDING`
 
 **Why:** every later phase compiles against the expressive APIs.
 
-- [ ] **A.1** Override Compose `material3` artifact in
-  `gradle/libs.versions.toml`. Add `composeMaterial3 = "1.5.0-alpha18"`
-  and pin `androidx-compose-material3 = { ..., version.ref = "composeMaterial3" }`.
-  **Removes BOM-based resolution for that one artifact only;** other
-  Compose modules keep flowing through the BOM.
-- [ ] **A.2** Verify `androidx.compose.material:material-icons-extended`
-  is still pinned with an explicit version (no longer transitive in
-  `material3:1.4.0+`). It already is — confirm.
-- [ ] **A.3** Add `@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)`
-  to `theme/Theme.kt` so consumers don't carry the annotation.
-- [ ] **A.4** Replace `MaterialTheme(colorScheme, typography)` in
-  `ShutterboyTheme` with `MaterialExpressiveTheme(colorScheme,
-  shapes, typography, motionScheme = MotionScheme.expressive())`.
-  Wire `MaterialTheme.shapes` from a small `Shapes(...)` block (see
-  D.1).
-- [ ] **A.5** Switch the *static-fallback* `lightColorScheme(...)` call
-  in `resolveColorScheme` to `expressiveLightColorScheme(...)`. Dark
-  stays on `darkColorScheme(...)` (alpha18 doesn't ship the dark
-  factory — see Finding 2). Static-fallback only — the dynamic-color
-  branches keep using `dynamicDark/LightColorScheme(context)`.
-- [ ] **A.6** Run `JAVA_HOME=… ./gradlew :app:assembleDebug` — confirm
-  it still builds. Run `./gradlew :app:licenseeAndroidDebug` if the
-  Licensee plugin has landed (oss-licenses Phase A); otherwise skip
-  this sub-step until that plan ships.
-- [ ] **A.7** Ship + tick.
+- [x] **A.1** Override Compose `material3` artifact in `gradle/libs.versions.toml`. Added `composeMaterial3 = "1.5.0-alpha18"` + `version.ref` on `androidx-compose-material3`. Other Compose modules keep flowing through the BOM.
+- [x] **A.2** Verified `androidx.compose.material:material-icons-extended` already pinned with an explicit version.
+- [x] **A.3** Added `@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)` to `theme/Theme.kt`.
+- [x] **A.4** Replaced `MaterialTheme(colorScheme, typography)` in `ShutterboyTheme` with `MaterialExpressiveTheme(...)`. Shapes block deferred to Phase C (D.1 referenced is actually C.2 in the current numbering — explicit `Shapes(...)` will land then). MotionScheme.expressive() is the M3E default so no explicit param needed.
+- [x] **A.5** Switched static-fallback `lightColorScheme(...)` → `expressiveLightColorScheme().copy(primary=..., secondary=..., tertiary=...)`. The factory is no-arg in alpha18, so brand seeds overlay via `.copy()`; the wider surface-tier ladder is preserved. Dark stays on `darkColorScheme(...)`.
+- [x] **A.6** `:app:assembleDebug` clean; full unit-test suite green. Licensee skipped (plugin not yet landed).
+- [x] **A.7** Shipped + ticked.
 
 ## Phase B — surface-tier discipline
 
