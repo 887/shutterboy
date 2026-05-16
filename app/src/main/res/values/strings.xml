@@ -85,11 +85,21 @@
     <string name="cd_sort_overflow">Sort options</string>
     <string name="cd_more_options">More options</string>
 
-    <!-- Phase C.6 — fullscreen viewer placeholder until Phase F lands the pager. -->
-    <string name="viewer_placeholder_title">Viewer</string>
-    <string name="viewer_placeholder_id">Photo id %1$d</string>
-    <string name="viewer_placeholder_backing_count">Backing list: %1$d photos</string>
-    <string name="viewer_placeholder_phase_note">Phase F replaces this with the fullscreen pager + EXIF panel.</string>
+    <!-- Phase F — fullscreen viewer. -->
+    <string name="viewer_loading_title">Loading…</string>
+    <string name="viewer_empty">No photos</string>
+    <string name="cd_viewer_back">Back</string>
+    <string name="cd_viewer_info">Photo info</string>
+    <string name="viewer_info_title">Info</string>
+    <string name="viewer_info_filename">File name</string>
+    <string name="viewer_info_capture_date">Captured</string>
+    <string name="viewer_info_dimensions">Dimensions</string>
+    <string name="viewer_info_file_size">File size</string>
+    <string name="viewer_info_lens">Lens</string>
+    <string name="viewer_info_focal_length">Focal length</string>
+    <string name="viewer_info_iso">ISO</string>
+    <string name="viewer_info_aperture">Aperture</string>
+    <string name="viewer_info_shutter_speed">Shutter speed</string>
 
     <!-- Phase C.x — Settings tab placeholder until Phase I builds the M3 Expressive root. -->
     <string name="settings_root_about_row_label">About</string>

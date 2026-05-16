@@ -14,4 +14,7 @@ interface PhotoSource {
     fun observePhotos(sort: PhotoSort = PhotoSort.Default): Flow<List<Photo>>
     fun observePhotosInFolder(folderId: FolderId, sort: PhotoSort = PhotoSort.Default): Flow<List<Photo>>
     suspend fun photosByIds(ids: List<Long>): List<Photo>
+
+    /** Phase F — single-photo reactive read; the viewer pager subscribes per page. */
+    fun observePhotoById(id: Long): Flow<Photo?>
 }

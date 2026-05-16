@@ -78,6 +78,7 @@ dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)
   androidTestImplementation(composeBom)
+  testImplementation(composeBom)
 
   // Core Android
   implementation(libs.androidx.core.ktx)
@@ -133,6 +134,8 @@ dependencies {
   testImplementation(libs.androidx.arch.core.testing)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.androidx.room.testing)
+  testImplementation(libs.androidx.compose.ui.test.junit4)
+  testImplementation(libs.androidx.compose.ui.test.manifest)
 
   // Instrumented tests
   androidTestImplementation(libs.androidx.test.core)
