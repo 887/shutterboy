@@ -27,6 +27,7 @@ coil3 = "3.1.0"
 coreSplashscreen = "1.0.1"
 exifinterface = "1.4.1"
 documentfile = "1.0.1"
+licensee = "1.14.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -78,3 +79,4 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
+licensee = { id = "app.cash.licensee", version.ref = "licensee" }

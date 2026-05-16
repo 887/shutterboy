@@ -89,6 +89,7 @@ fun ShutterboyApp(graph: AppGraph) {
                     entry<Settings> { it.Register(scope) }
                     entry<Search> { it.Register(scope) }
                     entry<SettingsAbout> { it.Register(scope) }
+                    entry<Licenses> { it.Register(scope) }
                     entry<PhotoViewer> { it.Register(scope) }
                     entry<FolderDetail> { it.Register(scope) }
                     entry<SmartAlbumDetail> { it.Register(scope) }
@@ -122,6 +123,7 @@ private fun navIconLabelCd(
     // resolver; the entry exhaustiveness is structural only.
     Search,
     SettingsAbout,
+    Licenses,
     is PhotoViewer,
     is FolderDetail,
     is SmartAlbumDetail ->

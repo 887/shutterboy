@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Numbers
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.eight87.shutterboy.BuildConfig
 import com.eight87.shutterboy.R
+import com.eight87.shutterboy.ui.nav.Licenses
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
@@ -143,6 +145,13 @@ fun SettingsAboutScreen(
                     onClick = {
                         context.startActivity(Intent(Intent.ACTION_VIEW, githubUrl.toUri()))
                     },
+                )
+                SettingsRow(
+                    id = "settings_about_licenses",
+                    icon = Icons.AutoMirrored.Outlined.Article,
+                    label = stringResource(R.string.licenses_row_label),
+                    subtitle = stringResource(R.string.licenses_row_supporting),
+                    onClick = { scope.backStack.push(Licenses) },
                 )
                 SettingsRow(
                     id = "settings_about_oss",

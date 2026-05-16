@@ -52,6 +52,14 @@ data object Search : Destination
 data object SettingsAbout : Destination
 
 /**
+ * oss-licenses Phase B — Open-source licenses sub-page. Pushed from the
+ * About sub-page row labelled "Open-source licenses". Renders the inventory
+ * generated at build time by the Licensee plugin (see `app/build.gradle.kts`).
+ */
+@Serializable
+data object Licenses : Destination
+
+/**
  * Phase C.6 — fullscreen viewer route. Pushed from a thumbnail / cover-tile
  * tap on the Photos timeline (and, in later phases, from Collections detail
  * screens, Search results, and the Slideshow). Carries the tapped photo's
