@@ -32,7 +32,7 @@ delta of work plus a standing maintenance rule.
 ## Phase C — verification
 
 - [x] **C.1** Robolectric: `DataStoreScanGatePreferencesTest` — 9 cases covering generation-token round-trip + per-volume independence, SAF fingerprint round-trip + empty-map clearing, `clear()` wiping both surfaces, malformed-encoded-string decode, null/empty decode. — passed locally (122 tests total, 0 failures).
-- [ ] **C.2** Robolectric: `RoomGalleryRepositoryScanGateTest` — fake `MediaStoreGeneration` returns matching token → scanner is *not* invoked; differing token → scanner *is* invoked and the new token is persisted; scanner-throws-mid-scan → token is NOT persisted (the next boot re-attempts). **Requires a small refactor** — `MediaStoreGeneration` is a static `object`; tests need a seam (either inject a `(Context, String) -> Long` lambda on the repo, or extract a `MediaStoreGenerationSource` interface). Tracked as follow-up; gate logic itself is exercised end-to-end on the AVD by C.3 / C.4.
+- [x] **C.2** Robolectric: `RoomGalleryRepositoryScanGateTest` — `MediaStoreGenerationSource` extracted as a DIP-aligned interface (default impl wraps the framework call, `MediaStoreGenerationSource.Default(context)` factory) and injected via an optional ctor param on `RoomGalleryRepository`. 6 cases: matching token short-circuits (no gate writes), differing token runs scan + persists, no-persisted-token initial scan persists, `ALWAYS_RESCAN` sentinel never persisted as a real token, permission-denied scan doesn't poison the MediaStore gate (Robolectric default), `forceRescan` clears then re-runs. Permission-grant path uses `shadowOf(ctx).grantPermissions(READ_MEDIA_IMAGES)`. Scanner-throws-mid-scan case not covered here — would need a second seam over `MediaStoreScanner` itself; the try/catch + token-persist-after-success structure is visible in source review.
 - [ ] **C.3** AVD smoke: cold-boot the app twice in a row with no library changes between boots. Second boot's `logcat -s shutterboy:*` should show "skipped scan, generation unchanged"; cold-start time should drop by 100–400 ms depending on library size.
 - [ ] **C.4** AVD smoke: add a photo via the camera app between boots; second boot should NOT skip — scanner runs, new photo lands in the grid.
 
@@ -42,12 +42,11 @@ delta of work plus a standing maintenance rule.
 - [x] **D.2** **Token persistence happens after success, not before.** A scan that throws halfway must re-run next boot. — `RoomGalleryRepository.scanIfChanged()` extracts `executeScan()` that throws; persistence only runs after the try-block returns successfully. A thrown scan falls into the catch branch, leaves the persisted tokens untouched, and the next boot re-runs. MediaStore-token persistence is further gated on `MediaImagesPermission.isGranted(context)` so a permission-denied scan doesn't poison the gate either.
 - [x] **D.3** **The `ContentObserver` and the cold-start gate are independent.** Don't try to clever-merge them — they serve different windows (in-session vs cross-boot). The observer keeps its existing role unchanged by this plan.
 
-## Status: in progress — Phases A, B, D shipped; Phase C verification pending
+## Status: in progress — Phases A, B, D shipped; C.1 + C.2 shipped; C.3 / C.4 AVD smoke pending
 
 Phases A + B (plumbing + wiring) and Phase D (standing rules) shipped
-in commits `962ebdb` and `95748b2`. Phase C verification still open:
-C.1 unit test shipped, C.2 deferred behind a small seam-refactor on
-`MediaStoreGeneration`, C.3 / C.4 are AVD smoke tests requiring the
-emulator + a granted `READ_MEDIA_IMAGES` permission. The gate is live
-on the cold-start path either way; C.3 / C.4 are confirmation, not
-gating.
+in commits `962ebdb` and `95748b2`. Phase C verification: C.1 unit
+test shipped, C.2 shipped via the `MediaStoreGenerationSource` seam
+refactor + 6 Robolectric cases. C.3 / C.4 remain as AVD smoke tests
+requiring the emulator + a granted `READ_MEDIA_IMAGES` permission —
+confirmation, not gating.

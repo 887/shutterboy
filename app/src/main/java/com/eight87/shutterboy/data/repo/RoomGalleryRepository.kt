@@ -22,7 +22,7 @@ import com.eight87.shutterboy.data.db.toEntity
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaImagesPermission
-import com.eight87.shutterboy.data.scan.MediaStoreGeneration
+import com.eight87.shutterboy.data.scan.MediaStoreGenerationSource
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.scan.ScannedPhoto
 import com.eight87.shutterboy.data.settings.ScanConfigSource
@@ -67,6 +67,8 @@ class RoomGalleryRepository(
     private val safSourceManager: SafSourceManager,
     private val scanConfig: ScanConfigSource,
     private val scanGate: ScanGatePreferences,
+    private val mediaStoreGeneration: MediaStoreGenerationSource =
+        MediaStoreGenerationSource.Default(context),
 ) : PhotoSource,
     FolderSource,
     SmartAlbumSource,
@@ -180,14 +182,14 @@ class RoomGalleryRepository(
 
     override suspend fun scanIfChanged(): LibrarySnapshot {
         val volume = MediaStore.VOLUME_EXTERNAL_PRIMARY
-        val currentGen = MediaStoreGeneration.current(context, volume)
+        val currentGen = mediaStoreGeneration.current(volume)
         val persistedGen = scanGate.observeMediaStoreGeneration(volume).first()
         val safUris = scanConfig.safSourceUris.first()
         val currentSaf = safSourceManager.fingerprint(safUris)
         val persistedSaf = scanGate.observeSafFingerprint().first()
 
         val mediaStoreMatches =
-            currentGen != MediaStoreGeneration.ALWAYS_RESCAN && currentGen == persistedGen
+            currentGen != MediaStoreGenerationSource.ALWAYS_RESCAN && currentGen == persistedGen
         val safMatches = currentSaf == persistedSaf
 
         if (mediaStoreMatches && safMatches) {
