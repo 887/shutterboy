@@ -121,7 +121,7 @@ Per-tab + per-folder sort persistence; drag-reorder for the smart-album chip row
 
 ---
 
-## Phase F — Fullscreen viewer
+## Phase F — Fullscreen viewer — F.1 + F.3 shipped in commit `318dae6`
 
 The pager + chrome + actions + EXIF panel.
 
