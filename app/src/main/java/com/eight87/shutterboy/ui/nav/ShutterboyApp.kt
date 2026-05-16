@@ -81,6 +81,7 @@ fun ShutterboyApp(graph: AppGraph) {
                 entry<Photos> { it.Register(scope) }
                 entry<Collections> { it.Register(scope) }
                 entry<Settings> { it.Register(scope) }
+                entry<Search> { it.Register(scope) }
                 entry<SettingsAbout> { it.Register(scope) }
                 entry<PhotoViewer> { it.Register(scope) }
                 entry<FolderDetail> { it.Register(scope) }
@@ -112,6 +113,7 @@ private fun navIconLabelCd(
     )
     // Pushed-not-rooted destinations should never reach the bottom-nav icon
     // resolver; the entry exhaustiveness is structural only.
+    Search,
     SettingsAbout,
     is PhotoViewer,
     is FolderDetail,

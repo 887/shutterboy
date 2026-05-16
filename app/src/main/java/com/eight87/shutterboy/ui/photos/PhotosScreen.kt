@@ -2,7 +2,11 @@ package com.eight87.shutterboy.ui.photos
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -17,6 +21,7 @@ import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.sort.PhotoSort
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.nav.Search
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 import com.eight87.shutterboy.ui.sort.SortOverflowAction
@@ -47,6 +52,12 @@ fun PhotosScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.photos_top_title)) },
                 actions = {
+                    IconButton(onClick = { scope.backStack.push(Search) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = stringResource(R.string.cd_search_open),
+                        )
+                    }
                     SortOverflowAction(
                         sort = sort,
                         onSortChanged = { newSort ->

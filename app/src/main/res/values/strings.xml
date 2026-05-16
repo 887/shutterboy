@@ -101,6 +101,18 @@
     <string name="viewer_info_aperture">Aperture</string>
     <string name="viewer_info_shutter_speed">Shutter speed</string>
 
+    <!-- Phase G — search overlay. -->
+    <string name="search_field_hint">Search photos</string>
+    <string name="search_clear_cd">Clear</string>
+    <string name="search_empty_state">No photos match this search.</string>
+    <string name="search_chip_photos">Photos</string>
+    <string name="search_chip_videos">Videos</string>
+    <string name="search_chip_gps">Has GPS</string>
+    <string name="search_chip_recent">Recent</string>
+    <string name="cd_search_open">Search</string>
+    <string name="cd_search_back">Back from search</string>
+    <string name="cd_search_field">Search field</string>
+
     <!-- Phase C.x — Settings tab placeholder until Phase I builds the M3 Expressive root. -->
     <string name="settings_root_about_row_label">About</string>
     <string name="settings_root_about_row_subtitle">Build, license, GitHub, easter egg</string>

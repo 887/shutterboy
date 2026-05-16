@@ -1,0 +1,343 @@
+package com.eight87.shutterboy.ui.search
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.eight87.shutterboy.R
+import com.eight87.shutterboy.data.repo.PhotoSearch
+import com.eight87.shutterboy.domain.Photo
+import com.eight87.shutterboy.ui.nav.PhotoViewer
+import com.eight87.shutterboy.ui.nav.RouteScope
+import kotlinx.coroutines.flow.flowOf
+
+internal const val SEARCH_FIELD_TAG = "search_field"
+internal const val SEARCH_RESULTS_GRID_TAG = "search_results_grid"
+
+/**
+ * Phase G — fullscreen search route. Pulls [PhotoSearch] via the RouteScope
+ * facet; result-tap pushes a [PhotoViewer] with the search-result id list
+ * as the pager backing.
+ */
+@Composable
+fun SearchScreen(
+    scope: RouteScope,
+    modifier: Modifier = Modifier,
+) {
+    SearchScreenContent(
+        photoSearch = scope.photoSearch,
+        onBack = { scope.backStack.pop() },
+        onResultTap = { photoId, backingIds ->
+            scope.backStack.push(PhotoViewer(photoId, backingIds))
+        },
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun SearchScreenContent(
+    photoSearch: PhotoSearch,
+    onBack: () -> Unit,
+    onResultTap: (Long, List<Long>) -> Unit,
+    modifier: Modifier = Modifier,
+    nowMs: Long = System.currentTimeMillis(),
+) {
+    var query by remember { mutableStateOf("") }
+    var focused by remember { mutableStateOf(false) }
+    val activeFilters = remember { mutableStateListOf<SearchFilter>() }
+
+    // Live results — re-collect whenever the trimmed query changes.
+    val trimmedQuery by remember { derivedStateOf { query.trim() } }
+    val rawResults by produceState(initialValue = emptyList<Photo>(), trimmedQuery, photoSearch) {
+        val flow = if (trimmedQuery.isEmpty()) flowOf(emptyList()) else photoSearch.searchPhotos(trimmedQuery)
+        flow.collect { value = it }
+    }
+    val filtered by remember(rawResults, activeFilters.toList(), nowMs) {
+        derivedStateOf { applyFilters(rawResults, activeFilters.toSet(), nowMs) }
+    }
+    val recents by produceState(initialValue = emptyList<String>(), photoSearch) {
+        photoSearch.recentSearches().collect { value = it }
+    }
+
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+            SearchHeader(
+                query = query,
+                onQueryChange = { query = it },
+                onBack = onBack,
+                onFocusChange = { focused = it },
+            )
+            FilterChipRow(
+                active = activeFilters.toSet(),
+                onToggle = { filter ->
+                    if (filter == SearchFilter.Videos) return@FilterChipRow
+                    if (activeFilters.contains(filter)) activeFilters.remove(filter)
+                    else activeFilters.add(filter)
+                },
+            )
+            when {
+                trimmedQuery.isEmpty() && focused && recents.isNotEmpty() ->
+                    RecentSearchesList(recents = recents, onPick = { query = it })
+                trimmedQuery.isEmpty() ->
+                    Box(modifier = Modifier.fillMaxSize())
+                filtered.isEmpty() ->
+                    SearchEmptyState()
+                else ->
+                    ResultsGrid(photos = filtered, onResultTap = onResultTap)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchHeader(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onBack: () -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.cd_search_back),
+            )
+        }
+        Surface(
+            modifier = Modifier
+                .padding(start = 4.dp, end = 4.dp)
+                .fillMaxWidth(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            TextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { onFocusChange(it.isFocused) }
+                    .testTag(SEARCH_FIELD_TAG),
+                placeholder = { Text(stringResource(R.string.search_field_hint)) },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = stringResource(R.string.cd_search_field),
+                    )
+                },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Clear,
+                                contentDescription = stringResource(R.string.search_clear_cd),
+                            )
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { /* live-search via state */ }),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilterChipRow(
+    active: Set<SearchFilter>,
+    onToggle: (SearchFilter) -> Unit,
+) {
+    val scroll = rememberScrollState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(scroll)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SearchFilter.entries.forEach { filter ->
+            val isVideos = filter == SearchFilter.Videos
+            FilterChip(
+                selected = active.contains(filter),
+                onClick = { onToggle(filter) },
+                enabled = !isVideos,
+                label = { Text(text = stringResource(labelFor(filter))) },
+                modifier = Modifier.testTag("search_chip_${filter.name.lowercase()}"),
+            )
+        }
+    }
+}
+
+private fun labelFor(filter: SearchFilter): Int = when (filter) {
+    SearchFilter.Photos -> R.string.search_chip_photos
+    SearchFilter.Videos -> R.string.search_chip_videos
+    SearchFilter.Gps -> R.string.search_chip_gps
+    SearchFilter.Recent -> R.string.search_chip_recent
+}
+
+@Composable
+private fun RecentSearchesList(
+    recents: List<String>,
+    onPick: (String) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+        recents.take(10).forEach { entry ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onPick(entry) }
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = entry,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 16.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResultsGrid(
+    photos: List<Photo>,
+    onResultTap: (Long, List<Long>) -> Unit,
+) {
+    val backingIds = remember(photos) { photos.map { it.id.value } }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(SEARCH_RESULTS_GRID_TAG),
+        contentPadding = PaddingValues(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        items(
+            items = photos,
+            key = { p -> "search-${p.id.value}" },
+            contentType = { "photo_thumbnail" },
+        ) { photo ->
+            SearchPhotoThumbnail(
+                photo = photo,
+                onTap = { onResultTap(photo.id.value, backingIds) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchPhotoThumbnail(
+    photo: Photo,
+    onTap: () -> Unit,
+) {
+    AsyncImage(
+        model = photo.contentUri,
+        contentDescription = photo.displayName,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(2.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .clickable(onClick = onTap)
+            .testTag("search_thumb_${photo.id.value}"),
+    )
+}
+
+@Composable
+private fun SearchEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.SearchOff,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(56.dp),
+        )
+        Text(
+            text = stringResource(R.string.search_empty_state),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+}
