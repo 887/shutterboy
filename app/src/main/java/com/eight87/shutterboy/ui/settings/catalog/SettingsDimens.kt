@@ -12,7 +12,8 @@ object SettingsDimens {
     val PagePadding = 16.dp
     val CardCornerRadius = 16.dp
     val CardSpacing = 16.dp
-    val RowVerticalPadding = 14.dp
+    // m3-expressive C.3 — system metric for settings rows is 12.dp vertical.
+    val RowVerticalPadding = 12.dp
     val RowHorizontalPadding = 16.dp
     val IconSize = 24.dp
     val IconLabelGap = 16.dp

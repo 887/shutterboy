@@ -1,6 +1,6 @@
 # shutterboy — Material 3 Expressive (M3E) plan
 
-## Status: 🟢 IN PROGRESS — Phases A + B.2-B.7 shipped; B.1 call-site sweep deferred to Phase E.5
+## Status: 🟢 IN PROGRESS — Phases A + B + C + D shipped; Phase E sweep + F design + G alpha-drop remaining
 
 ## Why this exists
 
@@ -278,34 +278,18 @@ folder card" experiment lands in main.md Phase E.x or later.
 - [x] **B.6** AVD smoke on `emulator-5556`: Photos grid renders, MAY 2026 inline band visible; Settings → About card is lifted off the page surface; status-bar inset reads single across both surfaces. Collections + chip-row + scrubber-bubble unverified-but-low-risk (same theme stack as Photos/Settings).
 - [x] **B.7** Shipped + ticked.
 
-## Phase C — typography + shapes audit
+## Phase C — typography + shapes audit — shipped in commits `87f65df` + `5614f3c` + `b805c2f`
 
 **Why:** the M3E motion / typography / shape defaults flow through
 `MaterialExpressiveTheme`; verify nothing is overriding them with
 baseline-M3 tokens.
 
-- [ ] **C.1** Audit the existing `Typography` value used in
-  `ShutterboyTheme`. If it's still the Phase 0 default
-  `androidx.compose.material3.Typography()`, leave it on the
-  defaults — `MaterialExpressiveTheme` overrides them with the
-  expressive scale automatically.
-- [ ] **C.2** Add an explicit `Shapes(...)` to the theme with
-  `extraLarge = RoundedCornerShape(28.dp)` so the M3E group-card
-  shape is honoured. Wire into the `MaterialExpressiveTheme(...)`
-  call from A.4.
-- [ ] **C.3** SettingsRow inner padding = `padding(horizontal = 16.dp,
-  vertical = 12.dp)` (system metric). Verify against the current
-  `SettingsRow.kt` and patch if it drifts.
-- [ ] **C.4** Within-`SettingsCard` row stacking: `Column(verticalArrangement
-  = Arrangement.spacedBy(2.dp))`. **Drop** any `HorizontalDivider`
-  between settings rows — M3E goes divider-less. Currently
-  `SettingsCard` doesn't add dividers between children, but verify
-  before Phase I lands and starts adding rows.
-- [ ] **C.5** Settings row title style:
-  `MaterialTheme.typography.titleMedium`. Subtitle:
-  `bodyMedium` + `color = onSurfaceVariant`. Audit `SettingsRow`
-  current usage; patch if drifted.
-- [ ] **C.6** Ship + tick.
+- [x] **C.1** Stripped the partial `bodyLarge` override in `Type.kt`; `Typography = Typography()` now passes the M3 default in, which `MaterialExpressiveTheme` overlays with the expressive scale automatically.
+- [x] **C.2** Added `theme/Shapes.kt` with `ShutterboyShapes = Shapes(extraLarge = RoundedCornerShape(28.dp))` (commit `87f65df`); wired via `shapes = ShutterboyShapes` into `MaterialExpressiveTheme(...)` in commit `5614f3c`.
+- [x] **C.3** `SettingsDimens.RowVerticalPadding` was 14.dp; brought to 12.dp per system metric. Horizontal already at 16.dp.
+- [x] **C.4** `SettingsRowDivider()` function + every invocation deleted; `SettingsCard` wraps content in `Column(verticalArrangement = Arrangement.spacedBy(2.dp))` for divider-less row separation.
+- [x] **C.5** SettingsRow title: `titleSmall` → `titleMedium`; subtitle: `bodySmall` → `bodyMedium` with `onSurfaceVariant`. Matches M3E settings-row weight.
+- [x] **C.6** Shipped.
 
 ## Phase D — `CategoryAccent` + per-row avatars — shipped in commits `87f65df` (code) + `74838b1` (plan tick)
 

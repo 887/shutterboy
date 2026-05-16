@@ -80,15 +80,18 @@ fun SettingsRow(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
+            // m3-expressive C.5 — title is titleMedium, subtitle is bodyMedium
+            // + onSurfaceVariant. M3E settings rows read at the higher type
+            // weight than baseline-M3's titleSmall / bodySmall.
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
