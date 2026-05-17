@@ -73,6 +73,7 @@ fun ShutterboyApp(graph: AppGraph) {
                     entry<SettingsPhotos> { it.Register(scope) }
                     entry<SettingsLibrary> { it.Register(scope) }
                     entry<SettingsLookAndFeel> { it.Register(scope) }
+                    entry<SettingsManageSources> { it.Register(scope) }
                     entry<Search> { it.Register(scope) }
                     entry<SettingsAbout> { it.Register(scope) }
                     entry<Licenses> { it.Register(scope) }

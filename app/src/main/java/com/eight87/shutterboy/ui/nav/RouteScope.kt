@@ -10,6 +10,7 @@ import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DisplayPreferences
+import com.eight87.shutterboy.data.settings.SafSourcesPreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
 import com.eight87.shutterboy.data.settings.ThemePreferences
 
@@ -40,4 +41,5 @@ interface RouteScope {
     val customOrderPreferences: CustomOrderPreferences
     val themePreferences: ThemePreferences
     val displayPreferences: DisplayPreferences
+    val safSourcesPreferences: SafSourcesPreferences
 }

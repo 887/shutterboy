@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import coil3.SingletonImageLoader
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.nav.SettingsManageSources
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
@@ -100,6 +102,13 @@ fun SettingsLibraryScreen(
                             )
                         }
                     },
+                )
+                SettingsRow(
+                    id = "settings_library_manage_sources",
+                    icon = Icons.Outlined.Folder,
+                    label = stringResource(R.string.settings_library_manage_sources),
+                    subtitle = stringResource(R.string.settings_library_manage_sources_subtitle),
+                    onClick = { scope.backStack.push(SettingsManageSources) },
                 )
                 SettingsRow(
                     id = "settings_library_clear_cache",

@@ -47,6 +47,14 @@ data object SettingsLibrary : Destination
 data object SettingsLookAndFeel : Destination
 
 /**
+ * Phase I.3.b — Settings → Library → Manage sources sub-page. Lists the
+ * persisted SAF tree URIs with per-source photo counts and exposes the
+ * `ACTION_OPEN_DOCUMENT_TREE` add affordance + per-row remove.
+ */
+@Serializable
+data object SettingsManageSources : Destination
+
+/**
  * Phase G — fullscreen search overlay. Pushed from the Photos TopAppBar
  * search icon. Pill-shaped search field at the top, filter chip row, results
  * grid below; recent searches below the field when it's empty + focused.
