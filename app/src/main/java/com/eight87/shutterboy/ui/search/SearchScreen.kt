@@ -324,17 +324,18 @@ private fun FilterChipRow(
             .padding(horizontal = 12.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // R.F.2 — chip row iterates the per-variant ConditionUi registry
+        // instead of `when`-ing over the enum at two call sites (label +
+        // enabled). Adding a SearchFilter variant means one enum case + one
+        // SearchFilterUi entry; this row needs no edit.
+        val chipCtx = ChipEnabledContext(favoritesWired = favoritesChipEnabled)
         SearchFilter.entries.forEach { filter ->
-            val enabled = when (filter) {
-                SearchFilter.Videos -> false
-                SearchFilter.Favorites -> favoritesChipEnabled
-                else -> true
-            }
+            val ui = SearchFilterUi.getValue(filter)
             FilterChip(
                 selected = active.contains(filter),
                 onClick = { onToggle(filter) },
-                enabled = enabled,
-                label = { Text(text = stringResource(labelFor(filter))) },
+                enabled = ui.enabled(chipCtx),
+                label = { Text(text = stringResource(ui.labelRes)) },
                 modifier = Modifier.testTag("search_chip_${filter.name.lowercase()}"),
             )
         }
@@ -365,14 +366,6 @@ private fun FilterChipRow(
             modifier = Modifier.testTag("search_chip_folder"),
         )
     }
-}
-
-private fun labelFor(filter: SearchFilter): Int = when (filter) {
-    SearchFilter.Photos -> R.string.search_chip_photos
-    SearchFilter.Videos -> R.string.search_chip_videos
-    SearchFilter.Gps -> R.string.search_chip_gps
-    SearchFilter.Recent -> R.string.search_chip_recent
-    SearchFilter.Favorites -> R.string.search_chip_favorites
 }
 
 @Composable

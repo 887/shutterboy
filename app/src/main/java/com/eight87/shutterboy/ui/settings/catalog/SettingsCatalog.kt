@@ -1,22 +1,12 @@
 package com.eight87.shutterboy.ui.settings.catalog
 
 import androidx.annotation.StringRes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.automirrored.outlined.Sort
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Numbers
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.outlined.CleaningServices
-import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.eight87.shutterboy.R
-import com.eight87.shutterboy.ui.nav.Licenses
 import com.eight87.shutterboy.ui.nav.RouteScope
-import com.eight87.shutterboy.ui.nav.SettingsAbout
-import com.eight87.shutterboy.ui.nav.SettingsLibrary
-import com.eight87.shutterboy.ui.nav.SettingsPhotos
+import com.eight87.shutterboy.ui.settings.sections.AboutSectionCatalog
+import com.eight87.shutterboy.ui.settings.sections.AppearanceSectionCatalog
+import com.eight87.shutterboy.ui.settings.sections.LibrarySectionCatalog
+import com.eight87.shutterboy.ui.settings.sections.PhotosSectionCatalog
 
 /**
  * I.7 — One settings entry. The catalog is the single source of truth for
@@ -49,123 +39,32 @@ data class SettingsCatalogEntry(
 )
 
 /**
- * I.7 — Catalog of every settings row searchable from the Settings
- * overlay. Each entry knows how to navigate to its sub-page and which
- * row id to flash on arrival. Adding a setting is one entry here plus
- * a binding on the corresponding sub-page (the [SettingsRow]
- * `id` parameter ties the two together).
+ * I.7 / R.F.14 — aggregator over the per-section catalog files in
+ * `ui/settings/sections/`. The catalog itself is intentionally tiny: each
+ * section owns its own list, this object just `flatten`s. Adding a new
+ * section is one file under `sections/` plus one line in [entries].
+ *
+ * The `ID_*` constants are re-exposed here for the `SettingsCatalogTest`
+ * pin-down assertion, which trips whenever a row legitimately arrives or
+ * departs. The shipping source of truth for each id is the section file.
  */
 object SettingsCatalog {
 
     /** Look-and-feel → Theme picker (row lives on the Settings root). */
-    const val ID_APPEARANCE_THEME = "settings_appearance_theme"
-    const val ID_LIBRARY_RESCAN = "settings_library_rescan"
-    const val ID_LIBRARY_CLEAR_CACHE = "settings_library_clear_cache"
-    const val ID_PHOTOS_DEFAULT_SORT = "settings_photos_default_sort"
-    const val ID_ABOUT_VERSION = "settings_about_version"
-    const val ID_ABOUT_LICENSE = "settings_about_license"
-    const val ID_ABOUT_GITHUB = "settings_about_github"
-    const val ID_ABOUT_LICENSES = "settings_about_licenses"
+    const val ID_APPEARANCE_THEME = AppearanceSectionCatalog.ID_APPEARANCE_THEME
+    const val ID_LIBRARY_RESCAN = LibrarySectionCatalog.ID_LIBRARY_RESCAN
+    const val ID_LIBRARY_CLEAR_CACHE = LibrarySectionCatalog.ID_LIBRARY_CLEAR_CACHE
+    const val ID_PHOTOS_DEFAULT_SORT = PhotosSectionCatalog.ID_PHOTOS_DEFAULT_SORT
+    const val ID_ABOUT_VERSION = AboutSectionCatalog.ID_ABOUT_VERSION
+    const val ID_ABOUT_LICENSE = AboutSectionCatalog.ID_ABOUT_LICENSE
+    const val ID_ABOUT_GITHUB = AboutSectionCatalog.ID_ABOUT_GITHUB
+    const val ID_ABOUT_LICENSES = AboutSectionCatalog.ID_ABOUT_LICENSES
 
-    fun entries(): List<SettingsCatalogEntry> = listOf(
-        SettingsCatalogEntry(
-            id = ID_APPEARANCE_THEME,
-            labelRes = R.string.settings_appearance_theme,
-            subtitleRes = null,
-            keywordsRes = R.string.settings_search_keywords_theme,
-            breadcrumbRes = R.string.settings_search_breadcrumb_appearance_theme,
-            icon = Icons.Outlined.Palette,
-            navigate = { scope ->
-                FlashRowController.flash(ID_APPEARANCE_THEME)
-                // Theme row lives on the Settings root; no push needed,
-                // pop is handled by the caller.
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_LIBRARY_RESCAN,
-            labelRes = R.string.settings_library_rescan,
-            subtitleRes = R.string.settings_library_rescan_subtitle,
-            keywordsRes = R.string.settings_search_keywords_library_rescan,
-            breadcrumbRes = R.string.settings_search_breadcrumb_library_rescan,
-            icon = Icons.Filled.Refresh,
-            navigate = { scope ->
-                FlashRowController.flash(ID_LIBRARY_RESCAN)
-                scope.backStack.push(SettingsLibrary)
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_LIBRARY_CLEAR_CACHE,
-            labelRes = R.string.settings_library_clear_cache,
-            subtitleRes = R.string.settings_library_clear_cache_subtitle,
-            keywordsRes = R.string.settings_search_keywords_library_clear_cache,
-            breadcrumbRes = R.string.settings_search_breadcrumb_library_clear_cache,
-            icon = Icons.Outlined.CleaningServices,
-            navigate = { scope ->
-                FlashRowController.flash(ID_LIBRARY_CLEAR_CACHE)
-                scope.backStack.push(SettingsLibrary)
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_PHOTOS_DEFAULT_SORT,
-            labelRes = R.string.settings_photos_default_sort_label,
-            subtitleRes = null,
-            keywordsRes = R.string.settings_search_keywords_photos_sort,
-            breadcrumbRes = R.string.settings_search_breadcrumb_photos_sort,
-            icon = Icons.AutoMirrored.Outlined.Sort,
-            navigate = { scope ->
-                FlashRowController.flash(ID_PHOTOS_DEFAULT_SORT)
-                scope.backStack.push(SettingsPhotos)
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_ABOUT_VERSION,
-            labelRes = R.string.about_version_label,
-            subtitleRes = null,
-            keywordsRes = R.string.settings_search_keywords_about_version,
-            breadcrumbRes = R.string.settings_search_breadcrumb_about_version,
-            icon = Icons.Filled.Numbers,
-            navigate = { scope ->
-                FlashRowController.flash(ID_ABOUT_VERSION)
-                scope.backStack.push(SettingsAbout)
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_ABOUT_LICENSE,
-            labelRes = R.string.about_license_row_label,
-            subtitleRes = R.string.about_license_row_value,
-            keywordsRes = R.string.settings_search_keywords_about_license,
-            breadcrumbRes = R.string.settings_search_breadcrumb_about_license,
-            icon = Icons.AutoMirrored.Filled.Article,
-            navigate = { scope ->
-                FlashRowController.flash(ID_ABOUT_LICENSE)
-                scope.backStack.push(SettingsAbout)
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_ABOUT_GITHUB,
-            labelRes = R.string.about_github_row_label,
-            subtitleRes = R.string.about_github_row_value,
-            keywordsRes = R.string.settings_search_keywords_about_github,
-            breadcrumbRes = R.string.settings_search_breadcrumb_about_github,
-            icon = Icons.Filled.Code,
-            navigate = { scope ->
-                FlashRowController.flash(ID_ABOUT_GITHUB)
-                scope.backStack.push(SettingsAbout)
-            },
-        ),
-        SettingsCatalogEntry(
-            id = ID_ABOUT_LICENSES,
-            labelRes = R.string.licenses_row_label,
-            subtitleRes = R.string.licenses_row_supporting,
-            keywordsRes = R.string.settings_search_keywords_about_licenses,
-            breadcrumbRes = R.string.settings_search_breadcrumb_about_licenses,
-            icon = Icons.AutoMirrored.Outlined.Article,
-            navigate = { scope ->
-                FlashRowController.flash(ID_ABOUT_LICENSES)
-                scope.backStack.push(SettingsAbout)
-            },
-        ),
-    )
+    fun entries(): List<SettingsCatalogEntry> =
+        AppearanceSectionCatalog.entries() +
+            LibrarySectionCatalog.entries() +
+            PhotosSectionCatalog.entries() +
+            AboutSectionCatalog.entries()
 
     /**
      * I.7 — filter entries by case-insensitive substring match against
