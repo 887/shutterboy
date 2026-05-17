@@ -13,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -151,7 +150,7 @@ private fun SlideshowPage(
     dwellMs: Long,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
-    val photo: Photo? by flow.collectAsState(initial = null)
+    val photo: Photo? by flow.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
     val kenBurns = if (kenBurnsEnabled) {
         rememberKenBurnsModifier(photoId = photoId, dwellMs = dwellMs)
