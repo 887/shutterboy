@@ -30,6 +30,7 @@ import com.eight87.shutterboy.ui.multiselect.rememberSelectionMoveHandler
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.nav.Slideshow
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 import com.eight87.shutterboy.ui.sort.SortOverflowAction
@@ -108,6 +109,12 @@ fun FolderDetailScreen(
                             onSortChanged = { newSort ->
                                 coroutineScope.launch {
                                     scope.sortPreferences.setFolderSort(folderId, newSort)
+                                }
+                            },
+                            onStartSlideshow = {
+                                val ids = allPhotos.map { it.id.value }
+                                if (ids.isNotEmpty()) {
+                                    scope.backStack.push(Slideshow(backingIds = ids))
                                 }
                             },
                         )

@@ -188,11 +188,11 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 
 ---
 
-## Phase J — Slideshow — J.1 + J.4 shipped
+## Phase J — Slideshow — J.1 + J.2 + J.3 + J.4 shipped
 
 - [x] **J.1** `ui/slideshow/SlideshowScreen.kt` — full-screen `HorizontalPager` advancing on a timer (default 4 s). Tap to pause, tap again to resume. Back-button exits. Route `Slideshow(backingIds)` registered in `Destinations.kt` + `ui/nav/routes/SlideshowRoutes.kt` + entry in `ShutterboyApp.kt`. "Paused" badge in `SlideshowOverlay.kt`. Settings-controlled dwell deferred (default 4 s constant for now).
-- [ ] **J.2** Optional Ken Burns effect — slow zoom + pan during each photo's dwell; togglable in Settings → Photos → Slideshow style. **DEFERRED** — landing the screen + route first; Ken Burns is additive and arrives once the J.1 surface is settled.
-- [ ] **J.3** Scope picker — slideshow can run over Folder / Smart album / Search results. Launched from the overflow menu of the matching screen. **DEFERRED** — sibling H-agent is mid-flight on Photos / FolderDetail / SmartAlbumDetail selection mode; J.3 lands after H settles so the overflow integration doesn't fight the in-progress selection-mode rewire.
+- [x] **J.2** Optional Ken Burns effect — slow zoom + pan during each photo's dwell; togglable in Settings → Photos. Modifier lives in `ui/slideshow/KenBurnsModifier.kt`; preference facet is `data/settings/SlideshowPreferences.kt` + `DataStoreSlideshowPreferences.kt` (default on); Settings → Photos hosts the Switch row. SlideshowScreen reads `slideshowPreferences.observeKenBurnsEnabled()` and threads it through `SlideshowContent` → `SlideshowPage` so the effect resets per slide and varies pan direction by `photoId % 4`.
+- [x] **J.3** Scope picker — Photos, FolderDetail, and Search results launch the slideshow over their currently-displayed (sorted/filtered) photo id list. Photos + FolderDetail extend `SortOverflowAction` with a new "Start slideshow" `DropdownMenuItem`; Search adds a slideshow `IconButton` to its header next to the text field (only visible when filtered results are non-empty).
 - [x] **J.4** Robolectric: `SlideshowAdvanceMathTest` covers next-page math (N+1 mod M, wraparound, empty edge) and `SlideshowScreenSmokeTest` mounts the screen with a 3-photo fake `PhotoSource`, asserts the first page renders, simulates a tap, asserts the paused badge appears. Ken Burns coverage moves with J.2.
 
 ---

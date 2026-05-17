@@ -22,8 +22,10 @@ import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreRecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
+import com.eight87.shutterboy.data.settings.DataStoreSlideshowPreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.DataStoreThemePreferences
+import com.eight87.shutterboy.data.settings.SlideshowPreferences
 import com.eight87.shutterboy.data.settings.RecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
@@ -113,4 +115,8 @@ class AppGraph(applicationContext: Context) {
     /** BaseTheme picker — Material You / brand / pure black / custom seed. */
     val themePreferences: ThemePreferences =
         DataStoreThemePreferences(appCtx.shutterboyPrefs)
+
+    /** Phase J.2 — DataStore-backed slideshow toggles (Ken Burns, future dwell). */
+    val slideshowPreferences: SlideshowPreferences =
+        DataStoreSlideshowPreferences(appCtx.shutterboyPrefs)
 }
