@@ -200,7 +200,7 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 ## Phase K — Easter egg + launcher icon polish
 
 - [x] **K.1** Easter egg shipped (`EasterEggController.kt` + `EasterEggDialog` + `rememberEasterEggBindings()` wired into `SettingsAboutScreen.kt`). Triple-tap the build version row reveals the tiger drawable in a modal Dialog with a black scrim; tap-outside / back-button dismiss; pure-Kotlin state machine matches tonearmboy's window-lapse + repeatable reveal spec.
-- [x] **K.2** Launcher icon polish pass — verified shipped state on `emulator-5556`.
+- [x] **K.2** Launcher icon polish pass — verified shipped state on `emulator-5556` (shipped in commit `9702984`).
   - [x] **K.2.1** Adaptive icon manifest present at `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_round.xml` with `<background>` (`@color/launcher_background` = `#1A1717`), `<foreground>` (`@mipmap/ic_launcher_foreground`), and `<monochrome>` (`@mipmap/ic_launcher_monochrome`) layers.
   - [x] **K.2.2** Foreground PNG present in all 5 densities (mdpi 108², hdpi 162², xhdpi 216², xxhdpi 324², xxxhdpi 432²) — dimensions match the 108dp adaptive-icon spec.
   - [x] **K.2.3** Monochrome themed-icon layer (Android 13+) present in all 5 densities. RGB is solid white; the tiger silhouette is encoded in the alpha channel — correct format for system-tinted themed icons.
