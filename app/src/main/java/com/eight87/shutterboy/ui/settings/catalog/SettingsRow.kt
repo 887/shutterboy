@@ -1,5 +1,8 @@
 package com.eight87.shutterboy.ui.settings.catalog
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,12 +16,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.eight87.shutterboy.theme.CategoryAccent
 import com.eight87.shutterboy.theme.accentFor
+import kotlinx.coroutines.delay
 
 /**
  * One row inside a [SettingsCard]. Always has a leading icon (the Android
@@ -50,9 +57,36 @@ fun SettingsRow(
     accent: CategoryAccent? = null,
 ) {
     val resolvedAccent: CategoryAccent? = accent ?: id?.let { accentFor(it) }
+
+    // I.7 — settings-search flash highlight. The overlay seeds
+    // FlashRowController.state with the matched row's id before popping
+    // itself; the receiving sub-page composes shortly after and any row
+    // whose id matches briefly tints its background.
+    val highlightState = LocalHighlightedSettingId.current
+    val highlighted = id != null && highlightState.value == id
+    val target = if (highlighted) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        Color.Transparent
+    }
+    val animatedBg by animateColorAsState(
+        targetValue = target,
+        animationSpec = tween(durationMillis = 300),
+        label = "settings_row_highlight",
+    )
+    if (highlighted) {
+        LaunchedEffect(id) {
+            // Hold the flash for ~300ms past peak, then clear so a later
+            // navigation to the same id re-fires.
+            delay(600)
+            if (highlightState.value == id) highlightState.value = null
+        }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(animatedBg)
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(
                 horizontal = SettingsDimens.RowHorizontalPadding,

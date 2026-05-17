@@ -224,4 +224,33 @@
     <!-- Phase J — Slideshow. -->
     <string name="slideshow_paused">Paused</string>
     <string name="cd_slideshow_back">Exit slideshow</string>
+
+    <!-- Phase I.7 — Settings search overlay (catalog-driven). -->
+    <string name="settings_search_placeholder">Search settings</string>
+    <string name="settings_search_open_cd">Search settings</string>
+    <string name="settings_search_clear_cd">Clear search</string>
+    <string name="settings_search_no_matches">No settings match "%1$s"</string>
+
+    <!-- I.7 — Catalog breadcrumbs (rendered as the subtitle on each
+         search result). Two-segment "Section · Row" format. -->
+    <string name="settings_search_breadcrumb_appearance_theme">Look and Feel · Theme</string>
+    <string name="settings_search_breadcrumb_library_rescan">Library · Rescan photos</string>
+    <string name="settings_search_breadcrumb_library_clear_cache">Library · Clear cached thumbnails</string>
+    <string name="settings_search_breadcrumb_photos_sort">Photos · Default sort</string>
+    <string name="settings_search_breadcrumb_about_version">About · Version</string>
+    <string name="settings_search_breadcrumb_about_license">About · License</string>
+    <string name="settings_search_breadcrumb_about_github">About · GitHub</string>
+    <string name="settings_search_breadcrumb_about_licenses">About · Open-source licenses</string>
+
+    <!-- I.7 — Catalog search keywords. Space-separated, lowercase,
+         resolved at filter time and substring-matched against the
+         user's query. Add synonyms users are likely to type. -->
+    <string name="settings_search_keywords_theme">theme colour color dark light dynamic material you palette appearance</string>
+    <string name="settings_search_keywords_library_rescan">rescan refresh reload scan media store</string>
+    <string name="settings_search_keywords_library_clear_cache">cache clear thumbnails coil disk memory storage</string>
+    <string name="settings_search_keywords_photos_sort">sort order date name size taken added timeline</string>
+    <string name="settings_search_keywords_about_version">version build sha date easter egg tiger</string>
+    <string name="settings_search_keywords_about_license">license mit copyright</string>
+    <string name="settings_search_keywords_about_github">github source repository code</string>
+    <string name="settings_search_keywords_about_licenses">open source licenses acknowledgments oss attribution spdx</string>
 </resources>
