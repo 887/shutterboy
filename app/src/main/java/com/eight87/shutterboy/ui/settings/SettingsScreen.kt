@@ -48,20 +48,25 @@ fun SettingsScreen(
 ) {
     Scaffold(
         topBar = {
-            RootTopBar(
-                current = Settings,
-                onSelect = { dest -> scope.backStack.selectTab(dest) },
-                actions = {
-                    IconButton(onClick = { scope.backStack.push(SettingsSearch) }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Search,
-                            contentDescription = stringResource(
-                                R.string.settings_search_open_cd,
-                            ),
-                        )
-                    }
-                },
-            )
+            Column {
+                RootTopBar(
+                    current = Settings,
+                    onSelect = { dest -> scope.backStack.selectTab(dest) },
+                    actions = {
+                        IconButton(onClick = { scope.backStack.push(SettingsSearch) }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = stringResource(
+                                    R.string.settings_search_open_cd,
+                                ),
+                            )
+                        }
+                    },
+                )
+                com.eight87.shutterboy.ui.nav.ScanProgressStrip(
+                    scanner = scope.libraryScanner,
+                )
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->

@@ -92,29 +92,34 @@ fun PhotosScreen(
                     onDelete = { deleteHandler.request(active.selectedIds) },
                 )
             } else {
-                RootTopBar(
-                    current = Photos,
-                    onSelect = { dest -> scope.backStack.selectTab(dest) },
-                ) {
-                    IconButton(onClick = { scope.backStack.push(Search) }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Search,
-                            contentDescription = stringResource(R.string.cd_search_open),
+                androidx.compose.foundation.layout.Column {
+                    RootTopBar(
+                        current = Photos,
+                        onSelect = { dest -> scope.backStack.selectTab(dest) },
+                    ) {
+                        IconButton(onClick = { scope.backStack.push(Search) }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = stringResource(R.string.cd_search_open),
+                            )
+                        }
+                        SortOverflowAction(
+                            sort = sort,
+                            onSortChanged = { newSort ->
+                                coroutineScope.launch {
+                                    scope.sortPreferences.setPhotosSort(newSort)
+                                }
+                            },
+                            onStartSlideshow = {
+                                val ids = allPhotos.map { it.id.value }
+                                if (ids.isNotEmpty()) {
+                                    scope.backStack.push(Slideshow(backingIds = ids))
+                                }
+                            },
                         )
                     }
-                    SortOverflowAction(
-                        sort = sort,
-                        onSortChanged = { newSort ->
-                            coroutineScope.launch {
-                                scope.sortPreferences.setPhotosSort(newSort)
-                            }
-                        },
-                        onStartSlideshow = {
-                            val ids = allPhotos.map { it.id.value }
-                            if (ids.isNotEmpty()) {
-                                scope.backStack.push(Slideshow(backingIds = ids))
-                            }
-                        },
+                    com.eight87.shutterboy.ui.nav.ScanProgressStrip(
+                        scanner = scope.libraryScanner,
                     )
                 }
             }

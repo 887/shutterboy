@@ -70,9 +70,10 @@ fun ShutterboyApp(graph: AppGraph) {
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // Non-blocking scan progress signal — surfaces ScanProgress.Running
-            // as a thin indeterminate strip at the top of the app shell.
-            ScanProgressStrip(scanner = graph.libraryScanner)
+            // Scan progress strip moved into each root screen's RootTopBar
+            // (renders BELOW the buttons row, like tonearmboy puts it
+            // below its library top bar). The outer shell no longer hosts
+            // it here.
             // F.7 — wrap the NavDisplay in a SharedTransitionLayout and
             // expose its SharedTransitionScope via a composition local so
             // the Photos timeline tile and the viewer page can hook into

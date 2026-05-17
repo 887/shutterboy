@@ -78,30 +78,35 @@ fun CollectionsScreen(
 
     Scaffold(
         topBar = {
-            RootTopBar(
-                current = Collections,
-                onSelect = { dest -> scope.backStack.selectTab(dest) },
-            ) {
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(
-                        imageVector = Icons.Outlined.MoreVert,
-                        contentDescription = stringResource(R.string.cd_more_options),
-                    )
-                }
-                DropdownMenu(
-                    expanded = menuOpen,
-                    onDismissRequest = { menuOpen = false },
+            Column {
+                RootTopBar(
+                    current = Collections,
+                    onSelect = { dest -> scope.backStack.selectTab(dest) },
                 ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.collections_overflow_reorder_folders))
-                        },
-                        onClick = {
-                            menuOpen = false
-                            showReorderFolders = true
-                        },
-                    )
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.MoreVert,
+                            contentDescription = stringResource(R.string.cd_more_options),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuOpen,
+                        onDismissRequest = { menuOpen = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(stringResource(R.string.collections_overflow_reorder_folders))
+                            },
+                            onClick = {
+                                menuOpen = false
+                                showReorderFolders = true
+                            },
+                        )
+                    }
                 }
+                com.eight87.shutterboy.ui.nav.ScanProgressStrip(
+                    scanner = scope.libraryScanner,
+                )
             }
         },
         modifier = modifier.fillMaxSize(),
