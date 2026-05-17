@@ -27,6 +27,8 @@ import com.eight87.shutterboy.data.scan.MediaImagesPermission
 import com.eight87.shutterboy.data.scan.MediaStoreGenerationSource
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.scan.ScannedPhoto
+import com.eight87.shutterboy.data.settings.NoOpRecentSearchesPreferences
+import com.eight87.shutterboy.data.settings.RecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.domain.DeleteRequest
@@ -70,6 +72,7 @@ class RoomGalleryRepository(
     private val scanGate: ScanGatePreferences,
     private val mediaStoreGeneration: MediaStoreGenerationSource =
         MediaStoreGenerationSource.Default(context),
+    private val recentSearchesPrefs: RecentSearchesPreferences = NoOpRecentSearchesPreferences,
 ) : PhotoSource,
     FolderSource,
     PhotoSearch,
@@ -144,8 +147,10 @@ class RoomGalleryRepository(
         else searchDao.observeMatching(ftsExpr).map { rows -> rows.map { it.toDomain() } }
     }
 
-    override fun recentSearches(): Flow<List<String>> = flowOf(emptyList())
-    override suspend fun recordSearch(query: String) { /* Phase G persists */ }
+    override fun recentSearches(): Flow<List<String>> = recentSearchesPrefs.observe()
+    override suspend fun recordSearch(query: String) {
+        recentSearchesPrefs.record(query)
+    }
 
     // --- LibraryScanner ---
 
