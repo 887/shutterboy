@@ -22,7 +22,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.SourceType
 import com.eight87.shutterboy.ui.nav.RouteScope
@@ -58,12 +58,12 @@ fun SettingsManageSourcesScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val sources by scope.safSourcesPreferences.observeSources()
-        .collectAsState(initial = emptySet())
+        .collectAsStateWithLifecycle(initialValue = emptySet())
     val safFoldersFlow = remember(scope.folderSource) {
         scope.folderSource.observeFolders()
             .map { list -> list.filter { it.sourceType == SourceType.SAF } }
     }
-    val safFolders by safFoldersFlow.collectAsState(initial = emptyList())
+    val safFolders by safFoldersFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val addedMessage = stringResource(R.string.settings_manage_sources_added)
     val removedMessage = stringResource(R.string.settings_manage_sources_removed)
