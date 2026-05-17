@@ -67,26 +67,31 @@ fun RootTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            // Title takes the leftover space; truncates first so the
-            // destination switcher stays anchored to the right edge even
-            // when per-screen actions are wide (Photos = Search+Sort vs
-            // Collections = MoreVert vs Settings = SettingsSearch).
+            // Per-screen actions cluster on the LEFT (Search / Sort /
+            // MoreVert / etc.). Different screens have different action
+            // counts; putting them left means variation in count compresses
+            // the title in the middle (weight 1f absorbs it), NOT the
+            // destination strip on the right.
+            actions()
+            // Title in the middle, weight(1f) so it eats all leftover
+            // space + truncates first if anything overflows. This is the
+            // thing that absorbs per-screen variation — the destinations
+            // and the actions both stay intrinsic-width.
             Text(
                 text = stringResource(rootLabelRes(current)),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 4.dp),
+                    .padding(horizontal = 8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // Per-screen actions sit BEFORE the destination switcher so
-            // the three nav icons (Photos / Collections / Settings) stay
-            // in fixed rightmost positions across every root screen.
-            // Settings is always the far-right icon — feels like tabs,
-            // not buttons that jump screen-to-screen.
-            actions()
+            // Destinations cluster on the RIGHT in fixed order: Photos,
+            // Collections, Settings (rightmost — always the far-right
+            // icon, like a settings cog convention). Iterating the list
+            // means Settings always renders last and its visual position
+            // is invariant across every root screen.
             rootDestinations.forEach { dest ->
                 DestinationButton(
                     dest = dest,
