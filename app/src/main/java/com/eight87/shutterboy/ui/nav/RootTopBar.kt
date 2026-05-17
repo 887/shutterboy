@@ -67,31 +67,25 @@ fun RootTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            // Per-screen actions cluster on the LEFT (Search / Sort /
-            // MoreVert / etc.). Different screens have different action
-            // counts; putting them left means variation in count compresses
-            // the title in the middle (weight 1f absorbs it), NOT the
-            // destination strip on the right.
-            actions()
-            // Title in the middle, weight(1f) so it eats all leftover
-            // space + truncates first if anything overflows. This is the
-            // thing that absorbs per-screen variation — the destinations
-            // and the actions both stay intrinsic-width.
+            // Title on the LEFT with weight(1f), absorbing all per-screen
+            // width variation. Per-screen actions (typically a single
+            // Search icon) sit between the title and the destinations —
+            // i.e. directly LEFT of the Photos tab — per user UX call.
             Text(
                 text = stringResource(rootLabelRes(current)),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp),
+                    .padding(start = 4.dp, end = 8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // Destinations cluster on the RIGHT in fixed order: Photos,
-            // Collections, Settings (rightmost — always the far-right
-            // icon, like a settings cog convention). Iterating the list
-            // means Settings always renders last and its visual position
-            // is invariant across every root screen.
+            actions()
+            // Destinations cluster on the FAR RIGHT in fixed order:
+            // Photos, Collections, Settings (rightmost — always the
+            // far-right icon). Settings's position is invariant across
+            // every root screen.
             rootDestinations.forEach { dest ->
                 DestinationButton(
                     dest = dest,

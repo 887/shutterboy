@@ -29,10 +29,8 @@ import com.eight87.shutterboy.ui.nav.Photos
 import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Search
-import com.eight87.shutterboy.ui.nav.Slideshow
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
-import com.eight87.shutterboy.ui.sort.SortOverflowAction
 import kotlinx.coroutines.launch
 
 /**
@@ -97,26 +95,19 @@ fun PhotosScreen(
                         current = Photos,
                         onSelect = { dest -> scope.backStack.selectTab(dest) },
                     ) {
+                        // Search sits directly left of the Photos tab.
+                        // Sort lives on Settings → Photos → Default sort
+                        // (canonical surface); the kebab overflow was
+                        // unused here, so it's gone. Slideshow can be
+                        // started from FolderDetail's overflow + Search
+                        // results — Photos timeline doesn't need its own
+                        // entry point until a real use case shows up.
                         IconButton(onClick = { scope.backStack.push(Search) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Search,
                                 contentDescription = stringResource(R.string.cd_search_open),
                             )
                         }
-                        SortOverflowAction(
-                            sort = sort,
-                            onSortChanged = { newSort ->
-                                coroutineScope.launch {
-                                    scope.sortPreferences.setPhotosSort(newSort)
-                                }
-                            },
-                            onStartSlideshow = {
-                                val ids = allPhotos.map { it.id.value }
-                                if (ids.isNotEmpty()) {
-                                    scope.backStack.push(Slideshow(backingIds = ids))
-                                }
-                            },
-                        )
                     }
                     com.eight87.shutterboy.ui.nav.ScanProgressStrip(
                         scanner = scope.libraryScanner,
