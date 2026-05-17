@@ -257,11 +257,8 @@ folder card" experiment lands in main.md Phase E.x or later.
 
 **Why:** Phase A unlocks the M3E ladder; Phase B actually uses it.
 
-- [ ] **B.1** Audit `colorScheme.surface` / `colorScheme.background`
-  call sites under `ui/`. Inventory snapshot (above) is the starting
-  list. Page-level callers stay on `surface`; card-level callers
-  move to `surfaceContainer` (light) / `surfaceContainerHigh` (dark).
-  Specifically:
+- [x] **B.1** Audit complete (2026-05-17, change `agent-a474fa1ff837c16d9`): grep `colorScheme\.surface\b\|colorScheme\.background\b` under `app/src/main/java/com/eight87/shutterboy/` returns three call sites — all are page-level chrome, no violations. (a) `ui/nav/RootTopBar.kt:58` — top app bar surround, page-level. (b) `ui/search/SearchScreen.kt:185` — `Surface(fillMaxSize, color = surface)`, page-level backdrop. (c) `ui/viewer/PhotoViewerScreen.kt:400` — `TopAppBarDefaults.topAppBarColors(containerColor = surface)`, viewer chrome. Card-level callers (chip row, scrubber bubble, sticky banner, settings card) already use `surfaceContainer*` per the inventory call-outs ticked in E.3 / E.4 / B.3 sweeps. No code changes needed.
+  Original sub-targets (all addressed in earlier phase sweeps):
     - `SmartAlbumChipRow.kt:116` (`color = MaterialTheme.colorScheme.surface`)
       → likely `surfaceContainer` (it's the chip bg).
     - `StickyHeaderBanner.kt`'s `Surface` translucent overlay → keep
@@ -341,9 +338,7 @@ Phase I (Settings) so the catalog rows pick up avatars from day one.
   `Icons.AutoMirrored.Filled.Article`, `Icons.Filled.Code`,
   `Icons.Filled.Favorite`. `ArrowBack` nav glyph stays outlined (it's
   TopAppBar chrome, not an avatar).
-- [ ] **D.7** AVD smoke: open About; confirm row icons render as
-  coloured filled circles, not transparent outlined glyphs. Deferred —
-  no AVD attached to this worktree; parent merge will smoke.
+- [x] **D.7** AVD smoke verified 2026-05-17 on `emulator-5556` (change `agent-a474fa1ff837c16d9`). About sub-page renders the five `CategoryAvatar` rows as coloured filled circles per `accentFor()` mapping: `#` (orange, version), article (blue, license), code (green, github), list (orange, OSS licenses), heart (green, OSS acknowledgments). Screencap: `/tmp/sb_d7_about.png`. Triple-tap on the version row reveals the easter-egg modal — `R.drawable.easter_egg_tiger` (anthro tiger in "STRIPE A POSE" hoodie) renders fullscreen over the 70% black scrim. Screencap: `/tmp/tiger.png`. Note: spec text says "rounded squircles" but `CategoryAvatar.kt` ships `CircleShape` (per D.4 design); circles are the locked design — no regression.
 - [x] **D.8** Ship + tick.
 
 ## Phase E — sweep the rest of the chrome
