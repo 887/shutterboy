@@ -106,7 +106,7 @@ exist on Maven). Bump both back to stable when an AGP-9-compatible
 ## Phase G — measure, don't guess
 
 - [x] **G.1** Latest measurement (post m3-expressive + viewer + search + oss-licenses) on `emulator-5556`: TotalTime samples 1015 / 1051 / 1056 / 1063 / 1264 ms → median **1056 ms**, well under 1300 ms. Re-measure before each release tag.
-- [ ] **G.2** When MainActivity LOC creeps above 50 lines, **revisit this plan before merging**. That's almost always a sign that work has migrated to the critical path.
+- [x] **G.2** Audit clean (2026-05-17, change `agent-a474fa1ff837c16d9`). `wc -l app/src/main/java/com/eight87/shutterboy/MainActivity.kt` = **48 LOC**, two under the ceiling. Nothing has crept onto the critical path. Standing rule — re-check before each major UI merge.
 
 ## Status: ✅ MAINTENANCE — standing rules in force
 

@@ -43,7 +43,7 @@ These rules are non-negotiable from Phase A onward. CLAUDE.md's "Design principl
 - [x] **R.A.4** UI call sites take the narrow interface from the start (Phase C onward).
 - [x] **R.A.5** Data → UI imports are forbidden by the cross-cutting rule above. `ScanConfigSource` interface defined in `data/` for the settings → scanner dependency; `SettingsRepository` implements it (Phase A.5 + Phase B.4).
 - [x] **R.A.6** `RoomGalleryRepository` constructor takes all collaborators explicitly from `AppGraph`. No constructor self-defaults.
-- [ ] **R.A.7** Verification gate: when Phase B ships, audit the actual repo against these rules.
+- [x] **R.A.7** Audit clean (2026-05-17, change `agent-a474fa1ff837c16d9`). Grep `RoomGalleryRepository` under `app/src/main/java/com/eight87/shutterboy/ui/` returns **one** match — `ui/search/SearchQueryTokens.kt:6`, a doc-comment reference to `RoomGalleryRepository.searchPhotos` (not an import / not a type reference). No wholesale-repo type imports in any UI consumer. Every UI screen pulls narrow facets (`PhotoSource`, `FolderSource`, `PhotoSearch`, `FavoriteCommands`, `PhotoDeleter`, `MediaChangeSource`, `LibraryScanner`, `PhotoMover`) off `RouteScope`, never the concrete repo type. R.A rules hold.
 
 ---
 
@@ -57,7 +57,7 @@ These rules are non-negotiable from Phase A onward. CLAUDE.md's "Design principl
 - [x] **R.B.4** Sub-pages take only their facet — never the wholesale `SettingsRepository`.
 - [x] **R.B.5** `SettingsSnapshot` mega-Flow forbidden by the cross-cutting rule above.
 - [x] **R.B.6** UI-only helpers (theme picker options, tab-order parsing) live in `ui/settings/` from day one, never in the data repo.
-- [ ] **R.B.7** Verification gate: when Phase I ships, audit the actual settings layout against these rules.
+- [x] **R.B.7** Audit clean (2026-05-17, change `agent-a474fa1ff837c16d9`). `app/src/main/java/com/eight87/shutterboy/data/settings/` contains **eight narrow `*Preferences.kt` facets** (`ThemePreferences`, `DisplayPreferences`, `SortPreferences`, `SlideshowPreferences`, `SafSourcesPreferences`, `ScanGatePreferences`, `RecentSearchesPreferences`, `CustomOrderPreferences`) each with a sibling `DataStore*Preferences.kt` concrete impl. No `SettingsSnapshot` god object exists anywhere in the codebase (grep returns zero hits). No monolithic `SettingsRepository` class — sub-pages take only their facet via `RouteScope`. R.B rules hold.
 
 ---
 
@@ -69,7 +69,7 @@ These rules are non-negotiable from Phase A onward. CLAUDE.md's "Design principl
 - Any future cross-cutting controller (slideshow timer, multi-select state hoisting, etc.).
 
 - [x] **R.C.1** Phase B.2/B.3/B.4 split scanning into three pure components by axis. No mega-`GalleryController`.
-- [ ] **R.C.2** Watch for accidental controller-bloat during Phase C–G; flag as a backlog item if a single class crosses ~5 axes.
+- [x] **R.C.2** Audit (2026-05-17, change `agent-a474fa1ff837c16d9`). Reviewed suspects: `RoomGalleryRepository` is 492 LOC and implements **eight** narrow facets (`PhotoSource`, `FolderSource`, `PhotoSearch`, `LibraryScanner`, `FavoriteCommands`, `PhotoDeleter`, `PhotoMover`, `MediaChangeSource`). Numerically crosses the ~5-axes line, but each facet here is an *external contract* (one method group per interface) where the class is the data-layer composition root, not an internal-axis bloat: heavy lifting is already split into collaborators (`MediaStoreScanner`, `ExifEnricher`, `SafSourceManager`, `*Dao`s) injected through the constructor. The eight-facet shape was a locked decision in R.A.1/R.A.2 — "one class, multiple narrow contracts" is the intended composition. No controller-bloat backlog item filed. If a ninth facet is added or any single facet's method count balloons past ~6, revisit by extracting per-facet implementer classes.
 
 ---
 
@@ -81,7 +81,7 @@ These rules are non-negotiable from Phase A onward. CLAUDE.md's "Design principl
 - [x] **R.D.2** `GallerySurface<T>` interface (`observe(filter)`, `sectionKey(item)`, `comparator(sort)`, `Tile(item, callbacks)`) defined when Phase D adds the second similar surface. One renderer engine, multiple strategies.
 - [x] **R.D.3** Multi-select state via `rememberSelectionState()` — pure transition methods, unit-testable. Locked into Phase H.
 - [x] **R.D.4** Sort comparators in pure `LibrarySorting.kt` (or `PhotoSorting.kt`) — testable without Compose.
-- [ ] **R.D.5** Verification gate: when Phase D ships and there are two `GallerySurface` impls, audit for duplicate logic that should have been in the engine.
+- [x] **R.D.5** Audit clean (2026-05-17, change `agent-a474fa1ff837c16d9`). Two timeline impls: `PhotosScreen.kt` (141 LOC) and `ui/collections/FolderDetailScreen.kt` (149 LOC). Both delegate to the shared `ui/photos/grid/GalleryTimelineFrame.kt` (52 LOC) + `PhotoStream` (27 LOC). The only per-screen logic is (a) sort-source wiring (`observePhotosSort()` vs `observeFolderSort(folderId)`) and (b) `Scaffold` top-bar (Root + sort overflow vs back-arrow + sort overflow) and (c) `rememberSelectionMoveHandler(sourceFolderId = null|folderId)`. All three differ by *configuration*, not duplicate logic — the timeline rendering, density grid, scrubber, sticky banner, empty state, selection holder, and viewer navigation already live in the shared engine. No extraction needed.
 
 ---
 
@@ -94,7 +94,7 @@ These rules are non-negotiable from Phase A onward. CLAUDE.md's "Design principl
 - [x] **R.E.3** `ShutterboyApp.kt` ceiling: 150 LOC. Anything beyond means a route renderer leaked back inline; extract.
 - [x] **R.E.4** Cross-cutting concerns (SAF picker for delete-consent, share-intent launcher, slideshow scope picker) lifted into `remember*Controller` helpers. Not inline in `ShutterboyApp`.
 - [x] **R.E.5** `SessionActivityIntentFactory` interface defined when the first background scope (rescan worker, watcher service) needs an Activity intent. Service layer never imports the UI module.
-- [ ] **R.E.6** Verification gate: at end of Phase E, `ShutterboyApp.kt` LOC count audited against the 150 ceiling.
+- [x] **R.E.6** Audit clean (2026-05-17, change `agent-a474fa1ff837c16d9`). `wc -l app/src/main/java/com/eight87/shutterboy/ui/nav/ShutterboyApp.kt` = **109 LOC**, well under the 150 ceiling. No route renderer leaked back inline — every `Destination` is dispatched through a `Register(scope)` extension in `ui/nav/routes/*`.
 
 ---
 
