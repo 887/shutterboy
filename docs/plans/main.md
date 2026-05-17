@@ -182,7 +182,7 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
   - [ ] **I.3.d** Confirmation dialog on Rescan (deferred until a destructive cost shows up — the current incremental scan is cheap).
 - [ ] **I.4** Photos sub-page — Default sort, Date-header style (Subtle / Bold / Hidden), Year-scrubber (Always visible / Reveal on scroll / Off), Density on launch (default vs last-used).
 - [ ] **I.5** Albums sub-page — Default sort, Hide empty folders toggle, Show smart-album chip row toggle.
-- [ ] **I.6** About sub-page — Build version (triple-tap → easter egg modal), License (MIT, opens dialog with full text), GitHub link (`https://github.com/887/shutterboy`), Open-source acknowledgments.
+- [ ] **I.6** About sub-page — Build version (triple-tap → easter egg modal), License (MIT, opens dialog with full text), GitHub link (`https://github.com/887/shutterboy`), Open-source acknowledgments (Licensee-driven sub-page; see [`oss-licenses.md`](oss-licenses.md), Phases A + B + C all shipped — this I.6 step is the About-page row that links to it).
 - [ ] **I.7** Search overlay — same pattern as tonearmboy's `SettingsSearch`. Catalog-driven, breadcrumb subtitle, tap pops overlay + scrolls + flashes the matched row for 300 ms.
 - [ ] **I.8** Robolectric: catalog wiring (every entry has a unique id + reachable destination), breadcrumb derivation, search filter against label / subtitle / keywords.
 
