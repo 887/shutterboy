@@ -74,6 +74,10 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 # Coil 3 — Compose-native image loading. Backs every thumbnail + fullscreen view.
 coil3-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
+# Coil 3 video-frame decoder — extracts a thumbnail frame from
+# `content://media/video/*` URIs via MediaMetadataRetriever. Registered
+# via the ImageLoader factory so AsyncImage handles video uniformly.
+coil3-video = { module = "io.coil-kt.coil3:coil-video", version.ref = "coil3" }
 # SplashScreen 1.x compatibility shim — Theme.SplashScreen parent + installSplashScreen().
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 # ExifInterface — capture date, lens, focal length, aperture, ISO, GPS subset.

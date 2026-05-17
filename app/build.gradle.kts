@@ -167,8 +167,9 @@ dependencies {
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
-  // Image loading
+  // Image loading + video-frame thumbnails
   implementation(libs.coil3.compose)
+  implementation(libs.coil3.video)
 
   // EXIF metadata
   implementation(libs.androidx.exifinterface)

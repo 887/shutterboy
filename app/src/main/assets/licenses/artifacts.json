@@ -2352,6 +2352,22 @@
         }
     },
     {
+        "groupId": "io.coil-kt.coil3",
+        "artifactId": "coil-video",
+        "version": "3.1.0",
+        "name": "coil-video",
+        "spdxLicenses": [
+            {
+                "identifier": "Apache-2.0",
+                "name": "Apache License 2.0",
+                "url": "https://www.apache.org/licenses/LICENSE-2.0"
+            }
+        ],
+        "scm": {
+            "url": "https://github.com/coil-kt/coil"
+        }
+    },
+    {
         "groupId": "org.jetbrains",
         "artifactId": "annotations",
         "version": "23.0.0",
