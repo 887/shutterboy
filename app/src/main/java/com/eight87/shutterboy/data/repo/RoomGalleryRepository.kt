@@ -218,6 +218,38 @@ class RoomGalleryRepository(
         return scanIfChanged()
     }
 
+    /**
+     * Phase I.3.d — destructive reset. Wipes every Room row this
+     * repository owns (favorites first because of FK against photos,
+     * then photos which cascades into the `photo_fts` content shadow,
+     * then folders, plus a defensive `photo_fts` truncate) and clears
+     * the cold-start scan gate. Then re-runs the full scan via the
+     * normal [scanIfChanged] path, which now sees an empty gate + empty
+     * DB and re-walks everything from scratch.
+     *
+     * Sequential (not a single SQLite transaction) — the DAO layer
+     * doesn't expose a `withTransaction` block from here, and this is
+     * a user-initiated wipe so a mid-flight crash leaves the cache
+     * empty, which is the same observable state as "we never
+     * succeeded": the next launch's `scanIfChanged` rebuilds from
+     * zero.
+     */
+    override suspend fun resetAndRescan(): LibrarySnapshot {
+        Log.i("shutterboy", "resetAndRescan: wiping Room cache + scan gate")
+        _scanProgress.value = ScanProgress.Running(processed = 0, total = null)
+        // FK order: favorites first (depend on photos), then photos
+        // (cascades into the `photo_fts` content shadow), then folders.
+        // `searchDao.deleteAll()` is a defensive second pass over the
+        // FTS shadow — already empty after the photos truncate, but
+        // keeps the wipe explicit rather than implicit.
+        favoriteDao.deleteAll()
+        photoDao.deleteAll()
+        searchDao.deleteAll()
+        folderDao.deleteAll()
+        scanGate.clear()
+        return scanIfChanged()
+    }
+
     private suspend fun executeScan(): LibrarySnapshot {
         // 1. Scan device media-store + SAF trees
         val device = mediaStoreScanner.scanDeviceMediaStore()

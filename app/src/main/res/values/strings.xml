@@ -178,6 +178,21 @@
     <string name="settings_library_rescan_subtitle">Force a fresh scan</string>
     <string name="settings_library_rescan_in_progress">Rescanning…</string>
     <string name="settings_library_rescan_complete">Rescan complete — %1$d photos</string>
+    <!-- Phase I.3.d — light confirm before kicking off a rescan. -->
+    <string name="settings_library_rescan_dialog_title">Rescan now?</string>
+    <string name="settings_library_rescan_dialog_body">Re-walks every source and updates the local cache. Existing photos stay; only new or removed files are reconciled.</string>
+    <string name="settings_library_rescan_confirm">Rescan</string>
+    <string name="settings_library_rescan_cancel">Cancel</string>
+
+    <!-- Phase I.3.d — destructive reset of the local Room cache. -->
+    <string name="settings_library_reset">Reset library cache</string>
+    <string name="settings_library_reset_subtitle">Wipes the local Room cache and re-walks every source. Use if photos are missing or the gallery looks out of sync.</string>
+    <string name="settings_library_reset_dialog_title">Reset library cache?</string>
+    <string name="settings_library_reset_dialog_body">Deletes every cached photo row, folder row, favorite, and search-index entry, then re-scans every source from scratch. Photo files on disk are not touched.</string>
+    <string name="settings_library_reset_confirm">Reset</string>
+    <string name="settings_library_reset_cancel">Cancel</string>
+    <string name="settings_library_reset_in_progress">Resetting…</string>
+    <string name="settings_library_reset_complete">Reset complete — %1$d photos</string>
 
     <!-- Phase I.3.b — Manage sources sub-page. -->
     <string name="settings_library_manage_sources">Manage sources</string>

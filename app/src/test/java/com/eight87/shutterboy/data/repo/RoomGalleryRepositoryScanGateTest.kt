@@ -4,6 +4,9 @@ import android.Manifest
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import org.robolectric.Shadows.shadowOf
+import com.eight87.shutterboy.data.db.PhotoEntity
+import com.eight87.shutterboy.data.db.FolderEntity
+import com.eight87.shutterboy.data.db.PhotoFavoriteEntity
 import com.eight87.shutterboy.data.db.ShutterboyDatabase
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
@@ -200,6 +203,70 @@ class RoomGalleryRepositoryScanGateTest {
             gate.mediaStoreWrites.isEmpty(),
         )
         assertEquals(1, gate.safWrites.size)
+    }
+
+    @Test
+    fun `resetAndRescan wipes Room rows + clears the gate then re-runs the scan`() = runTest {
+        val gate = RecordingScanGate(initialMediaStoreToken = 42L, initialSaf = mapOf("a" to 1))
+        val repo = makeRepo(gate, FixedGenerationSource(42L))
+
+        // Pre-seed Room with a folder + photo + favorite so we can prove the
+        // wipe actually deleted rows rather than no-opping.
+        db.folders().upsertAll(
+            listOf(
+                FolderEntity(
+                    id = 100L,
+                    displayName = "Seed",
+                    sourceType = "DEVICE",
+                    safTreeUri = null,
+                    photoCount = 1,
+                    coverPhotoId = 200L,
+                ),
+            ),
+        )
+        db.photos().upsertAll(
+            listOf(
+                PhotoEntity(
+                    id = 200L,
+                    contentUri = "content://seed/200",
+                    displayName = "seed.jpg",
+                    dateTakenMs = 1L,
+                    dateAddedMs = 1L,
+                    width = 10,
+                    height = 10,
+                    sizeBytes = 100L,
+                    mimeType = "image/jpeg",
+                    folderId = 100L,
+                ),
+            ),
+        )
+        db.favorites().add(PhotoFavoriteEntity(photoId = 200L))
+
+        // Sanity: rows are there.
+        assertEquals(1, db.photos().allIds().size)
+        assertEquals(1, db.folders().allIds().size)
+        assertTrue(db.favorites().isFavorite(200L))
+
+        repo.resetAndRescan()
+
+        // Wipe must have run; the (empty) MediaStore + (empty) SAF re-scan
+        // leaves us at zero rows.
+        assertTrue(
+            "photos table must be empty after resetAndRescan",
+            db.photos().allIds().isEmpty(),
+        )
+        assertTrue(
+            "folders table must be empty after resetAndRescan",
+            db.folders().allIds().isEmpty(),
+        )
+        assertFalse(
+            "favorites must be wiped after resetAndRescan",
+            db.favorites().isFavorite(200L),
+        )
+        // Scan gate must have been cleared (clear() recorded once) AND the
+        // subsequent scanIfChanged re-seeded the SAF fingerprint.
+        assertEquals(1, gate.clears)
+        assertTrue(gate.safWrites.isNotEmpty())
     }
 
     @Test

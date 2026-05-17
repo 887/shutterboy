@@ -36,4 +36,13 @@ interface PhotoSearchDao {
         """
     )
     fun observeByFolderNameLike(pattern: String): Flow<List<PhotoEntity>>
+
+    /**
+     * Phase I.3.d — destructive wipe used by `LibraryScanner.resetAndRescan`.
+     * `photo_fts` is a `contentEntity = PhotoEntity` shadow, so deleting
+     * from `photos` already cascades; this call is defensive belt-and-
+     * braces and a no-op once the photos table is empty.
+     */
+    @Query("DELETE FROM photo_fts")
+    suspend fun deleteAll()
 }

@@ -21,4 +21,8 @@ interface FolderDao {
 
     @Query("SELECT id FROM folders")
     suspend fun allIds(): List<Long>
+
+    /** Phase I.3.d — destructive wipe used by `LibraryScanner.resetAndRescan`. */
+    @Query("DELETE FROM folders")
+    suspend fun deleteAll()
 }

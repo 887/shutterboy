@@ -10,11 +10,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CleaningServices
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,11 +40,10 @@ import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
 import kotlinx.coroutines.launch
 
 /**
- * Settings → Library sub-page (main.md I.3). Rescan + Clear cache today;
- * Manage sources lands when the SAF source manager UI lands. Both
- * actions surface a snackbar via the shared host. Clear-cache prompts
- * for confirmation since it's destructive of thumbnails (regenerated on
- * next view).
+ * Settings → Library sub-page (main.md I.3). Rescan + Clear thumbnails +
+ * Reset library cache + Manage sources. Each destructive action has its
+ * own confirm dialog: Rescan is a light one-liner (I.3.d), Clear cache
+ * + Reset get heavier bodies explaining what's wiped.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,10 +54,14 @@ fun SettingsLibraryScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var showClearConfirm by remember { mutableStateOf(false) }
+    var showRescanConfirm by remember { mutableStateOf(false) }
+    var showResetConfirm by remember { mutableStateOf(false) }
 
     val rescanInProgress = stringResource(R.string.settings_library_rescan_in_progress)
     val rescanCompleteFormat = stringResource(R.string.settings_library_rescan_complete)
     val clearComplete = stringResource(R.string.settings_library_clear_cache_complete)
+    val resetInProgress = stringResource(R.string.settings_library_reset_in_progress)
+    val resetCompleteFormat = stringResource(R.string.settings_library_reset_complete)
 
     Scaffold(
         topBar = {
@@ -93,15 +98,7 @@ fun SettingsLibraryScreen(
                     icon = Icons.Filled.Refresh,
                     label = stringResource(R.string.settings_library_rescan),
                     subtitle = stringResource(R.string.settings_library_rescan_subtitle),
-                    onClick = {
-                        coroutineScope.launch { scope.snackbar.showSnackbar(rescanInProgress) }
-                        coroutineScope.launch {
-                            val snapshot = scope.libraryScanner.forceRescan()
-                            scope.snackbar.showSnackbar(
-                                rescanCompleteFormat.format(snapshot.photos.size),
-                            )
-                        }
-                    },
+                    onClick = { showRescanConfirm = true },
                 )
                 SettingsRow(
                     id = "settings_library_manage_sources",
@@ -116,6 +113,13 @@ fun SettingsLibraryScreen(
                     label = stringResource(R.string.settings_library_clear_cache),
                     subtitle = stringResource(R.string.settings_library_clear_cache_subtitle),
                     onClick = { showClearConfirm = true },
+                )
+                SettingsRow(
+                    id = "settings_library_reset",
+                    icon = Icons.Outlined.DeleteForever,
+                    label = stringResource(R.string.settings_library_reset),
+                    subtitle = stringResource(R.string.settings_library_reset_subtitle),
+                    onClick = { showResetConfirm = true },
                 )
             }
         }
@@ -140,6 +144,63 @@ fun SettingsLibraryScreen(
             dismissButton = {
                 TextButton(onClick = { showClearConfirm = false }) {
                     Text(stringResource(R.string.settings_library_clear_cache_cancel))
+                }
+            },
+        )
+    }
+
+    if (showRescanConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRescanConfirm = false },
+            title = { Text(stringResource(R.string.settings_library_rescan_dialog_title)) },
+            text = { Text(stringResource(R.string.settings_library_rescan_dialog_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRescanConfirm = false
+                    coroutineScope.launch { scope.snackbar.showSnackbar(rescanInProgress) }
+                    coroutineScope.launch {
+                        val snapshot = scope.libraryScanner.forceRescan()
+                        scope.snackbar.showSnackbar(
+                            rescanCompleteFormat.format(snapshot.photos.size),
+                        )
+                    }
+                }) {
+                    Text(stringResource(R.string.settings_library_rescan_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRescanConfirm = false }) {
+                    Text(stringResource(R.string.settings_library_rescan_cancel))
+                }
+            },
+        )
+    }
+
+    if (showResetConfirm) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirm = false },
+            title = { Text(stringResource(R.string.settings_library_reset_dialog_title)) },
+            text = { Text(stringResource(R.string.settings_library_reset_dialog_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showResetConfirm = false
+                    coroutineScope.launch { scope.snackbar.showSnackbar(resetInProgress) }
+                    coroutineScope.launch {
+                        val snapshot = scope.libraryScanner.resetAndRescan()
+                        scope.snackbar.showSnackbar(
+                            resetCompleteFormat.format(snapshot.photos.size),
+                        )
+                    }
+                }) {
+                    Text(
+                        text = stringResource(R.string.settings_library_reset_confirm),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirm = false }) {
+                    Text(stringResource(R.string.settings_library_reset_cancel))
                 }
             },
         )
