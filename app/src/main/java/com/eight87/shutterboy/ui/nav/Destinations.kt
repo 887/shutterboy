@@ -55,6 +55,16 @@ data object SettingsLookAndFeel : Destination
 data object SettingsManageSources : Destination
 
 /**
+ * Phase I.7 — fullscreen settings search overlay. Pushed from the
+ * Settings root TopAppBar search icon. Pill-shaped TextField at the top,
+ * catalog-driven result list below; tapping a result fires the entry's
+ * `navigate` lambda, which pushes the hosting sub-page and seeds the
+ * row-flash channel for a 300 ms highlight on arrival.
+ */
+@Serializable
+data object SettingsSearch : Destination
+
+/**
  * Phase G — fullscreen search overlay. Pushed from the Photos TopAppBar
  * search icon. Pill-shaped search field at the top, filter chip row, results
  * grid below; recent searches below the field when it's empty + focused.

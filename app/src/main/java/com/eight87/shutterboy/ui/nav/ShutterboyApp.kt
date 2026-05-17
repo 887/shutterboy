@@ -22,6 +22,8 @@ import com.eight87.shutterboy.AppGraph
 import com.eight87.shutterboy.data.settings.ThumbnailQuality
 import com.eight87.shutterboy.ui.nav.routes.Register
 import com.eight87.shutterboy.ui.photos.grid.LocalThumbnailQuality
+import com.eight87.shutterboy.ui.settings.catalog.FlashRowController
+import com.eight87.shutterboy.ui.settings.catalog.LocalHighlightedSettingId
 
 /**
  * R.E.3 — root composable. Top-bar destination switcher (per-screen
@@ -50,7 +52,13 @@ fun ShutterboyApp(graph: AppGraph) {
     val thumbnailQuality by graph.displayPreferences.observeThumbnailQuality()
         .collectAsStateWithLifecycle(initialValue = ThumbnailQuality.Medium)
 
-    CompositionLocalProvider(LocalThumbnailQuality provides thumbnailQuality) {
+    CompositionLocalProvider(
+        LocalThumbnailQuality provides thumbnailQuality,
+        // I.7 — wire the settings-search flash channel into composition
+        // so any [SettingsRow] whose id matches `FlashRowController.state`
+        // briefly highlights on arrival from the search overlay.
+        LocalHighlightedSettingId provides FlashRowController.state,
+    ) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         // m3-expressive B.5 — outer Scaffold yields the status-bar inset
@@ -83,6 +91,7 @@ fun ShutterboyApp(graph: AppGraph) {
                             entry<SettingsLibrary> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsLookAndFeel> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsManageSources> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsSearch> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<Search> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsAbout> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<Licenses> { WithNavAnimatedContentScope { it.Register(scope) } }
