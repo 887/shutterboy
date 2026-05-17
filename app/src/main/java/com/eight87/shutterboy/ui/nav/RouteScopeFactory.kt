@@ -31,6 +31,7 @@ fun rememberRouteScope(
             override val themePreferences = graph.themePreferences
             override val displayPreferences = graph.displayPreferences
             override val safSourcesPreferences = graph.safSourcesPreferences
+            override val slideshowPreferences = graph.slideshowPreferences
         }
     }
 }

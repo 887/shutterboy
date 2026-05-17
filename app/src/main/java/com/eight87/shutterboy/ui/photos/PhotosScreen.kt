@@ -29,6 +29,7 @@ import com.eight87.shutterboy.ui.nav.Photos
 import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Search
+import com.eight87.shutterboy.ui.nav.Slideshow
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 import com.eight87.shutterboy.ui.sort.SortOverflowAction
@@ -106,6 +107,12 @@ fun PhotosScreen(
                         onSortChanged = { newSort ->
                             coroutineScope.launch {
                                 scope.sortPreferences.setPhotosSort(newSort)
+                            }
+                        },
+                        onStartSlideshow = {
+                            val ids = allPhotos.map { it.id.value }
+                            if (ids.isNotEmpty()) {
+                                scope.backStack.push(Slideshow(backingIds = ids))
                             }
                         },
                     )

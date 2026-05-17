@@ -251,4 +251,9 @@
     <!-- Phase J — Slideshow. -->
     <string name="slideshow_paused">Paused</string>
     <string name="cd_slideshow_back">Exit slideshow</string>
+    <string name="slideshow_start_menu_label">Start slideshow</string>
+
+    <!-- Phase J.2 — Ken Burns toggle on Settings → Photos. -->
+    <string name="settings_photos_ken_burns_label">Ken Burns effect</string>
+    <string name="settings_photos_ken_burns_subtitle">Slow zoom and pan during each slide</string>
 </resources>

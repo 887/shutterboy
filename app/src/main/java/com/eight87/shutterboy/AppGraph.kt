@@ -24,10 +24,12 @@ import com.eight87.shutterboy.data.settings.DataStoreDisplayPreferences
 import com.eight87.shutterboy.data.settings.DataStoreRecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.DataStoreSafSourcesPreferences
 import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
+import com.eight87.shutterboy.data.settings.DataStoreSlideshowPreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.DataStoreThemePreferences
 import com.eight87.shutterboy.data.settings.DisplayPreferences
 import com.eight87.shutterboy.data.settings.RecentSearchesPreferences
+import com.eight87.shutterboy.data.settings.SlideshowPreferences
 import com.eight87.shutterboy.data.settings.SafSourcesPreferences
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
@@ -118,4 +120,8 @@ class AppGraph(applicationContext: Context) {
     /** Look-and-Feel I.2 — default grid density + thumbnail quality. */
     val displayPreferences: DisplayPreferences =
         DataStoreDisplayPreferences(appCtx.shutterboyPrefs)
+
+    /** Phase J.2 — DataStore-backed slideshow toggles (Ken Burns, future dwell). */
+    val slideshowPreferences: SlideshowPreferences =
+        DataStoreSlideshowPreferences(appCtx.shutterboyPrefs)
 }

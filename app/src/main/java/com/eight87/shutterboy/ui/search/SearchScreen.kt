@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,11 +63,13 @@ import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.nav.Slideshow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 
 internal const val SEARCH_FIELD_TAG = "search_field"
 internal const val SEARCH_RESULTS_GRID_TAG = "search_results_grid"
+internal const val SEARCH_SLIDESHOW_BUTTON_TAG = "search_slideshow_button"
 
 /**
  * Phase G.5 — milliseconds the trimmed query must stay stable before we
@@ -92,6 +95,9 @@ fun SearchScreen(
         onResultTap = { photoId, backingIds ->
             scope.backStack.push(PhotoViewer(photoId, backingIds))
         },
+        onStartSlideshow = { backingIds ->
+            scope.backStack.push(Slideshow(backingIds = backingIds))
+        },
         modifier = modifier,
     )
 }
@@ -101,6 +107,7 @@ internal fun SearchScreenContent(
     photoSearch: PhotoSearch,
     onBack: () -> Unit,
     onResultTap: (Long, List<Long>) -> Unit,
+    onStartSlideshow: (List<Long>) -> Unit = {},
     modifier: Modifier = Modifier,
     nowMs: Long = System.currentTimeMillis(),
 ) {
@@ -138,6 +145,9 @@ internal fun SearchScreenContent(
                 onQueryChange = { query = it },
                 onBack = onBack,
                 onFocusChange = { focused = it },
+                onStartSlideshow = if (filtered.isNotEmpty()) {
+                    { onStartSlideshow(filtered.map { it.id.value }) }
+                } else null,
             )
             FilterChipRow(
                 active = activeFilters.toSet(),
@@ -167,6 +177,7 @@ private fun SearchHeader(
     onQueryChange: (String) -> Unit,
     onBack: () -> Unit,
     onFocusChange: (Boolean) -> Unit,
+    onStartSlideshow: (() -> Unit)? = null,
 ) {
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
@@ -184,7 +195,7 @@ private fun SearchHeader(
         Surface(
             modifier = Modifier
                 .padding(start = 4.dp, end = 4.dp)
-                .fillMaxWidth(),
+                .weight(1f),
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
@@ -225,6 +236,17 @@ private fun SearchHeader(
                     disabledIndicatorColor = Color.Transparent,
                 ),
             )
+        }
+        if (onStartSlideshow != null) {
+            IconButton(
+                onClick = onStartSlideshow,
+                modifier = Modifier.testTag(SEARCH_SLIDESHOW_BUTTON_TAG),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Slideshow,
+                    contentDescription = stringResource(R.string.slideshow_start_menu_label),
+                )
+            }
         }
     }
 }

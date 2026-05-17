@@ -108,6 +108,6 @@ exist on Maven). Bump both back to stable when an AGP-9-compatible
 - [x] **G.1** Latest measurement (post m3-expressive + viewer + search + oss-licenses) on `emulator-5556`: TotalTime samples 1015 / 1051 / 1056 / 1063 / 1264 ms → median **1056 ms**, well under 1300 ms. Re-measure before each release tag.
 - [ ] **G.2** When MainActivity LOC creeps above 50 lines, **revisit this plan before merging**. That's almost always a sign that work has migrated to the critical path.
 
-## Status
+## Status: ✅ MAINTENANCE — standing rules in force
 
-This is a **standing-rule plan** — no terminal "DONE". Phase F is the only delta-of-work piece; everything else is preventive. The cost of *not* maintaining it is paying tonearmboy's perf-clawback session over again.
+This is a **standing-rule plan** — no terminal "DONE". Phase F (Baseline Profile scaffold) shipped; everything else is preventive. G.1 cold-start measurement holds at median 1056 ms on `emulator-5556` (post m3-expressive + viewer + search + oss-licenses). G.2 is the standing audit gate. The unchecked items in A–E are "don't do X" rules, not deliverables — they're in force as review criteria for every UI / data-layer commit.

@@ -9,10 +9,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Sort
+import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -48,6 +50,8 @@ fun SettingsPhotosScreen(
 ) {
     val sort by scope.sortPreferences.observePhotosSort()
         .collectAsStateWithLifecycle(initialValue = PhotoSort.Default)
+    val kenBurnsEnabled by scope.slideshowPreferences.observeKenBurnsEnabled()
+        .collectAsStateWithLifecycle(initialValue = true)
     val coroutineScope = rememberCoroutineScope()
     var showSortSheet by remember { mutableStateOf(false) }
 
@@ -87,6 +91,27 @@ fun SettingsPhotosScreen(
                     label = stringResource(R.string.settings_photos_default_sort_label),
                     subtitle = stringResource(sortSummaryRes(sort)),
                     onClick = { showSortSheet = true },
+                )
+                SettingsRow(
+                    id = "settings_photos_ken_burns",
+                    icon = Icons.Outlined.Slideshow,
+                    label = stringResource(R.string.settings_photos_ken_burns_label),
+                    subtitle = stringResource(R.string.settings_photos_ken_burns_subtitle),
+                    onClick = {
+                        coroutineScope.launch {
+                            scope.slideshowPreferences.setKenBurnsEnabled(!kenBurnsEnabled)
+                        }
+                    },
+                    trailing = {
+                        Switch(
+                            checked = kenBurnsEnabled,
+                            onCheckedChange = { value ->
+                                coroutineScope.launch {
+                                    scope.slideshowPreferences.setKenBurnsEnabled(value)
+                                }
+                            },
+                        )
+                    },
                 )
             }
         }

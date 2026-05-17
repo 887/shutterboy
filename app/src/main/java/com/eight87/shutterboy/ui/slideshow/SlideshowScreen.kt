@@ -33,9 +33,11 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.data.repo.PhotoSource
+import com.eight87.shutterboy.data.settings.SlideshowPreferences
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Slideshow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
 /**
@@ -60,10 +62,13 @@ fun SlideshowScreen(
     scope: RouteScope,
     modifier: Modifier = Modifier,
 ) {
+    val kenBurnsEnabled by scope.slideshowPreferences.observeKenBurnsEnabled()
+        .collectAsStateWithLifecycle(initialValue = true)
     SlideshowContent(
         backingIds = destination.backingIds,
         photoSource = scope.photoSource,
         onBack = { scope.backStack.pop() },
+        kenBurnsEnabled = kenBurnsEnabled,
         modifier = modifier,
     )
 }
@@ -78,6 +83,7 @@ internal fun SlideshowContent(
     photoSource: PhotoSource,
     onBack: () -> Unit,
     dwellMs: Long = DEFAULT_DWELL_MS,
+    kenBurnsEnabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(initialPage = 0) { backingIds.size }
@@ -121,6 +127,8 @@ internal fun SlideshowContent(
                 SlideshowPage(
                     photoId = backingIds[page],
                     photoSource = photoSource,
+                    kenBurnsEnabled = kenBurnsEnabled,
+                    dwellMs = dwellMs,
                 )
             }
         }
@@ -139,10 +147,17 @@ internal fun SlideshowContent(
 private fun SlideshowPage(
     photoId: Long,
     photoSource: PhotoSource,
+    kenBurnsEnabled: Boolean,
+    dwellMs: Long,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
     val photo: Photo? by flow.collectAsState(initial = null)
     val context = LocalContext.current
+    val kenBurns = if (kenBurnsEnabled) {
+        rememberKenBurnsModifier(photoId = photoId, dwellMs = dwellMs)
+    } else {
+        Modifier
+    }
 
     Box(
         modifier = Modifier
@@ -163,7 +178,7 @@ private fun SlideshowPage(
                 contentScale = ContentScale.Fit,
                 placeholder = ColorPainter(Color.Black),
                 error = ColorPainter(Color.Black),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().then(kenBurns),
             )
         }
     }

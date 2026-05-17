@@ -1,6 +1,6 @@
 # shutterboy — Material 3 Expressive (M3E) plan
 
-## Status: 🟢 IN PROGRESS — Phases A + B + C + D + E + F shipped; Phase G (drop alpha pin on 1.5.0 stable) remains as a deferred follow-up
+## Status: 🟡 DEFERRED — Phases A + B + C + D + E + F shipped; Phase G is gated on the external `androidx.compose.material3:material3:1.5.0` stable release. Drop the alpha18 override in `gradle/libs.versions.toml` and re-smoke when it lands; no in-repo work is actionable until then.
 
 ## Why this exists
 

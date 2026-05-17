@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ internal fun SortOverflowAction(
     sort: PhotoSort,
     onSortChanged: (PhotoSort) -> Unit,
     modifier: Modifier = Modifier,
+    onStartSlideshow: (() -> Unit)? = null,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var sheetOpen by remember { mutableStateOf(false) }
@@ -63,6 +65,21 @@ internal fun SortOverflowAction(
                     sheetOpen = true
                 },
             )
+            if (onStartSlideshow != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.slideshow_start_menu_label)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Slideshow,
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = {
+                        menuOpen = false
+                        onStartSlideshow()
+                    },
+                )
+            }
         }
     }
 
