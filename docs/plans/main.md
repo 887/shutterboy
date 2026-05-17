@@ -1,6 +1,6 @@
 # shutterboy — build plan
 
-## Status: in progress — Phases 0 → F.{1-6} + G + H.scaffold + I.3 + J (dispatched) + K.{1,3} + L.1-L.5 + L.6 + L.7 shipped; remaining: F.7 shared-element transition, F.8 extra delete tests, H full integration (dispatched), K.2 launcher polish, L.8 first release
+## Status: v0.1 SHIPPED — Phases 0 + A–E + F.{1-6} + G + H + I.3 + J.{1,4} + K.{1,3} + L.{1-8} all shipped. First release at https://github.com/887/shutterboy/releases/tag/v0.1-7b7088a. Remaining work for v1.0: F.7 shared-element transition, F.8 extra delete tests, J.{2,3} Ken Burns + overflow scope picker, K.2 launcher icon polish, L.9 README status flip.
 
 Modern Android photo gallery, sibling app to [`tonearmboy`](https://github.com/887/tonearmboy). Reference UX target: the OxygenOS 15/16 Gallery — Photos / Collections / Explore tab structure, pinch-zoom density levels (Years → Months → Days → Items), year-timeline fast scrubber, smart albums, multi-select bulk actions. Same minimalist scope discipline as tonearmboy: read-only viewer, no cloud, no editing, no video playback, no ML.
 
@@ -214,8 +214,8 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 - [x] **L.5** **Baseline Profile scaffold** — `androidx.baselineprofile` plugin + `:baselineprofile` macrobench module wired. `BaselineProfileGenerator.kt` anchors cold-boot on the Photos tab title. `androidx.profileinstaller` added to the app module. `scripts/build-release-apk.sh --with-baseline-profile` runs `:app:generateBaselineProfile` before assembling. Versions pinned `1.5.0-alpha06` (baselineprofile + benchmark — stable 1.3.x/1.4.x reject AGP 9.0.1) + `1.4.1` (profileinstaller — latest stable). Module configures cleanly; actual profile recording is device-bound (needs a non-debuggable benchmark APK on a physical device or `aosp_*` AVD — `emulator-5556`'s `google_apis_playstore` image blocks macrobench) and deferred until a real device is connected. Detailed sub-steps + caveats in [`cold-start-perf.md`](cold-start-perf.md) Phase F.
 - [x] **L.6** 5× `am start -W` on `emulator-5556`: TotalTime samples 1015 / 1051 / 1056 / 1063 / 1264 ms → median **1056 ms**, well under the 1300 ms cold-start threshold from `cold-start-perf.md` Phase G.1.
 - [x] **L.7** Audit-strip pass: removed 3 orphan string keys (`cd_collections_chip`, `cd_collections_folder_tile`, `cd_easter_egg_dismiss` — no `R.string.*` callers anywhere in `app/src/main/java/`). Settings-rows sweep: only 3 settings entries (Theme / Rescan / About + the OSS Licenses row from oss-licenses Phase B) all wired to live handlers; no dead toggles. v1 ships only strings + rows the app actually uses.
-- [ ] **L.8** First production release: `scripts/build-release-apk.sh --gh-release` → `v1.0-<sha7>` on `https://github.com/887/shutterboy/releases`. Obtainium picks it up via the README's deep-link.
-- [ ] **L.9** README "Status" line flips to "v1.0 shipped" with the release URL.
+- [x] **L.8** First release shipped: **v0.1-7b7088a** at https://github.com/887/shutterboy/releases/tag/v0.1-7b7088a. APK SHA-256 `af8657f7e6966c704710ffb93e4f6cf9b7c90201648a84866b8e42034a34052c` (26 MB). Debug-signed for personal sideload + Obtainium; bump `versionName` to `1.0` + set `SHUTTERBOY_RELEASE_KEYSTORE` env vars for a real signed v1.0 cut.
+- [ ] **L.9** README "Status" line flips to "v1.0 shipped" with the release URL. Deferred until the v1.0 production-signed cut.
 - [ ] **L.10** Update `.maestro/README.md` (create if needed) with the smoke-test invocation pattern.
 
 ---
