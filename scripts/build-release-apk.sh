@@ -114,6 +114,15 @@ echo "[build-release-apk] sha256: ${APK_SHA256}"
 echo "[build-release-apk] symlink: ${OUT_DIR}/latest.apk"
 BUILD_OK=true
 
+# Refresh translation progress table in README before tagging.
+# Idempotent: prints "[translation-progress] README.md updated" but only
+# changes bytes when a locale's coverage actually moved.
+echo "[build-release-apk] refreshing translation-progress README block..."
+bash "${ROOT}/scripts/translation-progress.sh" --update
+if ! git diff --quiet README.md 2>/dev/null; then
+    echo "[build-release-apk] README.md translation table changed — review or commit before tagging"
+fi
+
 # --gh-release: create or amend a tag-versioned GitHub release
 if "${PUSH_TO_GH}"; then
     if ! command -v gh >/dev/null; then

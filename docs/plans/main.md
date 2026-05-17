@@ -240,31 +240,31 @@ Locked constraints (mirror tonearmboy):
 
 Skipped — shutterboy ships with `stringResource(R.string.…)` from Phase A onward (locked in **Phase 0.8**). Every user-facing string already lives in `app/src/main/res/values/strings.xml` by the time Phase L closes; no back-extraction phase needed. tonearmboy's T.A (357-string mechanical pass) is the cost shutterboy pays nothing for by starting clean.
 
-### T.B — locale infrastructure
+### T.B — locale infrastructure — shipped
 
-- [ ] **T.B.1** Confirm `<application>` doesn't pin a locale (default behaviour follows system locale). Already confirmed in Phase 0.8; this is a re-verification once real UI exists.
-- [ ] **T.B.2** Confirm the `<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">` lint-anchor is intact in `values/strings.xml` — Phase 0.8 added it; this verifies it survived through Phase L.
-- [ ] **T.B.3** AVD locale-switch smoke under `de-DE` with **no** `values-de/` directory yet. Confirm every screen renders English (the fallback path) and nothing crashes on `getString` lookups. This proves the layout works before the first locale lands.
-- [ ] **T.B.4** Ship + tick.
+- [x] **T.B.1** Confirm `<application>` doesn't pin a locale (default behaviour follows system locale). Already confirmed in Phase 0.8; this is a re-verification once real UI exists.
+- [x] **T.B.2** Confirm the `<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">` lint-anchor is intact in `values/strings.xml` — Phase 0.8 added it; this verifies it survived through Phase L.
+- [x] **T.B.3** AVD locale-switch smoke under `de-DE` with **no** `values-de/` directory yet. Confirm every screen renders English (the fallback path) and nothing crashes on `getString` lookups. This proves the layout works before the first locale lands. (Used per-app locale via `cmd locale set-app-locales com.eight87.shutterboy --locales de-DE` since the production AVD blocks `setprop persist.sys.locale`; Photos / Collections / Settings all render English, system date shows German "MAI 2026" confirming the locale is active.)
+- [x] **T.B.4** Ship + tick.
 
 **Effort:** XS (1 hour). **Risk:** none.
 
-### T.C — translation-progress script + README markers
+### T.C — translation-progress script + README markers — shipped
 
-- [ ] **T.C.1** Write `scripts/translation-progress.sh` (POSIX shell + sed + grep). Parses `app/src/main/res/values/strings.xml` → set of canonical keys (excluding `translatable="false"`); for each `app/src/main/res/values-<locale>/strings.xml` parses translated keys; computes `done / total`; prints a markdown table with locale display names and a tilde-delimited progress bar (plain ASCII, no rendering surprises on github).
-- [ ] **T.C.2** Add `<!-- TRANSLATIONS-START -->` / `<!-- TRANSLATIONS-END -->` markers in `README.md` (new "Translations" section). Script `sed`-replaces between markers; idempotent (byte-for-byte stable on re-run).
-- [ ] **T.C.3** Wire into `scripts/build-release-apk.sh` immediately before the `git tag` step. Regenerate the README block; `git diff --quiet README.md` to confirm intentional change vs noise; release commit picks up the updated table.
-- [ ] **T.C.4** Sanity tests: golden files under `scripts/tests/translation-progress/` exercising 0%, 100%, partial, and missing-locale cases. Run via `bash scripts/translation-progress.sh --test`.
-- [ ] **T.C.5** Verify: README section renders correctly on github.com; auto-update is stable on re-run.
-- [ ] **T.C.6** Ship + tick.
+- [x] **T.C.1** Write `scripts/translation-progress.sh` (POSIX shell + sed + grep). Parses `app/src/main/res/values/strings.xml` → set of canonical keys (excluding `translatable="false"`); for each `app/src/main/res/values-<locale>/strings.xml` parses translated keys; computes `done / total`; prints a markdown table with locale display names and a tilde-delimited progress bar (plain ASCII, no rendering surprises on github). (Ported from tonearmboy; repo-relative via `$(dirname $(readlink -f $0))/..` so no path edits needed.)
+- [x] **T.C.2** Add `<!-- TRANSLATIONS-START -->` / `<!-- TRANSLATIONS-END -->` markers in `README.md` (new "Translations" section). Script `sed`-replaces between markers; idempotent (byte-for-byte stable on re-run).
+- [x] **T.C.3** Wire into `scripts/build-release-apk.sh` immediately before the `git tag` step. Regenerate the README block; `git diff --quiet README.md` to confirm intentional change vs noise; release commit picks up the updated table.
+- [x] **T.C.4** Sanity tests: golden files under `scripts/tests/translation-progress/` exercising 0%, 100%, partial, and missing-locale cases. Run via `bash scripts/translation-progress.sh --test`. (4 fixtures copied from tonearmboy: empty / full-de / no-locale / partial-de; all pass.)
+- [x] **T.C.5** Verify: README section renders correctly on github.com; auto-update is stable on re-run.
+- [x] **T.C.6** Ship + tick.
 
 **Effort:** S–M (½–1 day). **Risk:** low.
 
-### T.D — README "Translations" section content
+### T.D — README "Translations" section content — shipped
 
-- [ ] **T.D.1** 2-sentence intro above the auto-table: *translations are produced by the user + Claude per-language, English is canonical, missing keys fall back to English*. **Not** a "we welcome contributions" pitch.
-- [ ] **T.D.2** Linkify each language row in the auto-table to its `values-<locale>/strings.xml` on github so the user jumps straight to "edit this file" from the table.
-- [ ] **T.D.3** Ship + tick.
+- [x] **T.D.1** 2-sentence intro above the auto-table: *translations are produced by the user + Claude per-language, English is canonical, missing keys fall back to English*. **Not** a "we welcome contributions" pitch.
+- [x] **T.D.2** Linkify each language row in the auto-table to its `values-<locale>/strings.xml` on github so the user jumps straight to "edit this file" from the table. (Ported script already does `[${name}](app/src/main/res/values-${locale}/)`.)
+- [x] **T.D.3** Ship + tick.
 
 **Effort:** XS (15 min). **Risk:** none.
 
