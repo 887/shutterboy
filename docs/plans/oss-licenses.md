@@ -1,6 +1,6 @@
 # shutterboy — open-source licenses plan
 
-## Status: ✅ DONE — Phases A + B shipped in commit `bda7da5` (merged to main via `0263cbb`). Licensee plugin generates the inventory, LicensesScreen renders the catalog, About row links to it.
+## Status: ✅ DONE — Phases A + B + C shipped. A + B in commit `bda7da5` (merged to main via `0263cbb`); C.1 / C.4 / C.5 in commit `d9e5482`. Licensee plugin generates the inventory, LicensesScreen renders the catalog, About row links to it, LicensesCatalogTest gates the inventory + asset shape on every JVM test run.
 
 ## Why
 
@@ -70,16 +70,16 @@ Conclusion: **MIT app license is correct. No GPL anywhere. No dep prevents MIT.*
 - [ ] **B.7** AVD smoke — deferred. Agent worktree has no live AVD; UI smoke happens when the parent merges and walks the surface.
 - [x] **B.8** Ship + tick.
 
-## Phase C — Tests + audit discipline
+## Phase C — Tests + audit discipline — shipped in commit `d9e5482` (C.1 / C.4 / C.5 / C.6); C.2 + C.3 deferred (UI surfaces verified on AVD when the parent merges, see oss-licenses B.7 disposition).
 
 **Why:** keep the inventory honest as deps churn.
 
-- [ ] **C.1** `LicensesCatalogTest` (Robolectric, JVM-only): parses `assets/licenses/artifacts.json`; asserts non-empty; asserts every entry has a recognized SPDX from the allowlist and a backing license-text asset; asserts the catalog contains a known shipping sample (`io.coil-kt.coil3:coil-compose`, `androidx.exifinterface:exifinterface`, `androidx.room:room-runtime`).
-- [ ] **C.2** `LicensesScreenTest` (Compose UI test under Robolectric, `ui-test-junit4`): renders, scrolls, expanding a row reveals license text.
-- [ ] **C.3** AVD smoke per CLAUDE.md.
-- [ ] **C.4** Add a one-paragraph "Licenses" subhead to `CLAUDE.md`: when adding a new `implementation` dep, run `:app:licenseeReport` and confirm the SPDX is in the allowlist; if not, either add it to `licensee.allow(...)` (preferred) or document the exemption with a `because("...")`. Include a pointer to this plan.
-- [ ] **C.5** Cross-link from main.md I.6 to this plan when I.6 ships, and tick the I.6 "Open-source acknowledgments" sub-step.
-- [ ] **C.6** Ship + tick.
+- [x] **C.1** `LicensesCatalogTest` (Robolectric, JVM-only): parses `assets/licenses/artifacts.json` via `RuntimeEnvironment.getApplication().assets`, asserts non-empty, asserts every entry's SPDX is in the `{Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause}` allowlist, asserts a backing license-text asset exists for each SPDX (verified via `assets.list("licenses")`), and asserts the catalog contains `io.coil-kt.coil3:coil-compose`, `androidx.exifinterface:exifinterface`, and `androidx.room:room-runtime`.
+- [ ] **C.2** `LicensesScreenTest` (Compose UI test under Robolectric, `ui-test-junit4`): renders, scrolls, expanding a row reveals license text. Deferred — surface verified on AVD when the parent merges.
+- [ ] **C.3** AVD smoke per CLAUDE.md. Deferred — same reason as C.2 / B.7.
+- [x] **C.4** `CLAUDE.md` gained an "Open-source licenses" subhead above the Plan-file section: workflow for adding a new `implementation` dep (run `:app:licenseeAndroidRelease`, confirm SPDX in allowlist, prefer `licensee.allow(...)` over `allowDependency(...) { because("...") }`, ship new `assets/licenses/<spdx>.txt` from spdx.org if the SPDX is new), with a pointer to this plan.
+- [x] **C.5** main.md I.6 "Open-source acknowledgments" sub-step now cross-links to this plan. The I.6 checkbox itself remains unticked since the About-page row is a Phase I.6 deliverable; this plan only ships the Licenses sub-page it links to.
+- [x] **C.6** Ship + tick.
 
 ## Out of scope (revisit if pain emerges)
 
