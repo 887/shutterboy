@@ -148,6 +148,11 @@
     <string name="settings_library_rescan_in_progress">Rescanning…</string>
     <string name="settings_library_rescan_complete">Rescan complete — %1$d photos</string>
 
+    <!-- Tonearmboy-style scan progress bar mounted at top of app shell. -->
+    <string name="library_scan_progress_with_total">Scanning %1$d / %2$d</string>
+    <string name="library_scan_progress_indeterminate">Scanning…</string>
+    <string name="library_scan_progress_percent">%1$d%%</string>
+
     <!-- Shared dialog affordances. -->
     <string name="dialog_confirm">Confirm</string>
     <string name="dialog_cancel">Cancel</string>

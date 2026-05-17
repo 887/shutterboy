@@ -42,6 +42,61 @@ delta of work plus a standing maintenance rule.
 - [x] **D.2** **Token persistence happens after success, not before.** A scan that throws halfway must re-run next boot. — `RoomGalleryRepository.scanIfChanged()` extracts `executeScan()` that throws; persistence only runs after the try-block returns successfully. A thrown scan falls into the catch branch, leaves the persisted tokens untouched, and the next boot re-runs. MediaStore-token persistence is further gated on `MediaImagesPermission.isGranted(context)` so a permission-denied scan doesn't poison the gate either.
 - [x] **D.3** **The `ContentObserver` and the cold-start gate are independent.** Don't try to clever-merge them — they serve different windows (in-session vs cross-boot). The observer keeps its existing role unchanged by this plan.
 
+## Phase E — tonearmboy-style progress bar + video coverage — post-v0.1
+
+Follow-up after v0.1 ship: the rescan affordance in Settings still
+showed a tooltip-style snackbar rather than the always-on async
+progress bar tonearmboy mounts at the top of every library screen.
+Ported the mechanism verbatim. The same change also widened the
+device scan to cover `MediaStore.Video.Media.EXTERNAL_CONTENT_URI` —
+both volumes share the same `VOLUME_EXTERNAL_PRIMARY` generation
+token, so the gate layer from Phase A/B already covers video changes
+without modification.
+
+- [x] **E.1** `domain/ScanProgress.kt` — `Running` gains
+  `currentTitle: String?` and a `fraction: Float` derivation. Total
+  stays nullable to keep the `Running(0, null)` placeholder while the
+  scanner is enumerating.
+- [x] **E.2** `data/repo/RoomGalleryRepository.executeScan()` emits
+  intermediate `Running(processed, total, currentTitle)` per item,
+  throttled to ~5 Hz (200 ms) via `SCAN_PROGRESS_THROTTLE_MS` mirroring
+  tonearmboy's D.22.1 throttle. The terminal `Running(total, total, …)`
+  is emitted unconditionally (`processed == total` short-circuits the
+  throttle).
+- [x] **E.3** `ui/nav/ScanProgressStrip.kt` rewritten to mirror
+  tonearmboy's `ScanProgressBar`: M3E `Surface(tonalElevation = 2.dp)`,
+  count + percent header, determinate / indeterminate
+  `LinearProgressIndicator`, optional one-line ellipsised current-title
+  caption. Still mounts at the top of `ShutterboyApp`.
+- [x] **E.4** `data/scan/MediaStoreScanner.kt` — second cursor query
+  against `MediaStore.Video.Media.EXTERNAL_CONTENT_URI` with the
+  equivalent column set + `DURATION`. Both result sets funnel into the
+  same `ScannedPhoto` channel; the type stays named `ScannedPhoto` for
+  historical reasons. Coil 3 handles `content://media/video/...`
+  thumbnails natively via the platform video-thumbnail extractor.
+- [x] **E.5** `ExifEnricher.enrich` short-circuits on `video/*` mime
+  types — videos carry no EXIF, so opening a stream against the URI
+  would be wasted I/O.
+- [x] **E.6** Strings: `library_scan_progress_with_total`,
+  `library_scan_progress_indeterminate`, `library_scan_progress_percent`.
+- [x] **E.7** Tests: `RoomGalleryRepositoryScanProgressTest` asserts
+  the intermediate Running sequence + the both-volumes-via-same-channel
+  contract. The existing `RoomGalleryRepositoryScanGateTest` updated to
+  grant both `READ_MEDIA_IMAGES` and `READ_MEDIA_VIDEO` (the
+  `MediaImagesPermission.isGranted` predicate is all-or-nothing).
+
+**Throttle cadence:** 200 ms (~5 Hz), matching tonearmboy. Below this,
+every scanned item forces a Compose recomposition of the bar's
+caption + surrounding chrome — measured cost on a fast disk easily
+hits the UI thread. Above this, the bar visibly stutters. 200 ms is
+the slowest cadence that still looks live to a human.
+
+**Video volume coverage:** verified via doc + manifest. The runtime
+permission set already declares `READ_MEDIA_VIDEO` (commit `7524ee9`).
+`MediaStore.getGeneration(VOLUME_EXTERNAL_PRIMARY)` bumps for any
+change on the volume — including video — so the existing cold-start
+gate covers video changes without any code change on the gate side.
+
 ## Status: ✅ DONE — all phases shipped
 
 Phases A + B (plumbing + wiring) and Phase D (standing rules) shipped

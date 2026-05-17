@@ -15,11 +15,13 @@ import kotlinx.coroutines.withContext
  * — Coil 3 handles orientation transparently when displaying thumbnails. The
  * raw EXIF blob is not stored; only the per-field cached values.
  */
-class ExifEnricher(
+open class ExifEnricher(
     private val context: Context,
 ) {
-    /** Enrich a single photo. Returns input unchanged on read failure. */
-    suspend fun enrich(scanned: ScannedPhoto): ScannedPhoto = withContext(Dispatchers.IO) {
+    /** Enrich a single photo. Returns input unchanged on read failure.
+     * Videos carry no EXIF; skipped without opening a stream. */
+    open suspend fun enrich(scanned: ScannedPhoto): ScannedPhoto = withContext(Dispatchers.IO) {
+        if (scanned.mimeType.startsWith("video/")) return@withContext scanned
         runCatching {
             context.contentResolver.openInputStream(scanned.contentUri)?.use { stream ->
                 val exif = ExifInterface(stream)
@@ -46,7 +48,7 @@ class ExifEnricher(
      * to call this only on photos that aren't already enriched in the cache —
      * EXIF reads are I/O-heavy.
      */
-    suspend fun enrichBatch(scanned: List<ScannedPhoto>): List<ScannedPhoto> =
+    open suspend fun enrichBatch(scanned: List<ScannedPhoto>): List<ScannedPhoto> =
         scanned.map { enrich(it) }
 
 }
