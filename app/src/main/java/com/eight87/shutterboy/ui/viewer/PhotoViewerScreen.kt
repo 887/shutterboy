@@ -1,9 +1,13 @@
 package com.eight87.shutterboy.ui.viewer
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import com.eight87.shutterboy.ui.nav.LocalAnimatedContentScopeOrNull
+import com.eight87.shutterboy.ui.nav.LocalSharedTransitionScope
+import com.eight87.shutterboy.ui.nav.photoSharedElementKey
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -479,6 +483,7 @@ internal fun PhotoViewerContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PhotoPage(
     photoId: Long,
@@ -584,6 +589,33 @@ private fun PhotoPage(
                 modifier = Modifier.fillMaxSize(),
             )
         } else if (model != null) {
+            // F.7 — viewer half of the grid → viewer shared element. Same
+            // composition-local pair as the tile side; same key shape
+            // (`photo-<id>`). Falls back to plain modifier when scopes
+            // are absent (unit tests, mounts outside the nav graph) or
+            // if the experimental API throws — the Coil crossfade above
+            // covers the no-shared-element case.
+            val sharedScope = LocalSharedTransitionScope.current
+            // Nullable mirror of LocalNavAnimatedContentScope, published by
+            // WithNavAnimatedContentScope inside each route entry. Null when
+            // mounted outside a NavEntry (PhotoViewerScreenSmokeTest).
+            val animatedScope = LocalAnimatedContentScopeOrNull.current
+            val sharedModifier: Modifier =
+                if (sharedScope != null && animatedScope != null) {
+                    val contentState = with(sharedScope) {
+                        rememberSharedContentState(key = photoSharedElementKey(photoId))
+                    }
+                    runCatching {
+                        with(sharedScope) {
+                            Modifier.sharedElement(
+                                sharedContentState = contentState,
+                                animatedVisibilityScope = animatedScope,
+                            )
+                        }
+                    }.getOrDefault(Modifier)
+                } else {
+                    Modifier
+                }
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(model)
@@ -597,6 +629,7 @@ private fun PhotoPage(
                 error = ColorPainter(Color.Black),
                 modifier = Modifier
                     .fillMaxSize()
+                    .then(sharedModifier)
                     // G.3.1 — graphicsLayer (not Modifier.scale) so the
                     // State reads happen at draw time, skipping composition
                     // on every pinch frame. Clamp / pan-bounds-math is a

@@ -1,5 +1,6 @@
 package com.eight87.shutterboy.ui.photos.grid
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -30,6 +31,9 @@ import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.theme.SelectionAccent
+import com.eight87.shutterboy.ui.nav.LocalAnimatedContentScopeOrNull
+import com.eight87.shutterboy.ui.nav.LocalSharedTransitionScope
+import com.eight87.shutterboy.ui.nav.photoSharedElementKey
 
 /**
  * Phase H.2 + m3-expressive F.3 pattern 2 — single-thumbnail tile with
@@ -46,6 +50,7 @@ import com.eight87.shutterboy.theme.SelectionAccent
  * Active-state colours are pinned ([SelectionAccent]) so a Custom-seed theme
  * can't drift them onto a clashing hue (m3-expressive Finding 11).
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PhotoThumbnail(
     photo: Photo,
@@ -67,6 +72,33 @@ fun PhotoThumbnail(
     ) {
         val context = LocalContext.current
         val targetPx = LocalThumbnailQuality.current.targetPx
+        // F.7 — grid tile half of the shared-element transition. Wraps
+        // the Coil thumbnail in `Modifier.sharedElement(...)` when both
+        // the SharedTransitionScope (from ShutterboyApp's
+        // SharedTransitionLayout) and the AnimatedContentScope (from
+        // Navigation3's NavDisplay per-entry AnimatedContent) are in
+        // scope. Falls back to a plain modifier in unit tests, in
+        // mounts that bypass the nav graph, or if the experimental API
+        // throws — the existing crossfade on the viewer side covers the
+        // no-shared-element case.
+        val sharedScope = LocalSharedTransitionScope.current
+        val animatedScope = LocalAnimatedContentScopeOrNull.current
+        val sharedModifier: Modifier =
+            if (sharedScope != null && animatedScope != null) {
+                val contentState = with(sharedScope) {
+                    rememberSharedContentState(key = photoSharedElementKey(photo.id.value))
+                }
+                runCatching {
+                    with(sharedScope) {
+                        Modifier.sharedElement(
+                            sharedContentState = contentState,
+                            animatedVisibilityScope = animatedScope,
+                        )
+                    }
+                }.getOrDefault(Modifier)
+            } else {
+                Modifier
+            }
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(photo.contentUri)
@@ -77,6 +109,7 @@ fun PhotoThumbnail(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(2.dp))
+                .then(sharedModifier)
                 .let { if (selected) it.alpha(0.55f) else it },
         )
 

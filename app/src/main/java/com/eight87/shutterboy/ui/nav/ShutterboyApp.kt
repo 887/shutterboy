@@ -1,5 +1,7 @@
 package com.eight87.shutterboy.ui.nav
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +32,7 @@ import com.eight87.shutterboy.ui.photos.grid.LocalThumbnailQuality
  * destination icons sit alongside the search affordance at the top of
  * each root screen instead.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ShutterboyApp(graph: AppGraph) {
     val backStack = remember { ShutterboyBackStack(rootKey = Photos) }
@@ -62,26 +65,34 @@ fun ShutterboyApp(graph: AppGraph) {
             // Non-blocking scan progress signal — surfaces ScanProgress.Running
             // as a thin indeterminate strip at the top of the app shell.
             ScanProgressStrip(scanner = graph.libraryScanner)
-            NavDisplay(
-                backStack = backStack.backStack,
-                onBack = { backStack.pop() },
-                modifier = Modifier.fillMaxSize(),
-                entryProvider = entryProvider {
-                    entry<Photos> { it.Register(scope) }
-                    entry<Collections> { it.Register(scope) }
-                    entry<Settings> { it.Register(scope) }
-                    entry<SettingsPhotos> { it.Register(scope) }
-                    entry<SettingsLibrary> { it.Register(scope) }
-                    entry<SettingsLookAndFeel> { it.Register(scope) }
-                    entry<SettingsManageSources> { it.Register(scope) }
-                    entry<Search> { it.Register(scope) }
-                    entry<SettingsAbout> { it.Register(scope) }
-                    entry<Licenses> { it.Register(scope) }
-                    entry<PhotoViewer> { it.Register(scope) }
-                    entry<FolderDetail> { it.Register(scope) }
-                    entry<Slideshow> { it.Register(scope) }
-                },
-            )
+            // F.7 — wrap the NavDisplay in a SharedTransitionLayout and
+            // expose its SharedTransitionScope via a composition local so
+            // the Photos timeline tile and the viewer page can hook into
+            // a single shared-element transition across the two routes.
+            SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                    NavDisplay(
+                        backStack = backStack.backStack,
+                        onBack = { backStack.pop() },
+                        modifier = Modifier.fillMaxSize(),
+                        entryProvider = entryProvider {
+                            entry<Photos> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Collections> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Settings> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsPhotos> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsLibrary> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsLookAndFeel> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsManageSources> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Search> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsAbout> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Licenses> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<PhotoViewer> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<FolderDetail> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Slideshow> { WithNavAnimatedContentScope { it.Register(scope) } }
+                        },
+                    )
+                }
+            }
         }
     }
     }
