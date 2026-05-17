@@ -62,10 +62,19 @@ import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 
 internal const val SEARCH_FIELD_TAG = "search_field"
 internal const val SEARCH_RESULTS_GRID_TAG = "search_results_grid"
+
+/**
+ * Phase G.5 — milliseconds the trimmed query must stay stable before we
+ * commit it to recent-searches. Long enough that mid-word typing doesn't
+ * spam DataStore writes, short enough that pause-and-tap-a-result feels
+ * like "the search happened".
+ */
+private const val RECORD_SETTLE_DELAY_MS: Long = 800L
 
 /**
  * Phase G — fullscreen search route. Pulls [PhotoSearch] via the RouteScope
@@ -110,6 +119,16 @@ internal fun SearchScreenContent(
     }
     val recents by produceState(initialValue = emptyList<String>(), photoSearch) {
         photoSearch.recentSearches().collect { value = it }
+    }
+
+    // G.5 — record the query after a short settle delay so we persist the
+    // query the user actually typed, not every intermediate keystroke. The
+    // DataStore impl dedupe-promotes, so re-recording an existing entry just
+    // moves it to the head; we still skip blanks here.
+    LaunchedEffect(trimmedQuery, photoSearch) {
+        if (trimmedQuery.isEmpty()) return@LaunchedEffect
+        delay(RECORD_SETTLE_DELAY_MS)
+        photoSearch.recordSearch(trimmedQuery)
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {

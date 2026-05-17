@@ -20,9 +20,11 @@ import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
+import com.eight87.shutterboy.data.settings.DataStoreRecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.DataStoreThemePreferences
+import com.eight87.shutterboy.data.settings.RecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
@@ -73,6 +75,10 @@ class AppGraph(applicationContext: Context) {
     private val scanGate: ScanGatePreferences =
         DataStoreScanGatePreferences(appCtx.shutterboyPrefs)
 
+    /** Phase G.5 — DataStore-backed last-10 recent search queries. */
+    val recentSearchesPreferences: RecentSearchesPreferences =
+        DataStoreRecentSearchesPreferences(appCtx.shutterboyPrefs)
+
     private val repository = RoomGalleryRepository(
         context = appCtx,
         photoDao = database.photos(),
@@ -84,6 +90,7 @@ class AppGraph(applicationContext: Context) {
         safSourceManager = safSourceManager,
         scanConfig = scanConfig,
         scanGate = scanGate,
+        recentSearchesPrefs = recentSearchesPreferences,
     )
 
     // Eight narrow facets — UI consumes whichever it needs, never the wholesale repo.
