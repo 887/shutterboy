@@ -129,8 +129,13 @@ class RoomGalleryRepositoryScanGateTest {
 
     private fun grantReadMediaImages() {
         val ctx = ApplicationProvider.getApplicationContext<android.app.Application>()
-        // API 33+ (Config.sdk = 33 above) → READ_MEDIA_IMAGES.
-        shadowOf(ctx).grantPermissions(Manifest.permission.READ_MEDIA_IMAGES)
+        // API 33+ (Config.sdk = 33 above) → READ_MEDIA_IMAGES + READ_MEDIA_VIDEO
+        // (MediaImagesPermission.isGranted requires both since the scanner
+        // also covers MediaStore.Video).
+        shadowOf(ctx).grantPermissions(
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+        )
     }
 
     @Test

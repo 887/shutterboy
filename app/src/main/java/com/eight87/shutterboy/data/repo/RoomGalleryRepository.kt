@@ -250,12 +250,40 @@ class RoomGalleryRepository(
         val combinedPhotos: List<ScannedPhoto> = device.photos + saf.photos
         val combinedFolders = device.folders + saf.folders
 
+        val total = combinedPhotos.size
+        // Emit a fresh Running with total once we know it. Subsequent
+        // emissions happen as enrichment walks each item, throttled to
+        // ~5 Hz (SCAN_PROGRESS_THROTTLE_MS) to keep the UI thread free
+        // without losing visible fidelity. Tonearmboy R.F lesson.
+        _scanProgress.value = ScanProgress.Running(processed = 0, total = total, currentTitle = null)
+
         // 2. Diff vs cache: only new photos need EXIF; existing rows keep cached EXIF.
         val cachedIds = photoDao.allIds().toSet()
         val toEnrich = combinedPhotos.filter { it.id !in cachedIds }
-        val enriched = exifEnricher.enrichBatch(toEnrich)
         val byId = combinedPhotos.associateBy { it.id }.toMutableMap()
-        for (e in enriched) byId[e.id] = e
+
+        var processed = 0
+        var lastEmitMs = 0L
+        // Walk every combined photo so the bar fills the whole library,
+        // not just the to-enrich slice. Enrichment is the slow per-item
+        // I/O work; cached items pass through without an open().
+        val toEnrichIds = toEnrich.map { it.id }.toHashSet()
+        for (photo in combinedPhotos) {
+            if (photo.id in toEnrichIds) {
+                val enriched = exifEnricher.enrich(photo)
+                byId[enriched.id] = enriched
+            }
+            processed += 1
+            val now = android.os.SystemClock.uptimeMillis()
+            if (processed == total || now - lastEmitMs >= SCAN_PROGRESS_THROTTLE_MS) {
+                lastEmitMs = now
+                _scanProgress.value = ScanProgress.Running(
+                    processed = processed,
+                    total = total,
+                    currentTitle = photo.displayName,
+                )
+            }
+        }
 
         // 3. Map to entities
         val photoEntities = byId.values.map { it.toEntity() }
@@ -431,5 +459,16 @@ class RoomGalleryRepository(
             observer,
         )
         awaitClose { resolver.unregisterContentObserver(observer) }
+    }
+
+    companion object {
+        /**
+         * Tonearmboy D.22.1 — minimum spacing between per-item progress
+         * emissions on `_scanProgress`. 200 ms = ~5 Hz, the slowest
+         * cadence that still looks live to a human watching the bar
+         * advance. Below this, every photo triggers a Compose recomposition
+         * of the caption / bar, eating real UI-thread time on a fast disk.
+         */
+        internal const val SCAN_PROGRESS_THROTTLE_MS = 200L
     }
 }
