@@ -41,8 +41,10 @@ import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.domain.ScanProgress
 import com.eight87.shutterboy.domain.sort.PhotoSort
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
@@ -260,6 +262,13 @@ class RoomGalleryRepository(
     }
 
     private suspend fun executeScan(): LibrarySnapshot = scanMutex.withLock {
+        // Run the whole scan body on IO so the per-item EXIF enrichment loop
+        // doesn't bounce 30k+ times back to the caller's dispatcher (the
+        // cold-start LaunchedEffect / lifecycleScope.launch are Main).
+        // Each `enrich()` already withContext(IO)s internally, but without
+        // this wrapper every iteration round-trips back through Main, which
+        // is what locks up the UI on a real-phone library of 30k photos.
+        withContext(Dispatchers.IO) {
         // 1. Scan device media-store + SAF trees
         val device = mediaStoreScanner.scanDeviceMediaStore()
         val safUris = scanConfig.safSourceUris.first()
@@ -288,6 +297,8 @@ class RoomGalleryRepository(
 
         var processed = 0
         var lastEmitMs = 0L
+        var lastEmittedProcessed = -1
+        var lastEmittedTitle: String? = null
         // Walk every combined photo so the bar fills the whole library,
         // not just the to-enrich slice. Enrichment is the slow per-item
         // I/O work; cached items pass through without an open().
@@ -299,8 +310,20 @@ class RoomGalleryRepository(
             }
             processed += 1
             val now = android.os.SystemClock.uptimeMillis()
-            if (processed == total || now - lastEmitMs >= SCAN_PROGRESS_THROTTLE_MS) {
+            val terminal = processed == total
+            val timeOk = terminal || now - lastEmitMs >= SCAN_PROGRESS_THROTTLE_MS
+            // Skip the emission if the cadence allows but nothing changed
+            // since the last emit. Saves a no-op StateFlow set + a wasted
+            // Compose recomposition on 30k-photo cold scans. Always fire
+            // the terminal `processed == total` emission so the bar lands
+            // on 100% and the strip collapses cleanly.
+            val changed = terminal ||
+                processed != lastEmittedProcessed ||
+                photo.displayName != lastEmittedTitle
+            if (timeOk && changed) {
                 lastEmitMs = now
+                lastEmittedProcessed = processed
+                lastEmittedTitle = photo.displayName
                 _scanProgress.value = ScanProgress.Running(
                     processed = processed,
                     total = total,
@@ -344,6 +367,7 @@ class RoomGalleryRepository(
             folders = folderEntities.map { it.toDomain() },
             deltaCount = deltaCount,
         )
+        } // withContext(IO)
     }
 
     override fun scanProgress(): Flow<ScanProgress> = _scanProgress
@@ -502,6 +526,13 @@ class RoomGalleryRepository(
          * advance. Below this, every photo triggers a Compose recomposition
          * of the caption / bar, eating real UI-thread time on a fast disk.
          */
-        internal const val SCAN_PROGRESS_THROTTLE_MS = 200L
+        // 500 ms cadence — at 30k photos the 200 ms cadence was emitting
+        // ~150 Compose recomposes during a single cold scan, enough to
+        // contend with main-thread paints on a real phone. 500 ms still
+        // reads as live (2 ticks/sec) and quarters the recomposition cost.
+        // Combined with the no-op-skip + the IO-dispatcher wrap around the
+        // whole scan body, this is what makes a 30k-photo first scan stop
+        // freezing the UI on a real device.
+        internal const val SCAN_PROGRESS_THROTTLE_MS = 500L
     }
 }

@@ -67,6 +67,10 @@ fun RootTopBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
+            // Title takes the leftover space; truncates first so the
+            // destination switcher stays anchored to the right edge even
+            // when per-screen actions are wide (Photos = Search+Sort vs
+            // Collections = MoreVert vs Settings = SettingsSearch).
             Text(
                 text = stringResource(rootLabelRes(current)),
                 style = MaterialTheme.typography.headlineSmall,
@@ -77,6 +81,12 @@ fun RootTopBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            // Per-screen actions sit BEFORE the destination switcher so
+            // the three nav icons (Photos / Collections / Settings) stay
+            // in fixed rightmost positions across every root screen.
+            // Settings is always the far-right icon — feels like tabs,
+            // not buttons that jump screen-to-screen.
+            actions()
             rootDestinations.forEach { dest ->
                 DestinationButton(
                     dest = dest,
@@ -84,7 +94,6 @@ fun RootTopBar(
                     onClick = { onSelect(dest) },
                 )
             }
-            actions()
         }
     }
 }
