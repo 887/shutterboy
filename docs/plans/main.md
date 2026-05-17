@@ -27,7 +27,7 @@ Pull more web references as needed — Fossify Gallery, Simple Gallery, Google P
 
 ---
 
-## Phase 0 — Bootstrap — shipped in commits `79a9999` (0.1+0.2+0.3), `4e82582` (0.4+0.5+0.6), `224c5a9` (0.7+0.8+0.9)
+## Phase 0 — Bootstrap — shipped in commit `a4067f5` in commits `79a9999` (0.1+0.2+0.3), `4e82582` (0.4+0.5+0.6), `224c5a9` (0.7+0.8+0.9)
 
 Scaffold the Android project, get a hello-world cold-boot on `emulator-5554`, and move the tiger artwork into the project tree. Mirror tonearmboy's Phase 0 shape.
 
@@ -43,7 +43,7 @@ Scaffold the Android project, get a hello-world cold-boot on `emulator-5554`, an
 
 ---
 
-## Phase A — Reference research + design doc — shipped in commit `061d777`
+## Phase A — Reference research + design doc — shipped in commit `a4067f5` in commit `061d777`
 
 Capture the visual language we're targeting, document the decisions before any UI lands, so Phases C/D/E/F build against a settled spec.
 
@@ -55,7 +55,7 @@ Capture the visual language we're targeting, document the decisions before any U
 
 ---
 
-## Phase B — Data layer — shipped in commits `6968e01` (B.1), `7b1f1d6` (B.2+B.3), `6f9ea68` (B.4), `da45328` (B.5+B.6), `eb55537` (B.7)
+## Phase B — Data layer — shipped in commit `a4067f5` in commits `6968e01` (B.1), `7b1f1d6` (B.2+B.3), `6f9ea68` (B.4), `da45328` (B.5+B.6), `eb55537` (B.7)
 
 Room schema + MediaStore.Images scanner + EXIF cache + multi-source SAF + repository interface. Pure data — no UI in this phase.
 
@@ -83,7 +83,7 @@ Room schema + MediaStore.Images scanner + EXIF cache + multi-source SAF + reposi
 
 ---
 
-## Phase C — App chrome + Photos tab + density zoom + year scrubber — shipped in commits `08e1ee0` (C.1), `10981ae` (C.2), `12f9d98` (C.3), `7baf56e` (C.4 + C.5 + C.6 + C.7)
+## Phase C — App chrome + Photos tab + density zoom + year scrubber — shipped in commit `a4067f5` in commits `08e1ee0` (C.1), `10981ae` (C.2), `12f9d98` (C.3), `7baf56e` (C.4 + C.5 + C.6 + C.7)
 
 The headline feature. Bottom-nav scaffold lands here, then the Photos tab on top of it.
 
@@ -97,7 +97,7 @@ The headline feature. Bottom-nav scaffold lands here, then the Photos tab on top
 
 ---
 
-## Phase D — Collections tab (folders + smart albums) — shipped in commits `4163862` (D.1+D.2+D.3+D.3.5), `49cca98` (D.4+D.5)
+## Phase D — Collections tab (folders + smart albums) — shipped in commit `a4067f5` in commits `4163862` (D.1+D.2+D.3+D.3.5), `49cca98` (D.4+D.5)
 
 - [x] **D.1** `ui/collections/CollectionsScreen.kt` — single `LazyVerticalGrid(GridCells.Fixed(2))` hosts both surfaces: full-span "Smart albums" header + horizontal LazyRow of chips (Camera / Screenshots / Favorites / Recents / + Manage), then full-span "Folders" header + 2-column folder tiles. Smart-album chip taps push `SmartAlbumDetail(storageKey)`; folder taps push `FolderDetail(folderIdValue)`; Manage chip surfaces a snackbar (Phase I.3 lands the real Manage sources page). `SmartAlbumChipRow.kt` + `FolderTile.kt` carved out per R.F.7. Folder covers resolve via the new `FolderSource.observeFolderCovers(): Flow<Map<FolderId, Photo>>` facet method (mirrors `observeSmartAlbumCovers` shape; one batch read per emission). Smart-album covers via the existing `observeSmartAlbumCovers`. Empty-folders state shipped inline (D.4 will do the revoked-SAF re-add CTA).
 - [x] **D.2** `ui/collections/FolderDetailScreen.kt` — `Scaffold` + `TopAppBar` with the folder display name + back-arrow; body delegates to `GalleryTimelineFrame` with a `PhotoStream { sort -> photoSource.observePhotosInFolder(folderId, sort) }`. Repository-side filtering preserved (R.F.12 locked). Year-scrubber-only-for-spans-≥-90-days deferred to a later polish pass — for now the scrubber renders against whatever the timeline emits.
@@ -108,7 +108,7 @@ The headline feature. Bottom-nav scaffold lands here, then the Photos tab on top
 
 ---
 
-## Phase E — Custom sorting + custom order — shipped in commits `f63f208` (E.2 + partial E.5), `ef76a80` (E.4 + E.5)
+## Phase E — Custom sorting + custom order — shipped in commit `a4067f5` in commits `f63f208` (E.2 + partial E.5), `ef76a80` (E.4 + E.5)
 
 Per-tab + per-folder sort persistence; drag-reorder for the smart-album chip row and the folders grid order.
 
@@ -240,7 +240,7 @@ Locked constraints (mirror tonearmboy):
 
 Skipped — shutterboy ships with `stringResource(R.string.…)` from Phase A onward (locked in **Phase 0.8**). Every user-facing string already lives in `app/src/main/res/values/strings.xml` by the time Phase L closes; no back-extraction phase needed. tonearmboy's T.A (357-string mechanical pass) is the cost shutterboy pays nothing for by starting clean.
 
-### T.B — locale infrastructure — shipped
+### T.B — locale infrastructure — shipped in commit `a4067f5`
 
 - [x] **T.B.1** Confirm `<application>` doesn't pin a locale (default behaviour follows system locale). Already confirmed in Phase 0.8; this is a re-verification once real UI exists.
 - [x] **T.B.2** Confirm the `<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">` lint-anchor is intact in `values/strings.xml` — Phase 0.8 added it; this verifies it survived through Phase L.
@@ -249,7 +249,7 @@ Skipped — shutterboy ships with `stringResource(R.string.…)` from Phase A on
 
 **Effort:** XS (1 hour). **Risk:** none.
 
-### T.C — translation-progress script + README markers — shipped
+### T.C — translation-progress script + README markers — shipped in commit `a4067f5`
 
 - [x] **T.C.1** Write `scripts/translation-progress.sh` (POSIX shell + sed + grep). Parses `app/src/main/res/values/strings.xml` → set of canonical keys (excluding `translatable="false"`); for each `app/src/main/res/values-<locale>/strings.xml` parses translated keys; computes `done / total`; prints a markdown table with locale display names and a tilde-delimited progress bar (plain ASCII, no rendering surprises on github). (Ported from tonearmboy; repo-relative via `$(dirname $(readlink -f $0))/..` so no path edits needed.)
 - [x] **T.C.2** Add `<!-- TRANSLATIONS-START -->` / `<!-- TRANSLATIONS-END -->` markers in `README.md` (new "Translations" section). Script `sed`-replaces between markers; idempotent (byte-for-byte stable on re-run).
@@ -260,7 +260,7 @@ Skipped — shutterboy ships with `stringResource(R.string.…)` from Phase A on
 
 **Effort:** S–M (½–1 day). **Risk:** low.
 
-### T.D — README "Translations" section content — shipped
+### T.D — README "Translations" section content — shipped in commit `a4067f5`
 
 - [x] **T.D.1** 2-sentence intro above the auto-table: *translations are produced by the user + Claude per-language, English is canonical, missing keys fall back to English*. **Not** a "we welcome contributions" pitch.
 - [x] **T.D.2** Linkify each language row in the auto-table to its `values-<locale>/strings.xml` on github so the user jumps straight to "edit this file" from the table. (Ported script already does `[${name}](app/src/main/res/values-${locale}/)`.)
