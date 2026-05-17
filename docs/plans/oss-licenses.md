@@ -70,7 +70,7 @@ Conclusion: **MIT app license is correct. No GPL anywhere. No dep prevents MIT.*
 - [x] **B.7** AVD smoke — walked Photos → Settings tab → About card → Open-source licenses on `emulator-5556` (API 36); LicensesScreen renders the live ~183-entry catalog and the per-row Apache-2.0 dialog opens cleanly. Screencaps under `/tmp/sb-licenses-{0..4}*.png`. (See C.3 ship note.)
 - [x] **B.8** Ship + tick.
 
-## Phase C — Tests + audit discipline — shipped in commit `d9e5482` (C.1 / C.4 / C.5 / C.6); C.2 + C.3 closed out in this worktree (see ticks below).
+## Phase C — Tests + audit discipline — shipped in commit `d9e5482` (C.1 / C.4 / C.5 / C.6); C.2 + C.3 + B.7 closed out in commit `e84394f`.
 
 **Why:** keep the inventory honest as deps churn.
 
