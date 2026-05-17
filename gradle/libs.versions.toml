@@ -28,6 +28,14 @@ coreSplashscreen = "1.0.1"
 exifinterface = "1.4.1"
 documentfile = "1.0.1"
 licensee = "1.14.1"
+# cold-start-perf Phase F — Baseline Profile + Macrobenchmark.
+# Versions verified against https://dl.google.com/dl/android/maven2/...
+# baselineprofile + benchmark kept in lockstep (same release train).
+# profileinstaller latest stable is 1.4.1 (1.4.2 does not exist yet).
+androidxBaselineProfile = "1.5.0-alpha06"
+androidxBenchmark = "1.5.0-alpha06"
+androidxProfileInstaller = "1.4.1"
+androidxTestUiAutomator = "2.3.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -72,9 +80,16 @@ androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", versi
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 # DocumentFile — walks SAF tree URIs for the multi-source library (Phase B.4).
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
+# Baseline Profile + Macrobenchmark (cold-start-perf Phase F).
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidxProfileInstaller" }
+androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "androidxBenchmark" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidxTestUiAutomator" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-test = { id = "com.android.test", version.ref = "androidGradlePlugin" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidxBaselineProfile" }
+androidx-benchmark = { id = "androidx.benchmark", version.ref = "androidxBenchmark" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -5,6 +5,9 @@
 #   1. ./scripts/build-release-apk.sh                  # build APK into release/
 #   2. ./scripts/build-release-apk.sh --gh-release     # build + upload to GitHub Releases
 #   3. ./scripts/build-release-apk.sh --install        # build + adb install onto connected device
+#   4. ./scripts/build-release-apk.sh --with-baseline-profile  # record a
+#       macrobench Baseline Profile before assembling. Needs a connected
+#       device (physical or aosp_* AVD); slow; off by default.
 #
 # Combine: --gh-release --install is fine (this is the "phone-vibing" happy path).
 #
@@ -34,10 +37,12 @@ export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 
 PUSH_TO_GH=false
 INSTALL_TO_DEVICE=false
+WITH_BASELINE_PROFILE=false
 for arg in "$@"; do
     case "$arg" in
-        --gh-release|--github)   PUSH_TO_GH=true ;;
-        --install|--adb-install) INSTALL_TO_DEVICE=true ;;
+        --gh-release|--github)        PUSH_TO_GH=true ;;
+        --install|--adb-install)      INSTALL_TO_DEVICE=true ;;
+        --with-baseline-profile)      WITH_BASELINE_PROFILE=true ;;
         --help|-h)
             sed -n '1,/^$/p' "$0" | sed 's/^# \?//'
             exit 0
@@ -74,6 +79,22 @@ else
     echo "[build-release-apk] debug-signed build (set SHUTTERBOY_RELEASE_KEYSTORE for production signing)"
     GRADLE_TASK="assembleDebug"
     BUILD_APK="app/build/outputs/apk/debug/app-debug.apk"
+fi
+
+# cold-start-perf Phase F.4 — optional Baseline Profile generation step.
+# Off by default because it requires a connected non-debuggable benchmark
+# build on a physical device or aosp_* AVD (google_apis_playstore images
+# block macrobench). Run with `--with-baseline-profile` when a suitable
+# device is connected; the generated profile is merged into
+# `app/src/main/baseline-prof.txt` and picked up by the next assemble step.
+if "${WITH_BASELINE_PROFILE}"; then
+    echo "[build-release-apk] generating baseline profile (slow — needs connected device)..."
+    if ! command -v adb >/dev/null || ! adb devices | grep -qE '\<device$'; then
+        echo "[build-release-apk] --with-baseline-profile requires a connected ADB device" >&2
+        exit 1
+    fi
+    ./gradlew :app:generateBaselineProfile --console=plain
+    echo "[build-release-apk] baseline profile generation complete"
 fi
 
 echo "[build-release-apk] running ./gradlew :app:${GRADLE_TASK}..."

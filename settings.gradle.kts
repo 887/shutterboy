@@ -19,3 +19,4 @@ plugins {
 
 rootProject.name = "shutterboy"
 include(":app")
+include(":baselineprofile")

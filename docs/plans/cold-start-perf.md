@@ -85,15 +85,23 @@ that way as new lazy lists land.**
 - [ ] **E.1** Every `items(...)` / `items(count = ...)` call passes a `key = { ... }` argument that returns a stable identity (typically the entity id, NOT the index).
 - [ ] **E.2** When using `LazyColumn` / `LazyVerticalGrid` for a heterogeneous content type, consider `contentType = { ... }` too — Compose's slot table reuse benefits.
 
-## Phase F — Baseline Profile — pending
+## Phase F — Baseline Profile — scaffold shipped (generation device-bound)
 
 Baseline Profile typically shaves 25–35% off cold start on its own.
 Worth more than every phase above combined.
 
-- [ ] **F.1** Add the `androidx.baselineprofile` Gradle plugin + a sibling `baselineprofile` benchmark module.
-- [ ] **F.2** Record the cold-boot path (`launch → photos timeline visible`) via `MacrobenchmarkRule` and generate `app/src/main/baseline-prof.txt`.
-- [ ] **F.3** Add `androidx.profileinstaller:profileinstaller` to the app module.
-- [ ] **F.4** Wire profile generation into `scripts/build-release-apk.sh`.
+Scaffold shipped in main.md L.5 worktree. Versions pinned to
+`1.5.0-alpha06` (baselineprofile + benchmark) because AGP 9.0.1
+rejects the 1.3.x / 1.4.x stable branches with `Module ':app' is not
+a supported android module` — the alpha train adds AGP-9 compat.
+ProfileInstaller pinned at `1.4.1` (latest stable; `1.4.2` does not
+exist on Maven). Bump both back to stable when an AGP-9-compatible
+1.5.x stable lands.
+
+- [x] **F.1** Add the `androidx.baselineprofile` Gradle plugin + a sibling `baselineprofile` benchmark module. Module configures cleanly (`./gradlew :baselineprofile:tasks` lists the macrobench + Baseline Profile task graph; `:baselineprofile:assembleNonMinifiedRelease --dry-run` passes).
+- [x] **F.2** Record the cold-boot path (`launch → photos timeline visible`) via `MacrobenchmarkRule` and generate `app/src/main/baseline-prof.txt`. Generator is `BaselineProfileGenerator.kt` — anchors on `By.text("Photos")` (Phase 0.8 `photos_tab_title` string) with a 5 s timeout. Actual profile recording is **device-bound** (needs a non-debuggable benchmark APK on a physical device or `aosp_*` AVD; `emulator-5556`'s `google_apis_playstore` image blocks macrobench), deferred until a suitable device is connected. App-side `baselineProfile { mergeIntoMain = true }` is wired so the next run produces `app/src/main/baseline-prof.txt` directly.
+- [x] **F.3** Add `androidx.profileinstaller:profileinstaller` to the app module. Dependency added; no-op until a real profile is recorded.
+- [x] **F.4** Wire profile generation into `scripts/build-release-apk.sh`. New `--with-baseline-profile` flag runs `:app:generateBaselineProfile` before assembling. Off by default (slow + device-bound); opt-in per release.
 
 ## Phase G — measure, don't guess
 
