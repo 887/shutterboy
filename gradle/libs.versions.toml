@@ -36,6 +36,11 @@ androidxBaselineProfile = "1.5.0-alpha06"
 androidxBenchmark = "1.5.0-alpha06"
 androidxProfileInstaller = "1.4.1"
 androidxTestUiAutomator = "2.3.0"
+# Media3 ExoPlayer — used by the photo viewer to play video MIME-type
+# items inline. Same release tonearmboy ships against (sibling app).
+# androidx.media3 has no Maven BOM, so the version is centralized here
+# and referenced by media3-exoplayer + media3-ui below.
+media3 = "1.10.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
@@ -88,6 +93,9 @@ androidx-documentfile = { module = "androidx.documentfile:documentfile", version
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidxProfileInstaller" }
 androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "androidxBenchmark" }
 androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidxTestUiAutomator" }
+# Media3 ExoPlayer + PlayerView — inline video playback in the viewer.
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
