@@ -1,5 +1,7 @@
 package com.eight87.shutterboy.ui.nav
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,6 +28,7 @@ import com.eight87.shutterboy.ui.nav.routes.Register
  * destination icons sit alongside the search affordance at the top of
  * each root screen instead.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ShutterboyApp(graph: AppGraph) {
     val backStack = remember { ShutterboyBackStack(rootKey = Photos) }
@@ -53,24 +57,43 @@ fun ShutterboyApp(graph: AppGraph) {
             // Non-blocking scan progress signal — surfaces ScanProgress.Running
             // as a thin indeterminate strip at the top of the app shell.
             ScanProgressStrip(scanner = graph.libraryScanner)
-            NavDisplay(
-                backStack = backStack.backStack,
-                onBack = { backStack.pop() },
-                modifier = Modifier.fillMaxSize(),
-                entryProvider = entryProvider {
-                    entry<Photos> { it.Register(scope) }
-                    entry<Collections> { it.Register(scope) }
-                    entry<Settings> { it.Register(scope) }
-                    entry<SettingsPhotos> { it.Register(scope) }
-                    entry<SettingsLibrary> { it.Register(scope) }
-                    entry<Search> { it.Register(scope) }
-                    entry<SettingsAbout> { it.Register(scope) }
-                    entry<Licenses> { it.Register(scope) }
-                    entry<PhotoViewer> { it.Register(scope) }
-                    entry<FolderDetail> { it.Register(scope) }
-                    entry<Slideshow> { it.Register(scope) }
-                },
-            )
+            // F.7 — wrap the NavDisplay in a SharedTransitionLayout and
+            // expose its SharedTransitionScope via a composition local so
+            // the Photos timeline tile and the viewer page can hook into
+            // a single shared-element transition across the two routes.
+            // Each NavEntry's composable is hosted inside an
+            // AnimatedContent under the hood by NavDisplay, which exposes
+            // an AnimatedContentScope via `LocalNavAnimatedContentScope`
+            // from `androidx.navigation3.ui` — the viewer reads that to
+            // pair with the SharedTransitionScope from this layout.
+            SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                    NavDisplay(
+                        backStack = backStack.backStack,
+                        onBack = { backStack.pop() },
+                        modifier = Modifier.fillMaxSize(),
+                        entryProvider = entryProvider {
+                            // F.7 — every NavEntry body wraps its Register call in
+                            // WithNavAnimatedContentScope so the entry's AnimatedContentScope
+                            // is exposed via LocalAnimatedContentScopeOrNull. Leaf
+                            // composables (timeline tile, viewer AsyncImage) read that
+                            // local + LocalSharedTransitionScope to wire up the grid →
+                            // viewer shared-element transition.
+                            entry<Photos> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Collections> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Settings> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsPhotos> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsLibrary> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Search> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsAbout> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Licenses> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<PhotoViewer> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<FolderDetail> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Slideshow> { WithNavAnimatedContentScope { it.Register(scope) } }
+                        },
+                    )
+                }
+            }
         }
     }
 }
