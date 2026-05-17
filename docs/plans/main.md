@@ -200,7 +200,13 @@ Mirror tonearmboy's M3 Expressive grouped-cards + pill-search settings root. Sin
 ## Phase K — Easter egg + launcher icon polish
 
 - [x] **K.1** Easter egg shipped (`EasterEggController.kt` + `EasterEggDialog` + `rememberEasterEggBindings()` wired into `SettingsAboutScreen.kt`). Triple-tap the build version row reveals the tiger drawable in a modal Dialog with a black scrim; tap-outside / back-button dismiss; pure-Kotlin state machine matches tonearmboy's window-lapse + repeatable reveal spec.
-- [ ] **K.2** Launcher icon polish pass. Confirm the tiger cutout + Pentax composition reads at 48×48; refine the monochrome themed-icon layer for Android 13+; verify the splash screen icon and the launcher icon stay visually consistent.
+- [x] **K.2** Launcher icon polish pass — verified shipped state on `emulator-5556`.
+  - [x] **K.2.1** Adaptive icon manifest present at `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_round.xml` with `<background>` (`@color/launcher_background` = `#1A1717`), `<foreground>` (`@mipmap/ic_launcher_foreground`), and `<monochrome>` (`@mipmap/ic_launcher_monochrome`) layers.
+  - [x] **K.2.2** Foreground PNG present in all 5 densities (mdpi 108², hdpi 162², xhdpi 216², xxhdpi 324², xxxhdpi 432²) — dimensions match the 108dp adaptive-icon spec.
+  - [x] **K.2.3** Monochrome themed-icon layer (Android 13+) present in all 5 densities. RGB is solid white; the tiger silhouette is encoded in the alpha channel — correct format for system-tinted themed icons.
+  - [x] **K.2.4** Splash screen wired through `Theme.SplashScreen` (`app/src/main/res/values/themes.xml`): `windowSplashScreenBackground` + `windowSplashScreenIconBackgroundColor` both use `@color/launcher_background`, `windowSplashScreenAnimatedIcon` uses `@mipmap/ic_launcher_foreground` — splash and launcher icon read as one continuous surface.
+  - [x] **K.2.5** `AndroidManifest.xml` references `android:icon="@mipmap/ic_launcher"` + `android:roundIcon="@mipmap/ic_launcher_round"`.
+  - [x] **K.2.6** AVD smoke on `emulator-5556`: installed debug APK, opened launcher drawer, tiger cutout reads cleanly at tile size next to tonearmboy / strictlykeptboy. Screencap at `/tmp/shutterboy-launcher.png`.
 - [x] **K.3** `EasterEggControllerTest` shipped — exercises the pure `afterTap` state machine across single tap, reveal at 3, repeatable reveal, window-lapse reset, mixed pattern.
 
 ---
