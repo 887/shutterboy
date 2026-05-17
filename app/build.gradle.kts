@@ -9,6 +9,11 @@ plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.room)
   alias(libs.plugins.licensee)
+  // cold-start-perf Phase F — Baseline Profile consumer side.
+  // Companion :baselineprofile module produces the profile; this plugin
+  // wires the merged result into the app APK + integrates the
+  // `generateBaselineProfile` task into the app's task graph.
+  alias(libs.plugins.androidx.baselineprofile)
 }
 
 // Capture build-time metadata for the About screen (Phase I.6).
@@ -69,6 +74,13 @@ android {
 
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+// cold-start-perf Phase F — merge the generated profile into the main
+// `src/main/baseline-prof.txt` so every release APK ships with it
+// (rather than living variant-side).
+baselineProfile {
+    mergeIntoMain = true
 }
 
 // oss-licenses Phase A — Licensee plugin generates a build-time inventory of
@@ -157,6 +169,15 @@ dependencies {
 
   // SplashScreen compat
   implementation(libs.androidx.core.splashscreen)
+
+  // ProfileInstaller — applies the baseline-prof.txt that ships in the APK
+  // at first launch (cold-start-perf Phase F.3). No-op until the
+  // :baselineprofile module is actually run against a device.
+  implementation(libs.androidx.profileinstaller)
+
+  // Wire the baseline profile generator module so `generateBaselineProfile`
+  // knows where to source the recorded profile from.
+  "baselineProfile"(project(":baselineprofile"))
 
   // Local tests (Robolectric on the JVM)
   testImplementation(libs.junit)
