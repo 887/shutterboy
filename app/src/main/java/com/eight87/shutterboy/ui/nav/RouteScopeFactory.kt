@@ -22,6 +22,7 @@ fun rememberRouteScope(
             override val snackbar = snackbar
             override val photoSource = graph.photoSource
             override val photoDeleter = graph.photoDeleter
+            override val photoMover = graph.photoMover
             override val folderSource = graph.folderSource
             override val smartAlbumSource = graph.smartAlbumSource
             override val photoSearch = graph.photoSearch

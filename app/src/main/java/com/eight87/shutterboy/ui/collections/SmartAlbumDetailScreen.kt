@@ -23,6 +23,7 @@ import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.SelectionTopBar
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionHolder
+import com.eight87.shutterboy.ui.multiselect.rememberSelectionMoveHandler
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.SmartAlbumDetail
@@ -56,12 +57,19 @@ fun SmartAlbumDetailScreen(
     val deleteHandler = rememberSelectionDeleteHandler(scope.photoDeleter) {
         selectionHolder.exit()
     }
+    val moveHandler = rememberSelectionMoveHandler(
+        photoMover = scope.photoMover,
+        folderSource = scope.folderSource,
+        snackbar = scope.snackbar,
+        sourceFolderId = null,
+    ) { selectionHolder.exit() }
 
     BackHandler(enabled = selectionHolder.state is SelectionState.Active) {
         selectionHolder.exit()
     }
 
     deleteHandler.Render()
+    moveHandler.Render()
 
     if (albumId == null) {
         Scaffold(
@@ -96,6 +104,7 @@ fun SmartAlbumDetailScreen(
                     count = active.selectedIds.size,
                     onClose = { selectionHolder.exit() },
                     onSelectAll = { selectionHolder.selectAll(allPhotos.map { it.id }) },
+                    onMove = { moveHandler.request(active.selectedIds) },
                     onDelete = { deleteHandler.request(active.selectedIds) },
                 )
             } else {

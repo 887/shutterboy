@@ -2,8 +2,9 @@ package com.eight87.shutterboy.data.repo
 
 import android.app.PendingIntent
 import android.content.ContentResolver
-import android.content.Context
 import android.content.ContentUris
+import android.content.ContentValues
+import android.content.Context
 import android.database.ContentObserver
 import android.os.Build
 import android.os.Handler
@@ -33,6 +34,7 @@ import com.eight87.shutterboy.domain.Folder
 import com.eight87.shutterboy.domain.FolderId
 import com.eight87.shutterboy.domain.LibrarySnapshot
 import com.eight87.shutterboy.domain.MediaChange
+import com.eight87.shutterboy.domain.MoveRequest
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.domain.ScanProgress
@@ -77,6 +79,7 @@ class RoomGalleryRepository(
     LibraryScanner,
     FavoriteCommands,
     PhotoDeleter,
+    PhotoMover,
     MediaChangeSource {
 
     private val _scanProgress = MutableStateFlow<ScanProgress>(ScanProgress.Idle)
@@ -331,6 +334,81 @@ class RoomGalleryRepository(
             }
         }
     }
+
+    // --- PhotoMover (H.4 — RELATIVE_PATH update with consent on API 30+) ---
+
+    override suspend fun moveToFolder(
+        ids: List<PhotoId>,
+        targetRelativePath: String,
+    ): MoveRequest {
+        if (ids.isEmpty()) return MoveRequest.Direct(movedCount = 0)
+        val resolver = context.contentResolver
+        val uris = ids.map {
+            ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, it.value)
+        }
+        // Normalize: ensure trailing slash, strip any leading slash.
+        val normalized = targetRelativePath.trimStart('/').let {
+            if (it.endsWith('/')) it else "$it/"
+        }
+
+        return when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                runCatching {
+                    val pi: PendingIntent =
+                        MediaStore.createWriteRequest(resolver, uris)
+                    // Stash target path in an instance map keyed by uri set so the
+                    // post-consent applyMove can find it. For v1 we keep the model
+                    // simple: the UI calls applyMoveAfterConsent() with the same
+                    // target when the consent dialog returns OK.
+                    pendingMoveTarget = normalized
+                    pendingMoveUris = uris
+                    MoveRequest.Consent(pi)
+                }.getOrElse {
+                    MoveRequest.Failure(it.message ?: "createWriteRequest failed")
+                }
+            }
+            else -> {
+                runCatching {
+                    val values = ContentValues().apply {
+                        put(MediaStore.Images.Media.RELATIVE_PATH, normalized)
+                    }
+                    var moved = 0
+                    for (uri in uris) {
+                        val n = resolver.update(uri, values, null, null)
+                        if (n > 0) moved += n
+                    }
+                    MoveRequest.Direct(moved)
+                }.getOrElse { MoveRequest.Failure(it.message ?: "move failed") }
+            }
+        }
+    }
+
+    /**
+     * Phase H.4 — apply the pending RELATIVE_PATH update after the user
+     * grants consent via the IntentSender launched from [moveToFolder]'s
+     * `Consent` branch. Returns the moved count.
+     */
+    override suspend fun applyMoveAfterConsent(): Int {
+        val target = pendingMoveTarget ?: return 0
+        val uris = pendingMoveUris ?: return 0
+        val resolver = context.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.RELATIVE_PATH, target)
+        }
+        var moved = 0
+        for (uri in uris) {
+            runCatching {
+                val n = resolver.update(uri, values, null, null)
+                if (n > 0) moved += n
+            }
+        }
+        pendingMoveTarget = null
+        pendingMoveUris = null
+        return moved
+    }
+
+    @Volatile private var pendingMoveTarget: String? = null
+    @Volatile private var pendingMoveUris: List<android.net.Uri>? = null
 
     // --- MediaChangeSource ---
 

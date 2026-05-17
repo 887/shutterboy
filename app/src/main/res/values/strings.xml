@@ -159,6 +159,16 @@
     <string name="cd_multiselect_checkmark">Selected</string>
     <string name="cd_multiselect_close">Exit selection mode</string>
 
+    <!-- Phase H.4 — bulk move-to-album. -->
+    <string name="multiselect_move">Move to album</string>
+    <string name="cd_multiselect_move">Move selected photos to an album</string>
+    <string name="multiselect_move_picker_title">Move to album</string>
+    <string name="multiselect_move_picker_cancel">Cancel</string>
+    <string name="multiselect_move_success">Moved %1$d photos to %2$s</string>
+    <string name="multiselect_move_cancelled">Move cancelled</string>
+    <string name="multiselect_move_failed">Move failed: %1$s</string>
+    <string name="multiselect_move_folder_photo_count">%1$d photos</string>
+
     <!-- About sub-page (mirrors tonearmboy D.16.4 + D.16.5 easter egg). -->
     <string name="about_title">About</string>
     <string name="about_app_tagline">Modern photo gallery for Android</string>
