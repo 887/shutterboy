@@ -109,6 +109,7 @@ class SelectionIntegrationTest {
                         count = active.selectedIds.size,
                         onClose = { holder.exit() },
                         onSelectAll = { holder.selectAll(allPhotos.map { it.id }) },
+                        onMove = { },
                         onDelete = { },
                     )
                 } else {

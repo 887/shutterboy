@@ -11,6 +11,7 @@ import com.eight87.shutterboy.data.repo.FolderSource
 import com.eight87.shutterboy.data.repo.LibraryScanner
 import com.eight87.shutterboy.data.repo.MediaChangeSource
 import com.eight87.shutterboy.data.repo.PhotoDeleter
+import com.eight87.shutterboy.data.repo.PhotoMover
 import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.repo.RoomGalleryRepository
@@ -94,6 +95,7 @@ class AppGraph(applicationContext: Context) {
     val libraryScanner: LibraryScanner = repository
     val favoriteCommands: FavoriteCommands = repository
     val photoDeleter: PhotoDeleter = repository
+    val photoMover: PhotoMover = repository
     val mediaChangeSource: MediaChangeSource = repository
 
     /** Phase E.2 — DataStore-backed sort persistence. */

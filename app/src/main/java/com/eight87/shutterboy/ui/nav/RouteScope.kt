@@ -5,6 +5,7 @@ import com.eight87.shutterboy.AppGraph
 import com.eight87.shutterboy.data.repo.FolderSource
 import com.eight87.shutterboy.data.repo.LibraryScanner
 import com.eight87.shutterboy.data.repo.PhotoDeleter
+import com.eight87.shutterboy.data.repo.PhotoMover
 import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.repo.SmartAlbumSource
@@ -31,6 +32,7 @@ interface RouteScope {
     // Narrow facet reads — destinations consume these instead of the wholesale graph.
     val photoSource: PhotoSource
     val photoDeleter: PhotoDeleter
+    val photoMover: PhotoMover
     val folderSource: FolderSource
     val smartAlbumSource: SmartAlbumSource
     val photoSearch: PhotoSearch
