@@ -175,6 +175,10 @@
     <string name="settings_photos_sort_size_desc">File size — largest first</string>
     <string name="settings_photos_sort_size_asc">File size — smallest first</string>
 
+    <!-- Settings section headers (orange/primary-tinted card group titles). -->
+    <string name="settings_section_about">About</string>
+    <string name="settings_section_display">Display</string>
+
     <!-- BaseTheme picker — ported from tonearmboy. -->
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_appearance_theme">Theme</string>

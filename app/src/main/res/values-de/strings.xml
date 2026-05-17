@@ -157,6 +157,10 @@
     <string name="settings_photos_sort_size_desc">Dateigröße — größte zuerst</string>
     <string name="settings_photos_sort_size_asc">Dateigröße — kleinste zuerst</string>
 
+    <!-- Settings section headers. -->
+    <string name="settings_section_about">Info</string>
+    <string name="settings_section_display">Anzeige</string>
+
     <!-- BaseTheme picker — ported from tonearmboy. -->
     <string name="settings_section_appearance">Erscheinungsbild</string>
     <string name="settings_appearance_theme">Design</string>

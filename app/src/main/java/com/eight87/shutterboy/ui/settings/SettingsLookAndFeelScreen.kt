@@ -90,7 +90,9 @@ fun SettingsLookAndFeelScreen(
             verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
         ) {
             AppearanceSection(themePreferences = scope.themePreferences)
-            SettingsCard {
+            SettingsCard(
+                title = stringResource(R.string.settings_section_display),
+            ) {
                 SettingsRow(
                     id = "settings_lookfeel_density",
                     icon = Icons.Outlined.GridView,
