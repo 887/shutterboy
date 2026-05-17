@@ -1,6 +1,9 @@
 package com.eight87.shutterboy.ui.search
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.FolderId
 import com.eight87.shutterboy.domain.Photo
@@ -122,3 +125,20 @@ internal fun applyFilters(
             (selectedFolderId == null || p.folderId == selectedFolderId)
     }
 }
+
+/**
+ * R.F.21 — `Saver` for the active filter list so rotation + process-death
+ * don't blow the user's selected chips. Round-trips through the enum
+ * names; unknown tokens are dropped silently (downgrade-safe).
+ */
+internal val SearchFilterListSaver: Saver<SnapshotStateList<SearchFilter>, List<String>> =
+    Saver(
+        save = { list -> list.map { it.name } },
+        restore = { names ->
+            mutableStateListOf<SearchFilter>().apply {
+                names.forEach { token ->
+                    runCatching { SearchFilter.valueOf(token) }.getOrNull()?.let(::add)
+                }
+            }
+        },
+    )

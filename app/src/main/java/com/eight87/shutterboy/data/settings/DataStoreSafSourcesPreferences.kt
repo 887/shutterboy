@@ -35,6 +35,20 @@ internal class DataStoreSafSourcesPreferences(
         }
     }
 
+    /**
+     * R.F.26 — bulk-remove URIs the scanner identified as revoked. Atomic
+     * with respect to other writes; falls through cleanly if all of [uris]
+     * have already been removed.
+     */
+    override suspend fun pruneRevoked(uris: Set<String>) {
+        if (uris.isEmpty()) return
+        dataStore.edit { prefs ->
+            val current = prefs[SafTreeUrisKey] ?: return@edit
+            val pruned = current - uris
+            if (pruned.size != current.size) prefs[SafTreeUrisKey] = pruned
+        }
+    }
+
     companion object {
         internal val SafTreeUrisKey = stringSetPreferencesKey("saf_tree_uris")
     }

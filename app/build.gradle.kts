@@ -31,6 +31,15 @@ val buildDateUtc: String = DateTimeFormatter.ISO_LOCAL_DATE
 android {
     namespace = "com.eight87.shutterboy"
     compileSdk = 36
+
+    // R.F.27 — auto-generate `locales_config.xml` from `values-<locale>/`
+    // directories so per-app `cmd locale set-app-locales` is consistent.
+    // Without this the switch is flaky after `pm clear`.
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        generateLocaleConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.eight87.shutterboy"
         minSdk = 26

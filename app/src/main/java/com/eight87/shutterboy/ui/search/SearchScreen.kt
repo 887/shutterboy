@@ -44,7 +44,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -118,10 +121,16 @@ internal fun SearchScreenContent(
     modifier: Modifier = Modifier,
     nowMs: Long = System.currentTimeMillis(),
 ) {
-    var query by remember { mutableStateOf("") }
+    // R.F.21 — query / activeFilters / selectedFolder survive rotation +
+    // process-death via rememberSaveable. Custom Savers round-trip the
+    // filter list as its enum-name strings and the folder selection as its
+    // FolderId.value Long (re-resolved against the folders flow below).
+    var query by rememberSaveable { mutableStateOf("") }
     var focused by remember { mutableStateOf(false) }
-    val activeFilters = remember { mutableStateListOf<SearchFilter>() }
-    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
+    val activeFilters = rememberSaveable(saver = SearchFilterListSaver) {
+        mutableStateListOf<SearchFilter>()
+    }
+    var savedFolderId by rememberSaveable { mutableStateOf<Long?>(null) }
     var showFolderSheet by remember { mutableStateOf(false) }
 
     // G.3 — favorite-id set powers both the Favorites chip filter and the
@@ -132,6 +141,10 @@ internal fun SearchScreenContent(
     }
     val folders by produceState(initialValue = emptyList<Folder>(), folderSource) {
         folderSource?.observeFolders()?.collect { value = it }
+    }
+    // Re-resolve persisted folder id against the live folder list.
+    val selectedFolder = remember(savedFolderId, folders) {
+        savedFolderId?.let { id -> folders.firstOrNull { it.id.value == id } }
     }
 
     // Live results — re-collect whenever the trimmed query changes.
@@ -175,7 +188,7 @@ internal fun SearchScreenContent(
         FolderFilterSheet(
             folders = folders,
             onPick = { folder ->
-                selectedFolder = folder
+                savedFolderId = folder.id.value
                 showFolderSheet = false
             },
             onDismiss = { showFolderSheet = false },
@@ -203,12 +216,12 @@ internal fun SearchScreenContent(
                 selectedFolder = selectedFolder,
                 onFolderChipTap = {
                     if (selectedFolder != null) {
-                        selectedFolder = null
+                        savedFolderId = null
                     } else if (folderSource != null) {
                         showFolderSheet = true
                     }
                 },
-                onClearFolder = { selectedFolder = null },
+                onClearFolder = { savedFolderId = null },
                 folderChipEnabled = folderSource != null,
                 favoritesChipEnabled = favoriteCommands != null,
             )

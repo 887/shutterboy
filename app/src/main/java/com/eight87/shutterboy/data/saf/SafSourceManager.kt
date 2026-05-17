@@ -36,9 +36,22 @@ class SafSourceManager(
         if (treeUris.isEmpty()) return@withContext SafScanResult.Empty
         val photos = mutableListOf<ScannedPhoto>()
         val foldersById = LinkedHashMap<Long, MediaStoreScanner.ScannedFolder>()
+        // R.F.26 — collect URIs whose `DocumentFile.fromTreeUri(...)` returns
+        // null, or whose tree can't be read (`canRead() == false`). The
+        // caller prunes these from the persisted set so the next observation
+        // surfaces a clean inventory.
+        val revoked = mutableSetOf<String>()
         for (treeUriStr in treeUris) {
-            val treeUri = runCatching { Uri.parse(treeUriStr) }.getOrNull() ?: continue
-            val tree = DocumentFile.fromTreeUri(context, treeUri) ?: continue
+            val treeUri = runCatching { Uri.parse(treeUriStr) }.getOrNull()
+            if (treeUri == null) {
+                revoked += treeUriStr
+                continue
+            }
+            val tree = DocumentFile.fromTreeUri(context, treeUri)
+            if (tree == null || !tree.canRead()) {
+                revoked += treeUriStr
+                continue
+            }
             val rootName = tree.name ?: "SAF source"
             val rootId = stableFolderId(treeUriStr)
             val rooted = walkTreeForImages(tree, rootId, rootName, treeUri, photos)
@@ -53,7 +66,11 @@ class SafSourceManager(
                 }
             }
         }
-        SafScanResult(photos = photos, folders = foldersById.values.toList())
+        SafScanResult(
+            photos = photos,
+            folders = foldersById.values.toList(),
+            revokedUris = revoked,
+        )
     }
 
     /**
@@ -176,6 +193,7 @@ class SafSourceManager(
     data class SafScanResult(
         val photos: List<ScannedPhoto>,
         val folders: List<MediaStoreScanner.ScannedFolder>,
+        val revokedUris: Set<String> = emptySet(),
     ) {
         companion object {
             val Empty = SafScanResult(emptyList(), emptyList())

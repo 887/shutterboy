@@ -48,6 +48,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Phase B.5 — concrete implementation behind every facet interface.
@@ -83,6 +85,13 @@ class RoomGalleryRepository(
     MediaChangeSource {
 
     private val _scanProgress = MutableStateFlow<ScanProgress>(ScanProgress.Idle)
+
+    // R.F.25 — single-flight guard so cold-start LaunchedEffect racing with the
+    // permission-grant onGranted (or rapid Reset-cache taps) doesn't fire two
+    // concurrent scans. DAO writes are idempotent so the end-state was always
+    // consistent, but duplicate MediaStore + SAF + EXIF I/O and interleaved
+    // progress emissions are wasted work that hurts UX.
+    private val scanMutex = Mutex()
 
     // --- PhotoSource ---
 
@@ -250,11 +259,17 @@ class RoomGalleryRepository(
         return scanIfChanged()
     }
 
-    private suspend fun executeScan(): LibrarySnapshot {
+    private suspend fun executeScan(): LibrarySnapshot = scanMutex.withLock {
         // 1. Scan device media-store + SAF trees
         val device = mediaStoreScanner.scanDeviceMediaStore()
         val safUris = scanConfig.safSourceUris.first()
         val saf = safSourceManager.scanSafTrees(safUris)
+        // R.F.26 — externally-revoked SAF URIs detected by the manager get
+        // pruned from the persisted set so the next observation drops them
+        // from the Manage Sources list. No-op when nothing was revoked.
+        if (saf.revokedUris.isNotEmpty()) {
+            scanConfig.pruneRevoked(saf.revokedUris)
+        }
 
         val combinedPhotos: List<ScannedPhoto> = device.photos + saf.photos
         val combinedFolders = device.folders + saf.folders
@@ -324,7 +339,7 @@ class RoomGalleryRepository(
         for (id in toDeleteFolders) folderDao.deleteById(id)
 
         val deltaCount = photoEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
-        return LibrarySnapshot(
+        LibrarySnapshot(
             photos = photoEntities.map { it.toDomain() },
             folders = folderEntities.map { it.toDomain() },
             deltaCount = deltaCount,

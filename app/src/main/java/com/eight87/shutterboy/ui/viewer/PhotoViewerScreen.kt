@@ -44,8 +44,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -267,7 +267,7 @@ internal fun PhotoViewerContent(
     val currentPhotoFlow = remember(currentId) {
         if (currentId == null) flowOf(null) else photoSource.observePhotoById(currentId)
     }
-    val currentPhoto: Photo? by currentPhotoFlow.collectAsState(initial = null)
+    val currentPhoto: Photo? by currentPhotoFlow.collectAsStateWithLifecycle(initialValue = null)
 
     // G.3 — observe favorite-state for the current photo id. Falls back to
     // a no-op flow (false) when favorite commands aren't wired (test mounts).
@@ -275,7 +275,7 @@ internal fun PhotoViewerContent(
         if (currentId == null || favoriteCommands == null) flowOf(false)
         else favoriteCommands.observeIsFavorite(PhotoId(currentId))
     }
-    val isFavorite: Boolean by isFavoriteFlow.collectAsState(initial = false)
+    val isFavorite: Boolean by isFavoriteFlow.collectAsStateWithLifecycle(initialValue = false)
 
     Scaffold(
         topBar = {
@@ -539,7 +539,7 @@ private fun PhotoPage(
     onDoubleTap: () -> Unit,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
-    val photo: Photo? by flow.collectAsState(initial = null)
+    val photo: Photo? by flow.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
     val isVideo = photo?.mimeType?.startsWith("video/") == true
 
@@ -559,6 +559,15 @@ private fun PhotoPage(
         onPinch(zoomChange, panChange)
     }
     val zoomed = ViewerZoomMath.isZoomed(scale)
+
+    // R.F.22 — wrap `zoomed` / `isVideo` in a State<T> so the vertical-drag
+    // detector reads the current values via `.value` inside its suspend
+    // block, instead of capturing them at install time. Without this the
+    // outer `pointerInput(zoomed, isVideo)` reinstalled the detector every
+    // time `zoomed` crossed the rest threshold (every pinch frame). The
+    // detector now installs once per photoId and reads gates lazily.
+    val zoomedState = androidx.compose.runtime.rememberUpdatedState(zoomed)
+    val isVideoState = androidx.compose.runtime.rememberUpdatedState(isVideo)
 
     Box(
         modifier = Modifier
@@ -592,15 +601,24 @@ private fun PhotoPage(
                         )
                     },
             )
-            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx, zoomed, isVideo) {
-                // G.3 — disable vertical-drag dismiss/info gestures while
-                // zoomed past rest, otherwise a pan-down would accidentally
-                // dismiss the viewer.
-                if (zoomed && !isVideo) return@pointerInput
+            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx) {
+                // R.F.22 — keys stable per photo + thresholds only. `zoomed`
+                // and `isVideo` are read via rememberUpdatedState refs inside
+                // the drag handlers, so the detector installs once and stays
+                // installed across the entire zoom session.
                 detectVerticalDragGestures(
-                    onDragStart = { dragAccumulator.floatValue = 0f },
+                    onDragStart = {
+                        // Gate at gesture-start: if currently zoomed (and not
+                        // video), drop the drag — pinch-pan owns the gesture.
+                        if (zoomedState.value && !isVideoState.value) return@detectVerticalDragGestures
+                        dragAccumulator.floatValue = 0f
+                    },
                     onDragCancel = { dragAccumulator.floatValue = 0f },
                     onDragEnd = {
+                        if (zoomedState.value && !isVideoState.value) {
+                            dragAccumulator.floatValue = 0f
+                            return@detectVerticalDragGestures
+                        }
                         val travel = dragAccumulator.floatValue
                         dragAccumulator.floatValue = 0f
                         when (ViewerGestureMath.classifyRelease(

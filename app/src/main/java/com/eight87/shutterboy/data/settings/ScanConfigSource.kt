@@ -16,4 +16,12 @@ import kotlinx.coroutines.flow.Flow
 interface ScanConfigSource {
     /** Set of persisted SAF tree URIs the multi-source library should walk. */
     val safSourceUris: Flow<Set<String>>
+
+    /**
+     * R.F.26 — drop revoked SAF tree URIs from the persisted set. The
+     * scanner detects revocation (no permission, tree disappeared, etc.)
+     * and calls back here so the next observation surfaces the cleaned set.
+     * Default no-op so test/fake impls don't have to implement.
+     */
+    suspend fun pruneRevoked(uris: Set<String>) {}
 }
