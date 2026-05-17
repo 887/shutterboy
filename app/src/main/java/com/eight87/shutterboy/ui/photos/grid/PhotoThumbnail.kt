@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
@@ -99,16 +102,29 @@ fun PhotoThumbnail(
             } else {
                 Modifier
             }
+        // Aves-style grey placeholder so the grid doesn't flash blank
+        // cells during fast scroll. Coil renders the placeholder while
+        // decoding, crossfades to the bitmap on success, and falls back
+        // to the same grey on error / null URI.
+        val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        val placeholderPainter = remember(placeholderColor) {
+            androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)
+        }
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(photo.contentUri)
                 .size(Size(targetPx, targetPx))
+                .crossfade(true)
                 .build(),
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
+            placeholder = placeholderPainter,
+            error = placeholderPainter,
+            fallback = placeholderPainter,
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(2.dp))
+                .background(placeholderColor)
                 .then(sharedModifier)
                 .let { if (selected) it.alpha(0.55f) else it },
         )

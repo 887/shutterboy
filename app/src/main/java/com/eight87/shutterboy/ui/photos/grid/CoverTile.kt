@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.size.Size
 import com.eight87.shutterboy.domain.Photo
 
@@ -47,14 +48,24 @@ internal fun CoverTile(
     ) {
         val context = LocalContext.current
         val targetPx = LocalThumbnailQuality.current.targetPx
+        val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        val placeholderPainter = androidx.compose.runtime.remember(placeholderColor) {
+            androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)
+        }
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(cover.contentUri)
                 .size(Size(targetPx, targetPx))
+                .crossfade(true)
                 .build(),
             contentDescription = cover.displayName,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
+            placeholder = placeholderPainter,
+            error = placeholderPainter,
+            fallback = placeholderPainter,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(placeholderColor),
         )
         // Bottom scrim so the label reads cleanly over a busy photo.
         Box(
