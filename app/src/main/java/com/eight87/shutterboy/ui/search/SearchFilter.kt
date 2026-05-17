@@ -1,5 +1,7 @@
 package com.eight87.shutterboy.ui.search
 
+import androidx.annotation.StringRes
+import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.FolderId
 import com.eight87.shutterboy.domain.Photo
 
@@ -39,6 +41,64 @@ internal enum class SearchFilter {
         const val RECENT_WINDOW_MS: Long = 30L * 24L * 60L * 60L * 1000L
     }
 }
+
+/**
+ * R.F.2 — per-variant `ConditionUi` registry. Each [SearchFilter] variant
+ * carries its label + enabled-predicate next to the variant itself, so the
+ * chip row iterates the registry instead of `when`-ing over the enum at
+ * two separate call sites (label + enabled). Adding a future variant means
+ * a new enum case + a matching [ConditionUi] entry; the chip row needs no
+ * edit.
+ *
+ * The folder chip is intentionally not part of this registry — its label is
+ * a runtime value (the picked folder name), its trailing icon flips between
+ * absent and a clear-X, and tapping opens a bottom sheet rather than
+ * toggling a boolean. That asymmetry would dilute the abstraction; the
+ * folder chip stays its own composable in `SearchScreen.kt`.
+ */
+internal data class ConditionUi(
+    @StringRes val labelRes: Int,
+    /** Resolves to true when the chip should be tappable. The lambda is
+     *  passed the runtime flags the screen has on hand: whether favourites
+     *  wiring is available, whether the folder source is wired, etc. The
+     *  current registry only consults `favoritesWired`, but the lambda
+     *  shape keeps the door open for future variant-specific gates without
+     *  another `when` chain in the chip row. */
+    val enabled: (ChipEnabledContext) -> Boolean,
+)
+
+internal data class ChipEnabledContext(
+    val favoritesWired: Boolean,
+)
+
+/**
+ * R.F.2 — single source of truth for chip metadata. Order is `entries`
+ * order on the enum, which matches the visual order of the chip row.
+ */
+internal val SearchFilterUi: Map<SearchFilter, ConditionUi> = mapOf(
+    SearchFilter.Photos to ConditionUi(
+        labelRes = R.string.search_chip_photos,
+        enabled = { true },
+    ),
+    SearchFilter.Videos to ConditionUi(
+        labelRes = R.string.search_chip_videos,
+        // Videos chip is permanently disabled in v1; defensive false so a
+        // future caller can't accidentally toggle it on.
+        enabled = { false },
+    ),
+    SearchFilter.Gps to ConditionUi(
+        labelRes = R.string.search_chip_gps,
+        enabled = { true },
+    ),
+    SearchFilter.Recent to ConditionUi(
+        labelRes = R.string.search_chip_recent,
+        enabled = { true },
+    ),
+    SearchFilter.Favorites to ConditionUi(
+        labelRes = R.string.search_chip_favorites,
+        enabled = { ctx -> ctx.favoritesWired },
+    ),
+)
 
 /**
  * Applies the active boolean filters AND-ed with an optional folder
