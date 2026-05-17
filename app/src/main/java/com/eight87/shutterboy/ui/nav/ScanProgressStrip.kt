@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -59,7 +60,14 @@ fun ScanProgressStrip(
         val total = p.total ?: 0
         Surface(
             tonalElevation = 2.dp,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                // The outer Scaffold sets contentWindowInsets = 0 so per-screen
+                // TopAppBars own the status-bar inset themselves. The progress
+                // strip sits ABOVE every per-screen TopAppBar, so it has to
+                // own the inset too — otherwise the system status icons overdraw
+                // its content.
+                .statusBarsPadding(),
         ) {
             Column(
                 modifier = Modifier
