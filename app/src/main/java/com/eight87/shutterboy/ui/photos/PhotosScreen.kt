@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.sort.PhotoSort
+import com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.SelectionTopBar
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
@@ -52,6 +53,8 @@ fun PhotosScreen(
 ) {
     val sort: PhotoSort by scope.sortPreferences.observePhotosSort()
         .collectAsStateWithLifecycle(initialValue = PhotoSort.Default)
+    val initialDensity: PhotosZoomLevel by scope.displayPreferences.observeDefaultGridDensity()
+        .collectAsStateWithLifecycle(initialValue = PhotosZoomLevel.Items)
     val coroutineScope = rememberCoroutineScope()
     val stream = remember(scope, sort) {
         PhotoStream { scope.photoSource.observePhotos(sort) }
@@ -122,6 +125,7 @@ fun PhotosScreen(
             },
             selectionState = selectionHolder.state,
             onPhotoLongPress = { photoId -> selectionHolder.enterActive(photoId) },
+            initialZoomLevel = initialDensity,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),

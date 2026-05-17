@@ -30,8 +30,11 @@ fun GalleryTimelineFrame(
     emptyState: (@Composable (Modifier) -> Unit)? = null,
     selectionState: SelectionState = SelectionState.Idle,
     onPhotoLongPress: (PhotoId) -> Unit = {},
+    initialZoomLevel: PhotosZoomLevel = PhotosZoomLevel.Items,
 ) {
-    var accumulator by remember { mutableStateOf(ZoomAccumulator()) }
+    var accumulator by remember(initialZoomLevel) {
+        mutableStateOf(ZoomAccumulator(level = initialZoomLevel))
+    }
     val transformable = rememberTransformableState { zoomChange, _, _ ->
         accumulator = accumulator.apply(zoomChange)
     }

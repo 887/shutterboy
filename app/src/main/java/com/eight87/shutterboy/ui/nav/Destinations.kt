@@ -42,6 +42,10 @@ data object SettingsPhotos : Destination
 @Serializable
 data object SettingsLibrary : Destination
 
+/** Settings → Look and Feel sub-page. Theme + Grid density + Thumbnail quality. */
+@Serializable
+data object SettingsLookAndFeel : Destination
+
 /**
  * Phase G — fullscreen search overlay. Pushed from the Photos TopAppBar
  * search icon. Pill-shaped search field at the top, filter chip row, results

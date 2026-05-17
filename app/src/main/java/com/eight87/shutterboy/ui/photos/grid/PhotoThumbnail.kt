@@ -20,10 +20,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.theme.SelectionAccent
@@ -62,8 +65,13 @@ fun PhotoThumbnail(
             ),
         contentAlignment = Alignment.TopStart,
     ) {
+        val context = LocalContext.current
+        val targetPx = LocalThumbnailQuality.current.targetPx
         AsyncImage(
-            model = photo.contentUri,
+            model = ImageRequest.Builder(context)
+                .data(photo.contentUri)
+                .size(Size(targetPx, targetPx))
+                .build(),
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
             modifier = Modifier

@@ -8,13 +8,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.eight87.shutterboy.AppGraph
+import com.eight87.shutterboy.data.settings.ThumbnailQuality
 import com.eight87.shutterboy.ui.nav.routes.Register
+import com.eight87.shutterboy.ui.photos.grid.LocalThumbnailQuality
 
 /**
  * R.E.3 — root composable. Top-bar destination switcher (per-screen
@@ -39,6 +44,10 @@ fun ShutterboyApp(graph: AppGraph) {
         graph.libraryScanner.scanIfChanged()
     }
 
+    val thumbnailQuality by graph.displayPreferences.observeThumbnailQuality()
+        .collectAsStateWithLifecycle(initialValue = ThumbnailQuality.Medium)
+
+    CompositionLocalProvider(LocalThumbnailQuality provides thumbnailQuality) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         // m3-expressive B.5 — outer Scaffold yields the status-bar inset
@@ -63,6 +72,7 @@ fun ShutterboyApp(graph: AppGraph) {
                     entry<Settings> { it.Register(scope) }
                     entry<SettingsPhotos> { it.Register(scope) }
                     entry<SettingsLibrary> { it.Register(scope) }
+                    entry<SettingsLookAndFeel> { it.Register(scope) }
                     entry<Search> { it.Register(scope) }
                     entry<SettingsAbout> { it.Register(scope) }
                     entry<Licenses> { it.Register(scope) }
@@ -72,5 +82,6 @@ fun ShutterboyApp(graph: AppGraph) {
                 },
             )
         }
+    }
     }
 }

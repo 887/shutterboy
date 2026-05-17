@@ -20,10 +20,12 @@ import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
+import com.eight87.shutterboy.data.settings.DataStoreDisplayPreferences
 import com.eight87.shutterboy.data.settings.DataStoreRecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.DataStoreThemePreferences
+import com.eight87.shutterboy.data.settings.DisplayPreferences
 import com.eight87.shutterboy.data.settings.RecentSearchesPreferences
 import com.eight87.shutterboy.data.settings.ScanConfigSource
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
@@ -113,4 +115,8 @@ class AppGraph(applicationContext: Context) {
     /** BaseTheme picker — Material You / brand / pure black / custom seed. */
     val themePreferences: ThemePreferences =
         DataStoreThemePreferences(appCtx.shutterboyPrefs)
+
+    /** Look-and-Feel I.2 — default grid density + thumbnail quality. */
+    val displayPreferences: DisplayPreferences =
+        DataStoreDisplayPreferences(appCtx.shutterboyPrefs)
 }

@@ -30,6 +30,7 @@ import com.eight87.shutterboy.ui.multiselect.rememberSelectionMoveHandler
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 import com.eight87.shutterboy.ui.sort.SortOverflowAction
@@ -55,6 +56,8 @@ fun FolderDetailScreen(
         .collectAsStateWithLifecycle(initialValue = null)
     val sort: PhotoSort by scope.sortPreferences.observeFolderSort(folderId)
         .collectAsStateWithLifecycle(initialValue = PhotoSort.Default)
+    val initialDensity: PhotosZoomLevel by scope.displayPreferences.observeDefaultGridDensity()
+        .collectAsStateWithLifecycle(initialValue = PhotosZoomLevel.Items)
     val coroutineScope = rememberCoroutineScope()
     val title = folder?.displayName ?: stringResource(R.string.folder_detail_title_default)
     val stream = remember(scope, folderId, sort) {
@@ -129,6 +132,7 @@ fun FolderDetailScreen(
             },
             selectionState = selectionHolder.state,
             onPhotoLongPress = { photoId -> selectionHolder.enterActive(photoId) },
+            initialZoomLevel = initialDensity,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),

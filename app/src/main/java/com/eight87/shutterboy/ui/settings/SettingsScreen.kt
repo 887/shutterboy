@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,11 +25,11 @@ import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Settings
 import com.eight87.shutterboy.ui.nav.SettingsAbout
 import com.eight87.shutterboy.ui.nav.SettingsLibrary
+import com.eight87.shutterboy.ui.nav.SettingsLookAndFeel
 import com.eight87.shutterboy.ui.nav.SettingsPhotos
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
-import com.eight87.shutterboy.ui.settings.sections.AppearanceSection
 
 /**
  * Settings tab body. M3 Expressive grouped-cards under a shared
@@ -64,8 +65,14 @@ fun SettingsScreen(
                 ),
             verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
         ) {
-            AppearanceSection(themePreferences = scope.themePreferences)
             SettingsCard {
+                SubPageRow(
+                    id = "settings_lookfeel_root",
+                    icon = Icons.Outlined.Palette,
+                    label = stringResource(R.string.settings_root_lookfeel_row_label),
+                    subtitle = stringResource(R.string.settings_root_lookfeel_row_subtitle),
+                    onClick = { scope.backStack.push(SettingsLookAndFeel) },
+                )
                 SubPageRow(
                     id = "settings_library_root",
                     icon = Icons.Outlined.Storage,

@@ -6,10 +6,12 @@ import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Settings
 import com.eight87.shutterboy.ui.nav.SettingsAbout
 import com.eight87.shutterboy.ui.nav.SettingsLibrary
+import com.eight87.shutterboy.ui.nav.SettingsLookAndFeel
 import com.eight87.shutterboy.ui.nav.SettingsPhotos
 import com.eight87.shutterboy.ui.settings.LicensesScreen
 import com.eight87.shutterboy.ui.settings.SettingsAboutScreen
 import com.eight87.shutterboy.ui.settings.SettingsLibraryScreen
+import com.eight87.shutterboy.ui.settings.SettingsLookAndFeelScreen
 import com.eight87.shutterboy.ui.settings.SettingsPhotosScreen
 import com.eight87.shutterboy.ui.settings.SettingsScreen
 
@@ -31,6 +33,11 @@ fun SettingsPhotos.Register(scope: RouteScope) {
 @Composable
 fun SettingsLibrary.Register(scope: RouteScope) {
     SettingsLibraryScreen(scope = scope)
+}
+
+@Composable
+fun SettingsLookAndFeel.Register(scope: RouteScope) {
+    SettingsLookAndFeelScreen(scope = scope)
 }
 
 @Composable

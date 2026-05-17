@@ -124,7 +124,22 @@
     <string name="settings_root_photos_row_subtitle">Default sort and timeline display</string>
     <string name="settings_root_library_row_label">Library</string>
     <string name="settings_root_library_row_subtitle">Rescan photos, clear cached thumbnails</string>
+    <string name="settings_root_lookfeel_row_label">Look and feel</string>
+    <string name="settings_root_lookfeel_row_subtitle">Theme, grid density, thumbnail quality</string>
     <string name="cd_settings_back">Back</string>
+
+    <!-- Settings → Look and Feel sub-page (main.md I.2). -->
+    <string name="settings_look_and_feel_title">Look and feel</string>
+    <string name="settings_lookfeel_density_label">Default grid density</string>
+    <string name="settings_lookfeel_density_items">Items — one tile per photo</string>
+    <string name="settings_lookfeel_density_days">Days — one tile per day</string>
+    <string name="settings_lookfeel_density_months">Months — one tile per month</string>
+    <string name="settings_lookfeel_density_years">Years — one hero per year</string>
+    <string name="settings_lookfeel_quality_label">Thumbnail quality</string>
+    <string name="settings_lookfeel_quality_low">Low — fastest, less memory</string>
+    <string name="settings_lookfeel_quality_medium">Medium — balanced</string>
+    <string name="settings_lookfeel_quality_high">High — crispest, slower</string>
+    <string name="settings_lookfeel_close">Close</string>
 
     <!-- Settings → Library sub-page (main.md I.3). -->
     <string name="settings_library_title">Library</string>

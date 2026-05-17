@@ -29,6 +29,7 @@ fun rememberRouteScope(
             override val sortPreferences = graph.sortPreferences
             override val customOrderPreferences = graph.customOrderPreferences
             override val themePreferences = graph.themePreferences
+            override val displayPreferences = graph.displayPreferences
         }
     }
 }
