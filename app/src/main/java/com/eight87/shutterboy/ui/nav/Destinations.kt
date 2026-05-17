@@ -85,16 +85,6 @@ data class PhotoViewer(
 data class FolderDetail(val folderIdValue: Long) : Destination
 
 /**
- * Phase D.3 — smart-album detail. Pushed from a chip tap on the
- * Collections root. Body is the same density-zoomed timeline as the
- * Photos tab, filtered to `observeSmartAlbum(id)`. The `SmartAlbumId`
- * sealed type is round-tripped through [SmartAlbumId.storageKey] /
- * [SmartAlbumId.fromStorageKey].
- */
-@Serializable
-data class SmartAlbumDetail(val storageKey: String) : Destination
-
-/**
  * Phase J.1 — fullscreen slideshow route. Pushed (eventually, J.3) from
  * the overflow menu of Photos / FolderDetail / SmartAlbumDetail / Search.
  * Carries the backing photo-id list the [HorizontalPager] iterates over.

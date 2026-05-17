@@ -15,7 +15,6 @@ import com.eight87.shutterboy.data.repo.PhotoMover
 import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.repo.RoomGalleryRepository
-import com.eight87.shutterboy.data.repo.SmartAlbumSource
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
@@ -90,7 +89,6 @@ class AppGraph(applicationContext: Context) {
     // Eight narrow facets — UI consumes whichever it needs, never the wholesale repo.
     val photoSource: PhotoSource = repository
     val folderSource: FolderSource = repository
-    val smartAlbumSource: SmartAlbumSource = repository
     val photoSearch: PhotoSearch = repository
     val libraryScanner: LibraryScanner = repository
     val favoriteCommands: FavoriteCommands = repository

@@ -32,21 +32,6 @@ interface PhotoDao {
     @Query("SELECT * FROM photos WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<PhotoEntity?>
 
-    /** Recents smart-album resolution — `dateTakenMs >= now - WINDOW_MS`. */
-    @Query("SELECT * FROM photos WHERE date_taken_ms >= :sinceMs ORDER BY date_taken_ms DESC")
-    fun observeRecents(sinceMs: Long): Flow<List<PhotoEntity>>
-
-    /** Camera / Screenshots smart-album resolution — JOIN against folders.display_name. */
-    @Query(
-        """
-        SELECT photos.* FROM photos
-        INNER JOIN folders ON folders.id = photos.folder_id
-        WHERE LOWER(folders.display_name) = LOWER(:bucketName)
-        ORDER BY date_taken_ms DESC
-        """
-    )
-    fun observeInBucketByName(bucketName: String): Flow<List<PhotoEntity>>
-
     @Upsert
     suspend fun upsertAll(photos: List<PhotoEntity>)
 

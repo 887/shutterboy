@@ -38,13 +38,11 @@ import com.eight87.shutterboy.domain.MoveRequest
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.domain.ScanProgress
-import com.eight87.shutterboy.domain.SmartAlbumId
 import com.eight87.shutterboy.domain.sort.PhotoSort
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -74,7 +72,6 @@ class RoomGalleryRepository(
         MediaStoreGenerationSource.Default(context),
 ) : PhotoSource,
     FolderSource,
-    SmartAlbumSource,
     PhotoSearch,
     LibraryScanner,
     FavoriteCommands,
@@ -131,31 +128,6 @@ class RoomGalleryRepository(
             }
         }
 
-    // --- SmartAlbumSource (B.6 sealed dispatch) ---
-
-    override fun observeSmartAlbum(id: SmartAlbumId): Flow<List<Photo>> =
-        when (id) {
-            SmartAlbumId.Camera ->
-                photoDao.observeInBucketByName("Camera")
-                    .map { rows -> rows.map { it.toDomain() } }
-            SmartAlbumId.Screenshots ->
-                photoDao.observeInBucketByName("Screenshots")
-                    .map { rows -> rows.map { it.toDomain() } }
-            SmartAlbumId.Favorites ->
-                favoriteDao.observeFavoritePhotos()
-                    .map { rows -> rows.map { it.toDomain() } }
-            SmartAlbumId.Recents ->
-                photoDao.observeRecents(System.currentTimeMillis() - SmartAlbumId.Recents.WINDOW_MS)
-                    .map { rows -> rows.map { it.toDomain() } }
-        }
-
-    override fun observeSmartAlbumCovers(): Flow<Map<SmartAlbumId, Photo?>> {
-        val flows: List<Flow<Pair<SmartAlbumId, Photo?>>> =
-            SmartAlbumId.defaultOrder.map { id ->
-                observeSmartAlbum(id).map { id to it.firstOrNull() }
-            }
-        return combine(flows) { pairs -> pairs.toMap() }
-    }
 
     // --- PhotoSearch ---
 

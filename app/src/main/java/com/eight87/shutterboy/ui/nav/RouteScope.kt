@@ -8,7 +8,6 @@ import com.eight87.shutterboy.data.repo.PhotoDeleter
 import com.eight87.shutterboy.data.repo.PhotoMover
 import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
-import com.eight87.shutterboy.data.repo.SmartAlbumSource
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
 import com.eight87.shutterboy.data.settings.ThemePreferences
@@ -34,7 +33,6 @@ interface RouteScope {
     val photoDeleter: PhotoDeleter
     val photoMover: PhotoMover
     val folderSource: FolderSource
-    val smartAlbumSource: SmartAlbumSource
     val photoSearch: PhotoSearch
     val libraryScanner: LibraryScanner
     val sortPreferences: SortPreferences

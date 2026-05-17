@@ -1,41 +1,29 @@
 package com.eight87.shutterboy.ui.nav
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Collections
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Collections
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.eight87.shutterboy.AppGraph
-import com.eight87.shutterboy.R
 import com.eight87.shutterboy.ui.nav.routes.Register
 
 /**
- * R.E.3 — root composable. Bottom-nav scaffold + per-destination
- * `Register(scope)` dispatch. Adding a new destination is one entry
- * line below + one `Register` extension in `routes/`.
+ * R.E.3 — root composable. Top-bar destination switcher (per-screen
+ * via [RootTopBar]) + `NavDisplay` dispatch. Adding a new destination
+ * is one entry line below + one `Register` extension in `routes/`.
  *
- * LOC ceiling: 150. If this file grows past that, a route renderer
- * leaked back inline; extract.
+ * The legacy bottom [androidx.compose.material3.NavigationBar] is gone —
+ * destination icons sit alongside the search affordance at the top of
+ * each root screen instead.
  */
 @Composable
 fun ShutterboyApp(graph: AppGraph) {
@@ -52,26 +40,12 @@ fun ShutterboyApp(graph: AppGraph) {
     }
 
     Scaffold(
-        bottomBar = {
-            NavigationBar {
-                rootDestinations.forEach { dest ->
-                    val selected = backStack.currentTab == dest
-                    val (icon, label, cd) = navIconLabelCd(dest, selected)
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = { backStack.selectTab(dest) },
-                        icon = { Icon(imageVector = icon, contentDescription = cd) },
-                        label = { Text(text = label) },
-                    )
-                }
-            }
-        },
         snackbarHost = { SnackbarHost(snackbar) },
         // m3-expressive B.5 — outer Scaffold yields the status-bar inset
         // to inner-screen TopAppBars so the inset doesn't get double-applied.
         contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
-        androidx.compose.foundation.layout.Column(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -92,42 +66,9 @@ fun ShutterboyApp(graph: AppGraph) {
                     entry<Licenses> { it.Register(scope) }
                     entry<PhotoViewer> { it.Register(scope) }
                     entry<FolderDetail> { it.Register(scope) }
-                    entry<SmartAlbumDetail> { it.Register(scope) }
                     entry<Slideshow> { it.Register(scope) }
                 },
             )
         }
     }
-}
-
-@Composable
-private fun navIconLabelCd(
-    dest: Destination,
-    selected: Boolean,
-): Triple<ImageVector, String, String> = when (dest) {
-    Photos -> Triple(
-        if (selected) Icons.Filled.Image else Icons.Outlined.Image,
-        stringResource(R.string.nav_photos),
-        stringResource(R.string.cd_nav_photos),
-    )
-    Collections -> Triple(
-        if (selected) Icons.Filled.Collections else Icons.Outlined.Collections,
-        stringResource(R.string.nav_collections),
-        stringResource(R.string.cd_nav_collections),
-    )
-    Settings -> Triple(
-        if (selected) Icons.Filled.Settings else Icons.Outlined.Settings,
-        stringResource(R.string.nav_settings),
-        stringResource(R.string.cd_nav_settings),
-    )
-    // Pushed-not-rooted destinations should never reach the bottom-nav icon
-    // resolver; the entry exhaustiveness is structural only.
-    Search,
-    SettingsAbout,
-    Licenses,
-    is PhotoViewer,
-    is FolderDetail,
-    is SmartAlbumDetail,
-    is Slideshow ->
-        error("$dest is not a bottom-nav root destination")
 }

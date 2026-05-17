@@ -9,8 +9,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -26,6 +24,8 @@ import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionHolder
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionMoveHandler
 import com.eight87.shutterboy.ui.nav.PhotoViewer
+import com.eight87.shutterboy.ui.nav.Photos
+import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Search
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
@@ -88,25 +88,25 @@ fun PhotosScreen(
                     onDelete = { deleteHandler.request(active.selectedIds) },
                 )
             } else {
-                TopAppBar(
-                    title = { Text(text = stringResource(R.string.photos_top_title)) },
-                    actions = {
-                        IconButton(onClick = { scope.backStack.push(Search) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
-                                contentDescription = stringResource(R.string.cd_search_open),
-                            )
-                        }
-                        SortOverflowAction(
-                            sort = sort,
-                            onSortChanged = { newSort ->
-                                coroutineScope.launch {
-                                    scope.sortPreferences.setPhotosSort(newSort)
-                                }
-                            },
+                RootTopBar(
+                    current = Photos,
+                    onSelect = { dest -> scope.backStack.selectTab(dest) },
+                ) {
+                    IconButton(onClick = { scope.backStack.push(Search) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = stringResource(R.string.cd_search_open),
                         )
-                    },
-                )
+                    }
+                    SortOverflowAction(
+                        sort = sort,
+                        onSortChanged = { newSort ->
+                            coroutineScope.launch {
+                                scope.sortPreferences.setPhotosSort(newSort)
+                            }
+                        },
+                    )
+                }
             }
         },
         modifier = modifier.fillMaxSize(),

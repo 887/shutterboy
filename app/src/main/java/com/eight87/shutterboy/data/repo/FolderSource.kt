@@ -10,11 +10,11 @@ interface FolderSource {
     fun observeFolder(id: FolderId): Flow<Folder?>
 
     /**
-     * Phase D.1 — cover photo per folder. Resolves [Folder.coverPhotoId]
-     * via a single batch read per emission; folders without a cover photo
-     * are absent from the map. Mirrors [SmartAlbumSource.observeSmartAlbumCovers]
-     * so the Collections grid can render tiles reactively without each
-     * `FolderTile` doing its own one-photo query.
+     * Cover photo per folder. Resolves [Folder.coverPhotoId] via a
+     * single batch read per emission; folders without a cover photo
+     * are absent from the map. Lets the Collections grid render tiles
+     * reactively without each `FolderTile` doing its own one-photo
+     * query.
      */
     fun observeFolderCovers(): Flow<Map<FolderId, Photo>>
 }
