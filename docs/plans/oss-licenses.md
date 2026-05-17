@@ -67,16 +67,16 @@ Conclusion: **MIT app license is correct. No GPL anywhere. No dep prevents MIT.*
 - [x] **B.4** UI: `LazyColumn` of `SettingsRow`s. Row title `<artifactId> <version>`, supporting text `<groupId> • <spdxId>`. Tap opens a Material3 `AlertDialog` with the license body in monospaced scrollable text.
 - [x] **B.5** Wired navigation. Added a new `Licenses` `Destination`, a `Licenses.Register` route, and a new "Open-source licenses" row in `SettingsAboutScreen` between the GitHub row and the existing OSS-acknowledgments placeholder, using `Icons.AutoMirrored.Outlined.Article`. Tap pushes `Licenses` onto the back stack.
 - [x] **B.6** Strings landed in `app/src/main/res/values/strings.xml` under the `licenses_` / `cd_licenses_` prefix per the i18n convention.
-- [ ] **B.7** AVD smoke — deferred. Agent worktree has no live AVD; UI smoke happens when the parent merges and walks the surface.
+- [x] **B.7** AVD smoke — walked Photos → Settings tab → About card → Open-source licenses on `emulator-5556` (API 36); LicensesScreen renders the live ~183-entry catalog and the per-row Apache-2.0 dialog opens cleanly. Screencaps under `/tmp/sb-licenses-{0..4}*.png`. (See C.3 ship note.)
 - [x] **B.8** Ship + tick.
 
-## Phase C — Tests + audit discipline — shipped in commit `d9e5482` (C.1 / C.4 / C.5 / C.6); C.2 + C.3 deferred (UI surfaces verified on AVD when the parent merges, see oss-licenses B.7 disposition).
+## Phase C — Tests + audit discipline — shipped in commit `d9e5482` (C.1 / C.4 / C.5 / C.6); C.2 + C.3 + B.7 closed out in commit `e84394f`.
 
 **Why:** keep the inventory honest as deps churn.
 
 - [x] **C.1** `LicensesCatalogTest` (Robolectric, JVM-only): parses `assets/licenses/artifacts.json` via `RuntimeEnvironment.getApplication().assets`, asserts non-empty, asserts every entry's SPDX is in the `{Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause}` allowlist, asserts a backing license-text asset exists for each SPDX (verified via `assets.list("licenses")`), and asserts the catalog contains `io.coil-kt.coil3:coil-compose`, `androidx.exifinterface:exifinterface`, and `androidx.room:room-runtime`.
-- [ ] **C.2** `LicensesScreenTest` (Compose UI test under Robolectric, `ui-test-junit4`): renders, scrolls, expanding a row reveals license text. Deferred — surface verified on AVD when the parent merges.
-- [ ] **C.3** AVD smoke per CLAUDE.md. Deferred — same reason as C.2 / B.7.
+- [x] **C.2** `LicensesScreenTest` (Compose UI test under Robolectric, `ui-test-junit4`): mounts `LicensesScreenContent` (split out from `LicensesScreen` for testability — narrow `(entries, onBack)` shape, same as `FavoritesScreenContent` / `PhotoViewerContent`) over a 60-entry synthetic catalog and asserts (a) the title + first row render, (b) `performScrollToNode` reveals a row beyond the first viewport, (c) tapping a row opens an `AlertDialog` whose body contains the Apache-2.0 header. Lives at `app/src/test/java/com/eight87/shutterboy/ui/settings/LicensesScreenTest.kt`.
+- [x] **C.3** AVD smoke per CLAUDE.md — Photos → Settings tab (1080×2400 @ ~724,143) → About row (~540,1053) → Open-source licenses row (~540,1280) → tap row → Apache-2.0 dialog. Screencaps `/tmp/sb-licenses-{0-photos,1-settings,2-about,3-list,4-dialog}.png`. The LicensesScreen renders the live Licensee-generated catalog and the dialog scrolls through the full Apache-2.0 body.
 - [x] **C.4** `CLAUDE.md` gained an "Open-source licenses" subhead above the Plan-file section: workflow for adding a new `implementation` dep (run `:app:licenseeAndroidRelease`, confirm SPDX in allowlist, prefer `licensee.allow(...)` over `allowDependency(...) { because("...") }`, ship new `assets/licenses/<spdx>.txt` from spdx.org if the SPDX is new), with a pointer to this plan.
 - [x] **C.5** main.md I.6 "Open-source acknowledgments" sub-step now cross-links to this plan. The I.6 checkbox itself remains unticked since the About-page row is a Phase I.6 deliverable; this plan only ships the Licenses sub-page it links to.
 - [x] **C.6** Ship + tick.

@@ -70,6 +70,27 @@ fun LicensesScreen(
     val vm: LicensesViewModel = viewModel(factory = LicensesViewModel.factory(app.assets))
     val entries by vm.entries.collectAsState()
 
+    LicensesScreenContent(
+        entries = entries,
+        onBack = { scope.backStack.pop() },
+        modifier = modifier,
+    )
+}
+
+/**
+ * Stateless content for the licenses sub-page — split off from
+ * [LicensesScreen] so [LicensesScreenTest] (Phase C.2) can mount the surface
+ * over a synthetic entry list without dragging in the full [RouteScope] facet
+ * bundle. Mirrors the `*Content` pattern already used by other screens in
+ * this module (e.g. `FavoritesScreenContent`, `PhotoViewerContent`).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LicensesScreenContent(
+    entries: List<LicenseEntry>,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var selected by remember { mutableStateOf<LicenseEntry?>(null) }
 
     Scaffold(
@@ -77,7 +98,7 @@ fun LicensesScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.licenses_screen_title)) },
                 navigationIcon = {
-                    IconButton(onClick = { scope.backStack.pop() }) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = stringResource(R.string.cd_licenses_back),
