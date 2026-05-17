@@ -28,6 +28,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="en">
     <string name="app_name">shutterboy</string>
 
+    <!-- Runtime permission gate (READ_MEDIA_IMAGES + READ_MEDIA_VIDEO). -->
+    <string name="permission_media_title">Photo and video access</string>
+    <string name="permission_media_body">Shutterboy needs read access to your photos and videos to show them in the gallery. Nothing is uploaded; everything stays on your device.</string>
+    <string name="permission_media_grant_button">Grant access</string>
+    <string name="permission_media_retry_button">Try again</string>
+    <string name="permission_media_open_settings_button">Open settings</string>
+
     <!-- Phase C — bottom navigation + tab labels. -->
     <string name="nav_photos">Photos</string>
     <string name="nav_collections">Collections</string>

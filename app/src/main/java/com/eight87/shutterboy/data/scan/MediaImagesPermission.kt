@@ -7,26 +7,31 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 
 /**
- * Read-state of the system permission that gates `MediaStore.Images`
- * cursor access. The manifest permission name differs across SDK
- * boundaries:
+ * Read-state of the system permissions that gate `MediaStore.Images` +
+ * `MediaStore.Video` cursor access. The manifest permission set differs
+ * across SDK boundaries:
  *
- * - API 33+ (`TIRAMISU`): `READ_MEDIA_IMAGES`.
- * - API ≤ 32: `READ_EXTERNAL_STORAGE`.
+ * - API 33+ (`TIRAMISU`): `READ_MEDIA_IMAGES` + `READ_MEDIA_VIDEO`.
+ * - API ≤ 32: `READ_EXTERNAL_STORAGE` covers both.
  *
  * Centralised here so the scanner + the cold-start gate share one
  * answer.
  */
 object MediaImagesPermission {
 
-    val manifestName: String
+    /** All manifest permission names needed to read the photo + video library. */
+    val manifestNames: List<String>
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
+            listOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
         } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
+            listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
 
-    fun isGranted(context: Context): Boolean =
-        ContextCompat.checkSelfPermission(context, manifestName) ==
-            PackageManager.PERMISSION_GRANTED
+    /** Back-compat: the primary images permission, used where a single name is needed. */
+    val manifestName: String
+        get() = manifestNames.first()
+
+    fun isGranted(context: Context): Boolean = manifestNames.all { name ->
+        ContextCompat.checkSelfPermission(context, name) == PackageManager.PERMISSION_GRANTED
+    }
 }
