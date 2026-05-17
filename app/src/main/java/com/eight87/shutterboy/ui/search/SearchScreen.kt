@@ -59,7 +59,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.eight87.shutterboy.R
+import com.eight87.shutterboy.data.repo.FavoriteCommands
+import com.eight87.shutterboy.data.repo.FolderSource
 import com.eight87.shutterboy.data.repo.PhotoSearch
+import com.eight87.shutterboy.domain.Folder
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
@@ -91,6 +94,8 @@ fun SearchScreen(
 ) {
     SearchScreenContent(
         photoSearch = scope.photoSearch,
+        favoriteCommands = scope.favoriteCommands,
+        folderSource = scope.folderSource,
         onBack = { scope.backStack.pop() },
         onResultTap = { photoId, backingIds ->
             scope.backStack.push(PhotoViewer(photoId, backingIds))
@@ -105,6 +110,8 @@ fun SearchScreen(
 @Composable
 internal fun SearchScreenContent(
     photoSearch: PhotoSearch,
+    favoriteCommands: FavoriteCommands? = null,
+    folderSource: FolderSource? = null,
     onBack: () -> Unit,
     onResultTap: (Long, List<Long>) -> Unit,
     onStartSlideshow: (List<Long>) -> Unit = {},
@@ -114,6 +121,18 @@ internal fun SearchScreenContent(
     var query by remember { mutableStateOf("") }
     var focused by remember { mutableStateOf(false) }
     val activeFilters = remember { mutableStateListOf<SearchFilter>() }
+    var selectedFolder by remember { mutableStateOf<Folder?>(null) }
+    var showFolderSheet by remember { mutableStateOf(false) }
+
+    // G.3 — favorite-id set powers both the Favorites chip filter and the
+    // "no favorites yet → chip disabled" affordance check; folder list
+    // feeds the bottom-sheet.
+    val favoriteIds by produceState(initialValue = emptySet<Long>(), favoriteCommands) {
+        favoriteCommands?.observeFavoriteIds()?.collect { value = it }
+    }
+    val folders by produceState(initialValue = emptyList<Folder>(), folderSource) {
+        folderSource?.observeFolders()?.collect { value = it }
+    }
 
     // Live results — re-collect whenever the trimmed query changes.
     val trimmedQuery by remember { derivedStateOf { query.trim() } }
@@ -121,8 +140,22 @@ internal fun SearchScreenContent(
         val flow = if (trimmedQuery.isEmpty()) flowOf(emptyList()) else photoSearch.searchPhotos(trimmedQuery)
         flow.collect { value = it }
     }
-    val filtered by remember(rawResults, activeFilters.toList(), nowMs) {
-        derivedStateOf { applyFilters(rawResults, activeFilters.toSet(), nowMs) }
+    val filtered by remember(
+        rawResults,
+        activeFilters.toList(),
+        nowMs,
+        favoriteIds,
+        selectedFolder,
+    ) {
+        derivedStateOf {
+            applyFilters(
+                photos = rawResults,
+                active = activeFilters.toSet(),
+                nowMs = nowMs,
+                favoriteIds = favoriteIds,
+                selectedFolderId = selectedFolder?.id,
+            )
+        }
     }
     val recents by produceState(initialValue = emptyList<String>(), photoSearch) {
         photoSearch.recentSearches().collect { value = it }
@@ -136,6 +169,17 @@ internal fun SearchScreenContent(
         if (trimmedQuery.isEmpty()) return@LaunchedEffect
         delay(RECORD_SETTLE_DELAY_MS)
         photoSearch.recordSearch(trimmedQuery)
+    }
+
+    if (showFolderSheet && folderSource != null) {
+        FolderFilterSheet(
+            folders = folders,
+            onPick = { folder ->
+                selectedFolder = folder
+                showFolderSheet = false
+            },
+            onDismiss = { showFolderSheet = false },
+        )
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -156,6 +200,17 @@ internal fun SearchScreenContent(
                     if (activeFilters.contains(filter)) activeFilters.remove(filter)
                     else activeFilters.add(filter)
                 },
+                selectedFolder = selectedFolder,
+                onFolderChipTap = {
+                    if (selectedFolder != null) {
+                        selectedFolder = null
+                    } else if (folderSource != null) {
+                        showFolderSheet = true
+                    }
+                },
+                onClearFolder = { selectedFolder = null },
+                folderChipEnabled = folderSource != null,
+                favoritesChipEnabled = favoriteCommands != null,
             )
             when {
                 trimmedQuery.isEmpty() && focused && recents.isNotEmpty() ->
@@ -255,6 +310,11 @@ private fun SearchHeader(
 private fun FilterChipRow(
     active: Set<SearchFilter>,
     onToggle: (SearchFilter) -> Unit,
+    selectedFolder: Folder?,
+    onFolderChipTap: () -> Unit,
+    onClearFolder: () -> Unit,
+    folderChipEnabled: Boolean,
+    favoritesChipEnabled: Boolean,
 ) {
     val scroll = rememberScrollState()
     Row(
@@ -265,15 +325,45 @@ private fun FilterChipRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SearchFilter.entries.forEach { filter ->
-            val isVideos = filter == SearchFilter.Videos
+            val enabled = when (filter) {
+                SearchFilter.Videos -> false
+                SearchFilter.Favorites -> favoritesChipEnabled
+                else -> true
+            }
             FilterChip(
                 selected = active.contains(filter),
                 onClick = { onToggle(filter) },
-                enabled = !isVideos,
+                enabled = enabled,
                 label = { Text(text = stringResource(labelFor(filter))) },
                 modifier = Modifier.testTag("search_chip_${filter.name.lowercase()}"),
             )
         }
+        // G.3 — folder picker chip. Label is the picked folder's display
+        // name once one is selected; tapping a selected chip clears it
+        // (via the trailing close icon affordance), tapping an unselected
+        // chip opens the folder bottom sheet.
+        FilterChip(
+            selected = selectedFolder != null,
+            onClick = onFolderChipTap,
+            enabled = folderChipEnabled,
+            label = {
+                Text(
+                    text = selectedFolder?.displayName
+                        ?: stringResource(R.string.search_chip_folder_default),
+                )
+            },
+            trailingIcon = if (selectedFolder != null) {
+                {
+                    Icon(
+                        imageVector = Icons.Outlined.Clear,
+                        contentDescription =
+                            stringResource(R.string.search_folder_chip_clear_cd),
+                        modifier = Modifier.clickable(onClick = onClearFolder),
+                    )
+                }
+            } else null,
+            modifier = Modifier.testTag("search_chip_folder"),
+        )
     }
 }
 
@@ -282,6 +372,7 @@ private fun labelFor(filter: SearchFilter): Int = when (filter) {
     SearchFilter.Videos -> R.string.search_chip_videos
     SearchFilter.Gps -> R.string.search_chip_gps
     SearchFilter.Recent -> R.string.search_chip_recent
+    SearchFilter.Favorites -> R.string.search_chip_favorites
 }
 
 @Composable

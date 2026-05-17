@@ -20,6 +20,9 @@ interface PhotoFavoriteDao {
     @Query("SELECT EXISTS(SELECT 1 FROM photo_favorites WHERE photo_id = :photoId)")
     suspend fun isFavorite(photoId: Long): Boolean
 
+    @Query("SELECT EXISTS(SELECT 1 FROM photo_favorites WHERE photo_id = :photoId)")
+    fun observeIsFavorite(photoId: Long): Flow<Boolean>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun add(entity: PhotoFavoriteEntity)
 

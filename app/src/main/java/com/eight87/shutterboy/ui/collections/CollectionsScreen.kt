@@ -3,7 +3,9 @@ package com.eight87.shutterboy.ui.collections
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,7 +13,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -33,7 +39,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
+import androidx.compose.ui.draw.clip
 import com.eight87.shutterboy.ui.nav.Collections
+import com.eight87.shutterboy.ui.nav.Favorites
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
@@ -54,6 +62,8 @@ fun CollectionsScreen(
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val folderCovers by scope.folderSource.observeFolderCovers()
         .collectAsStateWithLifecycle(initialValue = emptyMap())
+    val favoriteIds by scope.favoriteCommands.observeFavoriteIds()
+        .collectAsStateWithLifecycle(initialValue = emptySet())
     val folderOrder by scope.customOrderPreferences.observeFolderOrder()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -105,6 +115,24 @@ fun CollectionsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (favoriteIds.isNotEmpty()) {
+                item(
+                    span = { GridItemSpan(maxLineSpan) },
+                    key = "section-favorites",
+                    contentType = "section_header",
+                ) {
+                    SectionHeader(text = stringResource(R.string.collections_section_favorites))
+                }
+                item(
+                    key = "favorites-tile",
+                    contentType = "favorites_tile",
+                ) {
+                    FavoritesTile(
+                        count = favoriteIds.size,
+                        onClick = { scope.backStack.push(Favorites) },
+                    )
+                }
+            }
             item(
                 span = { GridItemSpan(maxLineSpan) },
                 key = "section-folders",
@@ -167,6 +195,46 @@ private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp),
     )
+}
+
+@Composable
+private fun FavoritesTile(
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp),
+            )
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = stringResource(R.string.favorites_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.collections_favorites_tile_subtitle,
+                        count,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 @Composable

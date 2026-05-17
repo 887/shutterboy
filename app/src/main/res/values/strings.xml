@@ -54,6 +54,12 @@
     <string name="folder_revoked_title">Folder access was revoked</string>
     <string name="folder_revoked_subtitle">Re-grant access from Settings → Library → Manage sources to bring this folder back.</string>
     <string name="cd_folder_detail_back">Back to Collections</string>
+    <string name="collections_section_favorites">Favorites</string>
+    <string name="collections_favorites_tile_subtitle">%1$d photos</string>
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_empty_title">No favorites yet</string>
+    <string name="favorites_empty_subtitle">Tap the heart in the viewer to favorite a photo.</string>
+    <string name="cd_favorites_back">Back to Collections</string>
 
     <!-- Reorder dialog + Collections overflow. -->
     <string name="collections_overflow_reorder_folders">Reorder folders</string>
@@ -90,6 +96,8 @@
     <string name="cd_viewer_edit">Edit photo</string>
     <string name="viewer_edit_chooser_title">Edit with</string>
     <string name="cd_viewer_delete">Delete photo</string>
+    <string name="cd_viewer_favorite">Remove from favorites</string>
+    <string name="cd_viewer_unfavorite">Add to favorites</string>
     <string name="viewer_delete_dialog_title">Delete this photo?</string>
     <string name="viewer_delete_dialog_body">It will be moved to the system trash. You can restore it from Files for 30 days.</string>
     <string name="viewer_delete_confirm">Delete</string>
@@ -113,6 +121,10 @@
     <string name="search_chip_videos">Videos</string>
     <string name="search_chip_gps">Has GPS</string>
     <string name="search_chip_recent">Recent</string>
+    <string name="search_chip_favorites">Favorites</string>
+    <string name="search_chip_folder_default">Folder</string>
+    <string name="search_folder_sheet_title">Filter by folder</string>
+    <string name="search_folder_chip_clear_cd">Clear folder filter</string>
     <string name="cd_search_open">Search</string>
     <string name="cd_search_back">Back from search</string>
     <string name="cd_search_field">Search field</string>

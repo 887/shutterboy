@@ -313,6 +313,15 @@ class RoomGalleryRepository(
     override suspend fun isFavorite(photoId: PhotoId): Boolean =
         favoriteDao.isFavorite(photoId.value)
 
+    override fun observeIsFavorite(photoId: PhotoId): Flow<Boolean> =
+        favoriteDao.observeIsFavorite(photoId.value)
+
+    override fun observeFavoritePhotos(): Flow<List<Photo>> =
+        favoriteDao.observeFavoritePhotos().map { rows -> rows.map { it.toDomain() } }
+
+    override fun observeFavoriteIds(): Flow<Set<Long>> =
+        favoriteDao.observeFavoritePhotos().map { rows -> rows.mapTo(HashSet()) { it.id } }
+
     // --- PhotoDeleter (three-branch SDK split mirroring tonearmboy's TrackDeleter) ---
 
     override suspend fun deletePhotos(ids: List<PhotoId>): DeleteRequest {

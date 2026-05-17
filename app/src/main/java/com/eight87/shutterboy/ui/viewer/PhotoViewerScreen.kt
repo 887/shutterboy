@@ -26,9 +26,11 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,6 +73,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eight87.shutterboy.R
+import com.eight87.shutterboy.data.repo.FavoriteCommands
 import com.eight87.shutterboy.data.repo.PhotoDeleter
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.domain.DeleteRequest
@@ -114,6 +117,7 @@ fun PhotoViewerScreen(
         initialPhotoId = destination.photoIdValue,
         photoSource = scope.photoSource,
         photoDeleter = scope.photoDeleter,
+        favoriteCommands = scope.favoriteCommands,
         onBack = { scope.backStack.pop() },
         modifier = modifier,
     )
@@ -130,6 +134,7 @@ internal fun PhotoViewerContent(
     initialPhotoId: Long,
     photoSource: PhotoSource,
     photoDeleter: PhotoDeleter? = null,
+    favoriteCommands: FavoriteCommands? = null,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -264,6 +269,14 @@ internal fun PhotoViewerContent(
     }
     val currentPhoto: Photo? by currentPhotoFlow.collectAsState(initial = null)
 
+    // G.3 — observe favorite-state for the current photo id. Falls back to
+    // a no-op flow (false) when favorite commands aren't wired (test mounts).
+    val isFavoriteFlow = remember(currentId, favoriteCommands) {
+        if (currentId == null || favoriteCommands == null) flowOf(false)
+        else favoriteCommands.observeIsFavorite(PhotoId(currentId))
+    }
+    val isFavorite: Boolean by isFavoriteFlow.collectAsState(initial = false)
+
     Scaffold(
         topBar = {
             AnimatedVisibility(
@@ -335,6 +348,32 @@ internal fun PhotoViewerContent(
                                 imageVector = Icons.Outlined.Edit,
                                 contentDescription = stringResource(R.string.cd_viewer_edit),
                             )
+                        }
+                        // G.3 — Favorite toggle. Sits between Edit and Delete.
+                        IconButton(
+                            onClick = {
+                                val id = currentId
+                                val fav = favoriteCommands
+                                if (id != null && fav != null) {
+                                    coroutineScope.launch { fav.toggleFavorite(PhotoId(id)) }
+                                }
+                            },
+                            enabled = currentPhoto != null && favoriteCommands != null,
+                        ) {
+                            if (isFavorite) {
+                                Icon(
+                                    imageVector = Icons.Filled.Favorite,
+                                    contentDescription =
+                                        stringResource(R.string.cd_viewer_favorite),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Outlined.FavoriteBorder,
+                                    contentDescription =
+                                        stringResource(R.string.cd_viewer_unfavorite),
+                                )
+                            }
                         }
                         // F.4 — Delete via MediaStore consent (API 30+) /
                         // direct delete (API 26-28). Confirm dialog first.

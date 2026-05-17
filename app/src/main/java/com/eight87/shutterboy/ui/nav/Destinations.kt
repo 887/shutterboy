@@ -105,6 +105,15 @@ data class PhotoViewer(
 ) : Destination
 
 /**
+ * Phase G.3 — Favorites destination. Pushed from the Collections root
+ * Favorites tile; body is the same density-zoomed timeline as the Photos
+ * tab, fed by `FavoriteCommands.observeFavoritePhotos()`. Hidden from
+ * Collections when the favorites set is empty.
+ */
+@Serializable
+data object Favorites : Destination
+
+/**
  * Phase D.2 — folder detail. Pushed from a folder tile tap on the
  * Collections root. Body is the same density-zoomed timeline as the
  * Photos tab, filtered to `observePhotosInFolder(folderId)`. `FolderId` is

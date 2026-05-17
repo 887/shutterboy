@@ -97,6 +97,7 @@ fun ShutterboyApp(graph: AppGraph) {
                             entry<Licenses> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<PhotoViewer> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<FolderDetail> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<Favorites> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<Slideshow> { WithNavAnimatedContentScope { it.Register(scope) } }
                         },
                     )
