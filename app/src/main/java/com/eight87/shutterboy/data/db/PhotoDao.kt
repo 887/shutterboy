@@ -41,6 +41,15 @@ interface PhotoDao {
     @Query("SELECT id FROM photos")
     suspend fun allIds(): List<Long>
 
+    /**
+     * Phase I.3.d — destructive wipe used by `LibraryScanner.resetAndRescan`.
+     * Truncates the `photos` table; Room cascades into the FTS shadow
+     * (`photo_fts` is `contentEntity = PhotoEntity`) and any FK-bound child
+     * tables.
+     */
+    @Query("DELETE FROM photos")
+    suspend fun deleteAll()
+
     @Transaction
     suspend fun replaceWithDelta(toUpsert: List<PhotoEntity>, toDelete: List<Long>) {
         if (toUpsert.isNotEmpty()) upsertAll(toUpsert)

@@ -28,4 +28,8 @@ interface PhotoFavoriteDao {
 
     @Query("DELETE FROM photo_favorites WHERE photo_id = :photoId")
     suspend fun remove(photoId: Long)
+
+    /** Phase I.3.d — destructive wipe used by `LibraryScanner.resetAndRescan`. */
+    @Query("DELETE FROM photo_favorites")
+    suspend fun deleteAll()
 }

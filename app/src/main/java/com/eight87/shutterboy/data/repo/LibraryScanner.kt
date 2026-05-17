@@ -32,5 +32,18 @@ interface LibraryScanner {
      */
     suspend fun forceRescan(): LibrarySnapshot
 
+    /**
+     * Phase I.3.d — destructive reset. Wipes the Room cache (photos,
+     * folders, favorites, FTS shadow) and clears the cold-start scan
+     * gate, then runs a fresh scan as if on first launch. This is the
+     * heavy-handed counterpart to [forceRescan]: where `forceRescan`
+     * only re-evaluates against the existing cache, this rebuilds the
+     * cache from zero.
+     *
+     * Settings → Library → "Reset library cache" routes here (behind a
+     * destructive-action confirm dialog).
+     */
+    suspend fun resetAndRescan(): LibrarySnapshot
+
     fun scanProgress(): Flow<ScanProgress>
 }
