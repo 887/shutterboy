@@ -70,6 +70,14 @@ android {
         isIncludeAndroidResources = true
       }
     }
+
+    lint {
+        // `Instantiatable` is a false positive for `androidx.activity.ComponentActivity`
+        // subclasses — Lint's class-resolution doesn't see the AndroidX type via the
+        // analysis classpath at lintVitalAnalyzeRelease time, so it flags MainActivity
+        // even though it's perfectly instantiatable at runtime.
+        disable += "Instantiatable"
+    }
 }
 
 room {
@@ -112,6 +120,18 @@ val copyLicenseeInventory by tasks.registering(Copy::class) {
 afterEvaluate {
     tasks.matching { it.name == "mergeReleaseAssets" || it.name == "mergeDebugAssets" }
         .configureEach { dependsOn(copyLicenseeInventory) }
+    // Gradle 9 strict-mode: every Lint task that reads the merged-assets
+    // directory needs an explicit dependency on the inventory copy that
+    // writes into it. Match by name prefix — generateLint*ReportModel
+    // + lintVitalAnalyze* + lintAnalyze*.
+    tasks.matching { task ->
+        val n = task.name
+        n.startsWith("generate") && n.contains("Lint") ||
+            n.startsWith("lintAnalyze") ||
+            n.startsWith("lintVitalAnalyze") ||
+            n.startsWith("lintReportModel") ||
+            n.startsWith("lintVitalReportModel")
+    }.configureEach { dependsOn(copyLicenseeInventory) }
 }
 
 kotlin {
