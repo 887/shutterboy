@@ -21,16 +21,15 @@ import com.eight87.shutterboy.data.scan.MediaStoreScanner
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreCustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DataStoreRecentSearchesPreferences
+import com.eight87.shutterboy.data.settings.DataStoreSafSourcesPreferences
 import com.eight87.shutterboy.data.settings.DataStoreScanGatePreferences
 import com.eight87.shutterboy.data.settings.DataStoreSortPreferences
 import com.eight87.shutterboy.data.settings.DataStoreThemePreferences
 import com.eight87.shutterboy.data.settings.RecentSearchesPreferences
-import com.eight87.shutterboy.data.settings.ScanConfigSource
+import com.eight87.shutterboy.data.settings.SafSourcesPreferences
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
 import com.eight87.shutterboy.data.settings.ThemePreferences
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
 private val Context.shutterboyPrefs: DataStore<Preferences> by preferencesDataStore(
     name = "shutterboy_settings",
@@ -63,13 +62,13 @@ class AppGraph(applicationContext: Context) {
     private val safSourceManager = SafSourceManager(appCtx)
 
     /**
-     * Phase I.3 will replace this with the real `SettingsRepository`-backed
-     * impl. Until then SAF source set is empty; only MediaStore-visible
-     * device images are scanned.
+     * Phase I.3.b — DataStore-backed SAF tree URI set. Exposed through the
+     * narrow [SafSourcesPreferences] facet for the Manage-sources UI, and
+     * through `ScanConfigSource.safSourceUris` for the data-layer scanner.
      */
-    private val scanConfig: ScanConfigSource = object : ScanConfigSource {
-        override val safSourceUris: Flow<Set<String>> = flowOf(emptySet())
-    }
+    val safSourcesPreferences: SafSourcesPreferences =
+        DataStoreSafSourcesPreferences(appCtx.shutterboyPrefs)
+    private val scanConfig = safSourcesPreferences as DataStoreSafSourcesPreferences
 
     /** Phase incremental-scan A.2 + A.3 — cold-start gate persistence. */
     private val scanGate: ScanGatePreferences =

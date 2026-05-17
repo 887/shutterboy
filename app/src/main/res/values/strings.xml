@@ -164,6 +164,18 @@
     <string name="settings_library_rescan_in_progress">Rescanning…</string>
     <string name="settings_library_rescan_complete">Rescan complete — %1$d photos</string>
 
+    <!-- Phase I.3.b — Manage sources sub-page. -->
+    <string name="settings_library_manage_sources">Manage sources</string>
+    <string name="settings_library_manage_sources_subtitle">Add folders from SAF / SD card / USB</string>
+    <string name="settings_manage_sources_title">Manage sources</string>
+    <string name="settings_manage_sources_add">Add source</string>
+    <string name="settings_manage_sources_add_subtitle">Pick a folder to include in the library</string>
+    <string name="settings_manage_sources_empty">No additional sources. Device photos are scanned via MediaStore.</string>
+    <string name="settings_manage_sources_photo_count">%1$d photos</string>
+    <string name="settings_manage_sources_added">Source added</string>
+    <string name="settings_manage_sources_removed">Source removed</string>
+    <string name="cd_settings_manage_sources_remove">Remove source</string>
+
     <!-- Tonearmboy-style scan progress bar mounted at top of app shell. -->
     <string name="library_scan_progress_with_total">Scanning %1$d / %2$d</string>
     <string name="library_scan_progress_indeterminate">Scanning…</string>
