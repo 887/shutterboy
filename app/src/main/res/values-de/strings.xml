@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Shutterboy — German (de-DE) translations.
+
+  Locale variant of the canonical values/strings.xml. Same key order as
+  the source for diff-friendly review. Missing keys fall back to English
+  at runtime (Android default behaviour). Keys with translatable="false"
+  in the source are intentionally omitted.
+-->
+<resources>
+    <string name="app_name">shutterboy</string>
+
+    <!-- Runtime permission gate (READ_MEDIA_IMAGES + READ_MEDIA_VIDEO). -->
+    <string name="permission_media_title">Zugriff auf Fotos und Videos</string>
+    <string name="permission_media_body">Shutterboy benötigt Lesezugriff auf deine Fotos und Videos, um sie in der Galerie anzuzeigen. Es wird nichts hochgeladen; alles bleibt auf deinem Gerät.</string>
+    <string name="permission_media_grant_button">Zugriff erlauben</string>
+    <string name="permission_media_retry_button">Erneut versuchen</string>
+    <string name="permission_media_open_settings_button">Einstellungen öffnen</string>
+
+    <!-- Phase C — bottom navigation + tab labels. -->
+    <string name="nav_photos">Fotos</string>
+    <string name="nav_collections">Sammlungen</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="cd_nav_photos">Tab „Fotos“</string>
+    <string name="cd_nav_collections">Tab „Sammlungen“</string>
+    <string name="cd_nav_settings">Tab „Einstellungen“</string>
+
+    <!-- Collections root + folder detail. -->
+    <string name="collections_section_folders">Ordner</string>
+    <string name="collections_folder_count">%1$d Fotos</string>
+    <string name="collections_empty_title">Noch keine Ordner</string>
+    <string name="collections_empty_subtitle">Fotos erscheinen hier nach Ordnern gruppiert, sobald ein Scan sie erfasst.</string>
+    <string name="folder_detail_title_default">Ordner</string>
+    <string name="folder_empty_title">Dieser Ordner ist leer</string>
+    <string name="folder_empty_subtitle">In diesen Ordner aufgenommene Fotos erscheinen hier, sobald ein Scan sie erfasst.</string>
+    <string name="folder_revoked_title">Ordnerzugriff wurde entzogen</string>
+    <string name="folder_revoked_subtitle">Erteile den Zugriff erneut unter Einstellungen → Bibliothek → Quellen verwalten, um diesen Ordner zurückzuholen.</string>
+    <string name="cd_folder_detail_back">Zurück zu Sammlungen</string>
+    <string name="collections_section_favorites">Favoriten</string>
+    <string name="collections_favorites_tile_subtitle">%1$d Fotos</string>
+    <string name="favorites_title">Favoriten</string>
+    <string name="favorites_empty_title">Noch keine Favoriten</string>
+    <string name="favorites_empty_subtitle">Tippe im Viewer auf das Herz, um ein Foto zu favorisieren.</string>
+    <string name="cd_favorites_back">Zurück zu Sammlungen</string>
+
+    <!-- Reorder dialog + Collections overflow. -->
+    <string name="collections_overflow_reorder_folders">Ordner neu anordnen</string>
+    <string name="collections_reorder_folders_title">Ordner neu anordnen</string>
+    <string name="collections_reorder_apply">Übernehmen</string>
+    <string name="collections_reorder_cancel">Abbrechen</string>
+    <string name="cd_drag_handle">Zum Neuanordnen ziehen</string>
+
+    <!-- Phase C.2 — Photos timeline. -->
+    <string name="photos_top_title">Fotos</string>
+    <string name="photos_empty_title">Noch keine Fotos</string>
+    <string name="photos_empty_subtitle">Verbinde einen Ordner über Einstellungen → Bibliothek → Quellen verwalten, oder erteile Fotozugriff, falls noch nicht geschehen.</string>
+
+    <!-- Phase E.2 — sort sheet. -->
+    <string name="sort_sheet_title">Sortieren</string>
+    <string name="sort_axis_date_taken">Aufnahmedatum</string>
+    <string name="sort_axis_date_added">Hinzugefügt am</string>
+    <string name="sort_axis_name">Dateiname</string>
+    <string name="sort_axis_size">Dateigröße</string>
+    <string name="sort_direction_asc">Aufsteigend</string>
+    <string name="sort_direction_desc">Absteigend</string>
+    <string name="sort_apply">Übernehmen</string>
+    <string name="sort_overflow_label">Sortieren</string>
+    <string name="cd_sort_overflow">Sortieroptionen</string>
+    <string name="cd_more_options">Weitere Optionen</string>
+
+    <!-- Phase F — fullscreen viewer. -->
+    <string name="viewer_loading_title">Wird geladen …</string>
+    <string name="viewer_empty">Keine Fotos</string>
+    <string name="cd_viewer_back">Zurück</string>
+    <string name="cd_viewer_info">Fotoinfo</string>
+    <string name="cd_viewer_share">Foto teilen</string>
+    <string name="viewer_share_chooser_title">Teilen über</string>
+    <string name="cd_viewer_edit">Foto bearbeiten</string>
+    <string name="viewer_edit_chooser_title">Bearbeiten mit</string>
+    <string name="cd_viewer_delete">Foto löschen</string>
+    <string name="cd_viewer_favorite">Aus Favoriten entfernen</string>
+    <string name="cd_viewer_unfavorite">Zu Favoriten hinzufügen</string>
+    <string name="viewer_delete_dialog_title">Dieses Foto löschen?</string>
+    <string name="viewer_delete_dialog_body">Es wird in den Systempapierkorb verschoben. Du kannst es 30 Tage lang aus „Dateien“ wiederherstellen.</string>
+    <string name="viewer_delete_confirm">Löschen</string>
+    <string name="viewer_delete_cancel">Abbrechen</string>
+    <string name="viewer_info_title">Info</string>
+    <string name="viewer_info_filename">Dateiname</string>
+    <string name="viewer_info_capture_date">Aufgenommen</string>
+    <string name="viewer_info_dimensions">Abmessungen</string>
+    <string name="viewer_info_file_size">Dateigröße</string>
+    <string name="viewer_info_lens">Objektiv</string>
+    <string name="viewer_info_focal_length">Brennweite</string>
+    <string name="viewer_info_iso">ISO</string>
+    <string name="viewer_info_aperture">Blende</string>
+    <string name="viewer_info_shutter_speed">Belichtungszeit</string>
+
+    <!-- Phase G — search overlay. -->
+    <string name="search_field_hint">Fotos durchsuchen</string>
+    <string name="search_clear_cd">Leeren</string>
+    <string name="search_empty_state">Keine Fotos passen zu dieser Suche.</string>
+    <string name="search_chip_photos">Fotos</string>
+    <string name="search_chip_videos">Videos</string>
+    <string name="search_chip_gps">Mit GPS</string>
+    <string name="search_chip_recent">Neu</string>
+    <string name="search_chip_favorites">Favoriten</string>
+    <string name="search_chip_folder_default">Ordner</string>
+    <string name="search_folder_sheet_title">Nach Ordner filtern</string>
+    <string name="search_folder_chip_clear_cd">Ordnerfilter zurücksetzen</string>
+    <string name="cd_search_open">Suche</string>
+    <string name="cd_search_back">Zurück von Suche</string>
+    <string name="cd_search_field">Suchfeld</string>
+
+    <!-- Phase C.x — Settings tab placeholder until Phase I builds the M3 Expressive root. -->
+    <string name="settings_root_about_row_label">Info</string>
+    <string name="settings_root_about_row_subtitle">Build, Lizenz, GitHub, Easter Egg</string>
+    <string name="settings_root_photos_row_label">Fotos</string>
+    <string name="settings_root_photos_row_subtitle">Standardsortierung und Zeitleistenanzeige</string>
+    <string name="settings_root_library_row_label">Bibliothek</string>
+    <string name="settings_root_library_row_subtitle">Fotos neu scannen, Vorschaubilder-Cache leeren</string>
+    <string name="settings_root_lookfeel_row_label">Erscheinungsbild</string>
+    <string name="settings_root_lookfeel_row_subtitle">Design, Rasterdichte, Vorschaubildqualität</string>
+    <string name="cd_settings_back">Zurück</string>
+
+    <!-- Settings → Look and Feel sub-page (main.md I.2). -->
+    <string name="settings_look_and_feel_title">Erscheinungsbild</string>
+    <string name="settings_lookfeel_density_label">Standard-Rasterdichte</string>
+    <string name="settings_lookfeel_density_items">Einzeln — eine Kachel pro Foto</string>
+    <string name="settings_lookfeel_density_days">Tage — eine Kachel pro Tag</string>
+    <string name="settings_lookfeel_density_months">Monate — eine Kachel pro Monat</string>
+    <string name="settings_lookfeel_density_years">Jahre — ein Bild pro Jahr</string>
+    <string name="settings_lookfeel_quality_label">Vorschaubildqualität</string>
+    <string name="settings_lookfeel_quality_low">Niedrig — am schnellsten, weniger Speicher</string>
+    <string name="settings_lookfeel_quality_medium">Mittel — ausgewogen</string>
+    <string name="settings_lookfeel_quality_high">Hoch — am schärfsten, langsamer</string>
+    <string name="settings_lookfeel_close">Schließen</string>
+
+    <!-- Settings → Library sub-page (main.md I.3). -->
+    <string name="settings_library_title">Bibliothek</string>
+    <string name="settings_library_clear_cache">Vorschaubilder-Cache leeren</string>
+    <string name="settings_library_clear_cache_subtitle">Gibt Speicherplatz frei; Vorschaubilder werden bei der nächsten Anzeige neu erzeugt</string>
+    <string name="settings_library_clear_cache_dialog_title">Vorschaubilder-Cache leeren?</string>
+    <string name="settings_library_clear_cache_dialog_body">Zwischengespeicherte Vorschaubilder werden gelöscht und beim erneuten Anzeigen der Fotos neu erzeugt. Die Fotos selbst sind nicht betroffen.</string>
+    <string name="settings_library_clear_cache_confirm">Leeren</string>
+    <string name="settings_library_clear_cache_cancel">Abbrechen</string>
+    <string name="settings_library_clear_cache_complete">Cache geleert</string>
+
+    <!-- Settings → Photos sub-page (main.md I.4). -->
+    <string name="settings_photos_title">Fotos</string>
+    <string name="settings_photos_default_sort_label">Standardsortierung</string>
+    <string name="settings_photos_sort_date_taken_desc">Aufnahmedatum — neueste zuerst</string>
+    <string name="settings_photos_sort_date_taken_asc">Aufnahmedatum — älteste zuerst</string>
+    <string name="settings_photos_sort_date_added_desc">Hinzugefügt am — neueste zuerst</string>
+    <string name="settings_photos_sort_date_added_asc">Hinzugefügt am — älteste zuerst</string>
+    <string name="settings_photos_sort_name_asc">Dateiname — A bis Z</string>
+    <string name="settings_photos_sort_name_desc">Dateiname — Z bis A</string>
+    <string name="settings_photos_sort_size_desc">Dateigröße — größte zuerst</string>
+    <string name="settings_photos_sort_size_asc">Dateigröße — kleinste zuerst</string>
+
+    <!-- BaseTheme picker — ported from tonearmboy. -->
+    <string name="settings_section_appearance">Erscheinungsbild</string>
+    <string name="settings_appearance_theme">Design</string>
+    <string name="settings_appearance_default_android">Material You (System)</string>
+    <string name="settings_appearance_default_colors">Shutterboy-Palette</string>
+    <string name="settings_appearance_pure_black">Reines Schwarz</string>
+    <string name="settings_appearance_custom">Eigene Grundfarbe</string>
+    <string name="settings_appearance_pick_colour">Grundfarbe auswählen</string>
+
+    <!-- Phase I.3 — Library section + Rescan photos row. -->
+    <string name="settings_section_library">Bibliothek</string>
+    <string name="settings_library_rescan">Fotos neu scannen</string>
+    <string name="settings_library_rescan_subtitle">Erzwingt einen frischen Scan</string>
+    <string name="settings_library_rescan_in_progress">Wird neu gescannt …</string>
+    <string name="settings_library_rescan_complete">Neuscan abgeschlossen — %1$d Fotos</string>
+    <!-- Phase I.3.d — light confirm before kicking off a rescan. -->
+    <string name="settings_library_rescan_dialog_title">Jetzt neu scannen?</string>
+    <string name="settings_library_rescan_dialog_body">Durchläuft alle Quellen erneut und aktualisiert den lokalen Cache. Vorhandene Fotos bleiben erhalten; nur neue oder entfernte Dateien werden abgeglichen.</string>
+    <string name="settings_library_rescan_confirm">Neu scannen</string>
+    <string name="settings_library_rescan_cancel">Abbrechen</string>
+
+    <!-- Phase I.3.d — destructive reset of the local Room cache. -->
+    <string name="settings_library_reset">Bibliotheks-Cache zurücksetzen</string>
+    <string name="settings_library_reset_subtitle">Löscht den lokalen Room-Cache und durchläuft alle Quellen erneut. Verwenden, wenn Fotos fehlen oder die Galerie nicht synchron wirkt.</string>
+    <string name="settings_library_reset_dialog_title">Bibliotheks-Cache zurücksetzen?</string>
+    <string name="settings_library_reset_dialog_body">Löscht jeden zwischengespeicherten Foto-Eintrag, Ordner-Eintrag, Favoriten- und Suchindex-Eintrag und scannt anschließend alle Quellen von Grund auf neu. Die Fotodateien auf dem Speicher werden nicht angerührt.</string>
+    <string name="settings_library_reset_confirm">Zurücksetzen</string>
+    <string name="settings_library_reset_cancel">Abbrechen</string>
+    <string name="settings_library_reset_in_progress">Wird zurückgesetzt …</string>
+    <string name="settings_library_reset_complete">Zurücksetzen abgeschlossen — %1$d Fotos</string>
+
+    <!-- Phase I.3.b — Manage sources sub-page. -->
+    <string name="settings_library_manage_sources">Quellen verwalten</string>
+    <string name="settings_library_manage_sources_subtitle">Ordner von SAF / SD-Karte / USB hinzufügen</string>
+    <string name="settings_manage_sources_title">Quellen verwalten</string>
+    <string name="settings_manage_sources_add">Quelle hinzufügen</string>
+    <string name="settings_manage_sources_add_subtitle">Ordner zur Aufnahme in die Bibliothek auswählen</string>
+    <string name="settings_manage_sources_empty">Keine zusätzlichen Quellen. Gerätefotos werden über MediaStore gescannt.</string>
+    <string name="settings_manage_sources_photo_count">%1$d Fotos</string>
+    <string name="settings_manage_sources_added">Quelle hinzugefügt</string>
+    <string name="settings_manage_sources_removed">Quelle entfernt</string>
+    <string name="cd_settings_manage_sources_remove">Quelle entfernen</string>
+
+    <!-- Tonearmboy-style scan progress bar mounted at top of app shell. -->
+    <string name="library_scan_progress_with_total">Scanvorgang %1$d / %2$d</string>
+    <string name="library_scan_progress_indeterminate">Scanvorgang läuft …</string>
+    <string name="library_scan_progress_percent">%1$d %%</string>
+
+    <!-- Shared dialog affordances. -->
+    <string name="dialog_confirm">Bestätigen</string>
+    <string name="dialog_cancel">Abbrechen</string>
+
+    <!-- Phase H.3 — bulk delete typed-confirm dialog. -->
+    <string name="multiselect_delete_dialog_title">%1$d Fotos löschen?</string>
+    <string name="multiselect_delete_dialog_body">Dies kann nicht rückgängig gemacht werden. Tippe die Zahl zur Bestätigung ein.</string>
+    <string name="multiselect_delete_confirm_label">Bestätigen</string>
+    <string name="multiselect_delete_cancel_label">Abbrechen</string>
+
+    <!-- Phase H.2 — selection mode top bar + tile chrome. -->
+    <string name="multiselect_selected_count">%1$d ausgewählt</string>
+    <string name="multiselect_select_all">Alle auswählen</string>
+    <string name="multiselect_close">Fertig</string>
+    <string name="multiselect_delete">Löschen</string>
+    <string name="cd_multiselect_checkmark">Ausgewählt</string>
+    <string name="cd_multiselect_close">Auswahlmodus beenden</string>
+
+    <!-- Phase H.4 — bulk move-to-album. -->
+    <string name="multiselect_move">In Album verschieben</string>
+    <string name="cd_multiselect_move">Ausgewählte Fotos in ein Album verschieben</string>
+    <string name="multiselect_move_picker_title">In Album verschieben</string>
+    <string name="multiselect_move_picker_cancel">Abbrechen</string>
+    <string name="multiselect_move_success">%1$d Fotos nach %2$s verschoben</string>
+    <string name="multiselect_move_cancelled">Verschieben abgebrochen</string>
+    <string name="multiselect_move_failed">Verschieben fehlgeschlagen: %1$s</string>
+    <string name="multiselect_move_folder_photo_count">%1$d Fotos</string>
+
+    <!-- About sub-page (mirrors tonearmboy D.16.4 + D.16.5 easter egg). -->
+    <string name="about_title">Info</string>
+    <string name="about_app_tagline">Moderne Fotogalerie für Android</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_version_format">%1$s · %2$s · %3$s</string>
+    <string name="about_license_row_label">Lizenz</string>
+    <string name="about_license_row_value">MIT</string>
+    <string name="about_license_dialog_title">MIT-Lizenz</string>
+    <string name="about_license_dialog_dismiss">Schließen</string>
+    <string name="about_github_row_label">GitHub</string>
+    <string name="about_github_row_value">github.com/887/shutterboy</string>
+    <string name="about_oss_row_label">Open-Source-Hinweise</string>
+    <string name="about_oss_row_subtitle">Wird mit Phase-L-Release-Politur ausgeliefert</string>
+    <string name="cd_easter_egg_tiger">Tiger-Easter-Egg</string>
+
+    <!-- oss-licenses Phase B — Open-source licenses sub-page. -->
+    <string name="licenses_screen_title">Open-Source-Lizenzen</string>
+    <string name="licenses_row_label">Open-Source-Lizenzen</string>
+    <string name="licenses_row_supporting">Liste aller mitgelieferten Abhängigkeiten</string>
+    <string name="cd_licenses_back">Zurück</string>
+    <string name="licenses_unknown_spdx">Unbekannte SPDX: %1$s</string>
+
+    <!-- Phase J — Slideshow. -->
+    <string name="slideshow_paused">Pausiert</string>
+    <string name="cd_slideshow_back">Diashow beenden</string>
+    <string name="slideshow_start_menu_label">Diashow starten</string>
+
+    <!-- Phase J.2 — Ken Burns toggle on Settings → Photos. -->
+    <string name="settings_photos_ken_burns_label">Ken-Burns-Effekt</string>
+    <string name="settings_photos_ken_burns_subtitle">Langsames Zoomen und Schwenken pro Bild</string>
+
+    <!-- Phase I.7 — Settings search overlay (catalog-driven). -->
+    <string name="settings_search_placeholder">Einstellungen durchsuchen</string>
+    <string name="settings_search_open_cd">Einstellungen durchsuchen</string>
+    <string name="settings_search_clear_cd">Suche leeren</string>
+    <string name="settings_search_no_matches">Keine Einstellungen passen zu „%1$s“</string>
+
+    <!-- I.7 — Catalog breadcrumbs (rendered as the subtitle on each
+         search result). Two-segment "Section · Row" format. -->
+    <string name="settings_search_breadcrumb_appearance_theme">Erscheinungsbild · Design</string>
+    <string name="settings_search_breadcrumb_library_rescan">Bibliothek · Fotos neu scannen</string>
+    <string name="settings_search_breadcrumb_library_clear_cache">Bibliothek · Vorschaubilder-Cache leeren</string>
+    <string name="settings_search_breadcrumb_photos_sort">Fotos · Standardsortierung</string>
+    <string name="settings_search_breadcrumb_about_version">Info · Version</string>
+    <string name="settings_search_breadcrumb_about_license">Info · Lizenz</string>
+    <string name="settings_search_breadcrumb_about_github">Info · GitHub</string>
+    <string name="settings_search_breadcrumb_about_licenses">Info · Open-Source-Lizenzen</string>
+
+    <!-- I.7 — Catalog search keywords. Space-separated, lowercase,
+         resolved at filter time and substring-matched against the
+         user's query. Add synonyms users are likely to type. -->
+    <string name="settings_search_keywords_theme">design farbe farben dunkel hell dynamisch material you palette erscheinungsbild theme</string>
+    <string name="settings_search_keywords_library_rescan">neuscan rescan aktualisieren neu laden scan media store bibliothek</string>
+    <string name="settings_search_keywords_library_clear_cache">cache leeren vorschaubilder thumbnails coil speicher festplatte arbeitsspeicher</string>
+    <string name="settings_search_keywords_photos_sort">sortieren reihenfolge datum name größe aufnahme hinzugefügt zeitleiste</string>
+    <string name="settings_search_keywords_about_version">version build sha datum easter egg tiger</string>
+    <string name="settings_search_keywords_about_license">lizenz mit copyright urheberrecht</string>
+    <string name="settings_search_keywords_about_github">github quelle repository code</string>
+    <string name="settings_search_keywords_about_licenses">open source lizenzen hinweise oss attribution spdx</string>
+</resources>
