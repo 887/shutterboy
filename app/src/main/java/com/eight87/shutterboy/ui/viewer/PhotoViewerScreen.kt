@@ -390,6 +390,7 @@ internal fun PhotoViewerContent(
                     PhotoPage(
                         photoId = pageId,
                         photoSource = photoSource,
+                        isCurrentPage = isCurrentPage,
                         dismissThresholdPx = dismissThresholdPx,
                         infoOpenThresholdPx = infoOpenThresholdPx,
                         onSwipeUpForInfo = { infoVisible = true },
@@ -482,6 +483,7 @@ internal fun PhotoViewerContent(
 private fun PhotoPage(
     photoId: Long,
     photoSource: PhotoSource,
+    isCurrentPage: Boolean,
     dismissThresholdPx: Float,
     infoOpenThresholdPx: Float,
     onSwipeUpForInfo: () -> Unit,
@@ -495,6 +497,7 @@ private fun PhotoPage(
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
     val photo: Photo? by flow.collectAsState(initial = null)
     val context = LocalContext.current
+    val isVideo = photo?.mimeType?.startsWith("video/") == true
 
     // G.2 — per-page vertical drag detector. Accumulates the vertical
     // delta; on release we classify it into swipe-up-info / swipe-down-
@@ -516,31 +519,40 @@ private fun PhotoPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            // G.3.1 — outermost: transformable claims pinch (2+ fingers).
-            // Single-finger drags fall through to the gesture detectors
-            // below via the canPan = { zoomed } gate — without it,
-            // transformable claims single-finger pans too and swallows
-            // both the HorizontalPager swipe and our vertical-drag
-            // dismiss/info gestures. Once zoomed, single-finger pan is
-            // wanted (the user is moving around inside the zoomed image).
-            .transformable(
-                state = transformableState,
-                canPan = { zoomed },
+            // Video pages skip the zoom + tap gesture stack — pinch/zoom
+            // math doesn't apply to a PlayerView, and the tap detector
+            // would swallow Media3's seek-bar / play-pause taps. The
+            // vertical-drag dismiss/info gestures still apply (swipe-down
+            // to close, swipe-up to open info), but we relax the `zoomed`
+            // gate since video has no zoom state.
+            .then(
+                if (isVideo) Modifier else Modifier
+                    // G.3.1 — outermost: transformable claims pinch (2+ fingers).
+                    // Single-finger drags fall through to the gesture detectors
+                    // below via the canPan = { zoomed } gate — without it,
+                    // transformable claims single-finger pans too and swallows
+                    // both the HorizontalPager swipe and our vertical-drag
+                    // dismiss/info gestures. Once zoomed, single-finger pan is
+                    // wanted (the user is moving around inside the zoomed image).
+                    .transformable(
+                        state = transformableState,
+                        canPan = { zoomed },
+                    )
+                    // F.2 + G.3.2 — single tap toggles chrome, double tap toggles
+                    // zoom. Separate pointerInput so the tap detector doesn't
+                    // fight the vertical drag detector below.
+                    .pointerInput(photoId) {
+                        detectTapGestures(
+                            onTap = { onTap() },
+                            onDoubleTap = { onDoubleTap() },
+                        )
+                    },
             )
-            // F.2 + G.3.2 — single tap toggles chrome, double tap toggles
-            // zoom. Separate pointerInput so the tap detector doesn't
-            // fight the vertical drag detector below.
-            .pointerInput(photoId) {
-                detectTapGestures(
-                    onTap = { onTap() },
-                    onDoubleTap = { onDoubleTap() },
-                )
-            }
-            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx, zoomed) {
+            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx, zoomed, isVideo) {
                 // G.3 — disable vertical-drag dismiss/info gestures while
                 // zoomed past rest, otherwise a pan-down would accidentally
                 // dismiss the viewer.
-                if (zoomed) return@pointerInput
+                if (zoomed && !isVideo) return@pointerInput
                 detectVerticalDragGestures(
                     onDragStart = { dragAccumulator.floatValue = 0f },
                     onDragCancel = { dragAccumulator.floatValue = 0f },
@@ -565,7 +577,13 @@ private fun PhotoPage(
         contentAlignment = Alignment.Center,
     ) {
         val model = photo?.contentUri
-        if (model != null) {
+        if (model != null && isVideo) {
+            VideoPlayerSurface(
+                contentUri = model,
+                isActive = isCurrentPage,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else if (model != null) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(model)

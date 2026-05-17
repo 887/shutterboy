@@ -171,6 +171,11 @@ dependencies {
   implementation(libs.coil3.compose)
   implementation(libs.coil3.video)
 
+  // Media3 ExoPlayer + PlayerView — inline video playback in the
+  // viewer when a MediaStore row's mimeType starts with "video/".
+  implementation(libs.androidx.media3.exoplayer)
+  implementation(libs.androidx.media3.ui)
+
   // EXIF metadata
   implementation(libs.androidx.exifinterface)
 

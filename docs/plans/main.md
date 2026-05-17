@@ -2,7 +2,7 @@
 
 ## Status: v0.1 SHIPPED — Phases 0 + A–E + F.{1-6} + G + H + I.3 + J.{1,4} + K.{1,3} + L.{1-8} all shipped. First release at https://github.com/887/shutterboy/releases/tag/v0.1-7b7088a. Remaining work for v1.0: F.7 shared-element transition, F.8 extra delete tests, J.{2,3} Ken Burns + overflow scope picker, K.2 launcher icon polish, L.9 README status flip.
 
-Modern Android photo gallery, sibling app to [`tonearmboy`](https://github.com/887/tonearmboy). Reference UX target: the OxygenOS 15/16 Gallery — Photos / Collections / Explore tab structure, pinch-zoom density levels (Years → Months → Days → Items), year-timeline fast scrubber, smart albums, multi-select bulk actions. Same minimalist scope discipline as tonearmboy: read-only viewer, no cloud, no editing, no video playback, no ML.
+Modern Android photo gallery, sibling app to [`tonearmboy`](https://github.com/887/tonearmboy). Reference UX target: the OxygenOS 15/16 Gallery — Photos / Collections / Explore tab structure, pinch-zoom density levels (Years → Months → Days → Items), year-timeline fast scrubber, smart albums, multi-select bulk actions. Same minimalist scope discipline as tonearmboy: read-only viewer, no cloud, no editing, no ML.
 
 **SOLID discipline is locked into every phase below.** Cross-cutting standing rules + per-phase pre-emption mapping live in [`refactor-solid.md`](refactor-solid.md). Self-check against the cross-cutting rules (ISP narrow facets, DIP no wrong-direction imports, OCP sealed types, SRP file-size heuristics, no `SettingsSnapshot`, composition root) before ticking any phase header.
 
