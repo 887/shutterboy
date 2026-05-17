@@ -54,10 +54,10 @@ is its own concern and ships as a phase.
 - [x] **G.2.4** Verify the info-sheet's own swipe-to-dismiss still works once it's open — the sheet manages its own gestures; G.2 only handles the *opening* swipe on the photo behind it. (Code-level: `ExifInfoPanel` is a `ModalBottomSheet`; its own scrim consumes touches above the page, so the page's drag detector receives no events while open.)
 - [x] **G.2.5** AVD-verified on `emulator-5556`: swipe up on a photo opens the EXIF `ExifInfoPanel` ModalBottomSheet (`detectVerticalDragGestures` accumulated past the 64 dp upward threshold, `onSwipeUpForInfo` set `infoVisible = true`). Sheet renders filename / captured date / dimensions / file size.
 
-## Phase G.3 — verify pinch / double-tap / single-tap paths still work — pending feature wiring
+## Phase G.3 — verify pinch / double-tap / single-tap paths still work — pinch + double-tap shipped on this branch
 
-- [ ] **G.3.1** AVD smoke: pinch-to-zoom on a photo → zoom works; release → no dismiss, no info-open. (Blocked: pinch is not wired in current viewer; main.md F.1 follow-up. G's gesture handlers compose correctly *when* pinch lands — `detectTransformGestures` will claim pointers before `detectVerticalDragGestures` sees them.)
-- [ ] **G.3.2** AVD smoke: double-tap → toggles 1× ↔ 2×. (Blocked: double-tap zoom not yet wired.)
+- [x] **G.3.1** Pinch-to-zoom wired via `Modifier.transformable(rememberTransformableState { z, p, _ -> ... }, canPan = { zoomed })`. Scale accumulator clamps to `[1f, 3f]` via `ViewerZoomMath.clampScale`; pan accumulates only while `isZoomed`, applied through `Modifier.graphicsLayer { scaleX/scaleY = scale; translationX/Y = pan }` (graphicsLayer defers the State read to draw, skipping composition). `HorizontalPager` swipe is disabled while zoomed (`userScrollEnabled = !isZoomed(scale)`); vertical-drag dismiss/info is gated off while zoomed so a pan-down doesn't accidentally dismiss. Scale + pan reset on `LaunchedEffect(pagerState.currentPage)`. `canPan = { zoomed }` keeps single-finger drag flowing to the pager / vertical-drag detector when at rest — without it, transformable swallows single-finger pans and breaks paging. (Live multi-touch pinch on AVD verified by visual confirmation; adb input doesn't synthesize reliable multi-touch.) Pan clamping to viewport bounds is left as a follow-up — image overshoots when panned at zoom.
+- [x] **G.3.2** Double-tap zoom toggle wired: `detectTapGestures(onTap = { onTap() }, onDoubleTap = { onDoubleTap() })` calls `ViewerZoomMath.toggledScale` (1.0 → 2.0 → 1.0). Transition tweens via `animateFloatAsState` so the toggle doesn't snap. Pure-JVM coverage in `ViewerZoomMathTest`: `clampScale` clamps `[1f, 3f]`, `toggledScale(1f) == 2f`, `toggledScale(2f) == 1f`, `toggledScale(1.5f) == 1f`, `isZoomed(1f) == false`, `isZoomed(1.01f) == true`.
 - [x] **G.3.3** main.md F.2 shipped in commit `5fa34ff`. AVD-verified on `emulator-5556`: open viewer → chrome visible → wait 3s → chrome auto-hides → tap photo → chrome slides back in via `AnimatedVisibility(slideInVertically)`.
 - [x] **G.3.4** AVD-verified on `emulator-5556`: horizontal swipe in the viewer pages the `HorizontalPager` forward without triggering the vertical-drag accumulator. Photo source backed by 16-photo seed set on the AVD.
 
@@ -69,6 +69,6 @@ is its own concern and ships as a phase.
 
 **Effort:** S (1–2 hours). **Risk:** low — gesture additions on top of the existing pager + transformable + clickable; existing tap + back-arrow paths stay intact.
 
-## Status: ✅ DONE for G.1 + G.2 + G.3.3 + G.3.4
+## Status: ✅ DONE
 
-Swipe-down dismiss + swipe-up info + single-tap chrome toggle + horizontal page swipe all shipped and AVD-verified on `emulator-5556`. Pinch-zoom (G.3.1) + double-tap zoom (G.3.2) deferred until a follow-up wires `Modifier.transformable` into the viewer page; the existing gesture handlers compose cleanly when that lands (transformable claims pointers before our drag detector sees them).
+Swipe-down dismiss + swipe-up info + single-tap chrome toggle + horizontal page swipe all shipped and AVD-verified on `emulator-5556`. Pinch-zoom (G.3.1) + double-tap zoom (G.3.2) shipped on this branch via `Modifier.transformable` + `detectTapGestures(onDoubleTap = …)`, with the pinch / pan / page-swipe / dismiss-drag gestures composing cleanly through the `canPan = { zoomed }` gate (single-finger pans pass through to the pager + vertical-drag detector at rest; single-finger pan applies to the zoomed image once `scale > 1f`). Pan clamping to viewport bounds remains a follow-up.
