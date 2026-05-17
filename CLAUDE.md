@@ -152,6 +152,18 @@ These are evaluation criteria, not religion — small ad-hoc helpers don't need 
 
 SOLID refactor + standing-discipline plan: see [`docs/plans/refactor-solid.md`](docs/plans/refactor-solid.md). It tracks the cross-cutting rules every phase enforces, the tonearmboy-audit lessons absorbed pre-emptively into main.md's phase definitions (R.A → R.E), the standing R.F polish backlog, and the per-phase + end-of-major-phase audit cadence. Self-check the cross-cutting rules against the diff before ticking any phase header.
 
+## Open-source licenses
+
+The app ships an open-source acknowledgements sub-page driven by the [`app.cash.licensee`](https://github.com/cashapp/licensee) Gradle plugin (build-time only, nothing added to the APK at runtime). The plugin walks the `releaseRuntimeClasspath` and writes `app/src/main/assets/licenses/artifacts.json`, which `LicensesScreen` renders. Allowlist: `Apache-2.0`, `MIT`, `BSD-2-Clause`, `BSD-3-Clause`. License bodies ship as raw text assets at `app/src/main/assets/licenses/<spdx>.txt` sourced from `https://spdx.org/licenses/<spdx>.txt`.
+
+When adding a new `implementation` dep:
+
+1. Run `JAVA_HOME=/usr/lib/jvm/java-26-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:licenseeAndroidRelease` and confirm the dep's SPDX is in the allowlist above.
+2. If it isn't, prefer adding it via `licensee { allow("<SPDX>") }` in `app/build.gradle.kts`; only fall back to `allowDependency(group, artifact, version) { because("…") }` for one-off exemptions (e.g. test-only deps like JUnit's EPL-1.0).
+3. If the SPDX is genuinely new, ship the matching `app/src/main/assets/licenses/<spdx>.txt` from spdx.org in the same commit. `LicensesCatalogTest` (Robolectric, JVM-only) will fail loud if the asset is missing or the SPDX falls outside the allowlist.
+
+Full design + phase log: [`docs/plans/oss-licenses.md`](docs/plans/oss-licenses.md).
+
 ## Plan file
 
 The phased build plan lives at [`docs/plans/main.md`](docs/plans/main.md), per the user's global CLAUDE.md rule (numbered phases, sub-step checkboxes).
