@@ -282,7 +282,7 @@ This is **the ship vector**. Every supported language lands here, in a dedicated
 
 Per-locale ticks (extend as new languages land):
 
-- [ ] **T.E.1** German (`values-de/`) — user is local, primary review channel.
+- [x] **T.E.1** German (`values-de/`) — user is local, primary review channel. Shipped at 224/224 (100%). AVD walk under `de-DE` per-app locale: Photos / Collections / Settings root / Look-and-Feel sub-page / Library sub-page / Photos sub-page / About sub-page all render German cleanly; no layout overflow on compound words ("Standardsortierung", "Vorschaubilder-Cache", "Open-Source-Hinweise", "Bibliotheks-Cache zurücksetzen") — subtitles wrap to 2 lines within the existing card layouts. No Compose patches required.
 - [ ] **T.E.2** Next locale — user picks; same workflow.
 - [ ] **T.E.3** Next locale — same workflow.
 - [ ] (… one sub-step per locale shipped)
