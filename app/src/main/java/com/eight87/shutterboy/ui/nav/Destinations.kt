@@ -38,6 +38,10 @@ data object Settings : Destination
 @Serializable
 data object SettingsPhotos : Destination
 
+/** Settings → Library sub-page. Rescan + Clear cache. */
+@Serializable
+data object SettingsLibrary : Destination
+
 /**
  * Phase G — fullscreen search overlay. Pushed from the Photos TopAppBar
  * search icon. Pill-shaped search field at the top, filter chip row, results

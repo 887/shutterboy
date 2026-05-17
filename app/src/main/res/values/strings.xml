@@ -122,7 +122,19 @@
     <string name="settings_root_about_row_subtitle">Build, license, GitHub, easter egg</string>
     <string name="settings_root_photos_row_label">Photos</string>
     <string name="settings_root_photos_row_subtitle">Default sort and timeline display</string>
+    <string name="settings_root_library_row_label">Library</string>
+    <string name="settings_root_library_row_subtitle">Rescan photos, clear cached thumbnails</string>
     <string name="cd_settings_back">Back</string>
+
+    <!-- Settings → Library sub-page (main.md I.3). -->
+    <string name="settings_library_title">Library</string>
+    <string name="settings_library_clear_cache">Clear cached thumbnails</string>
+    <string name="settings_library_clear_cache_subtitle">Frees disk space; thumbnails regenerate on next view</string>
+    <string name="settings_library_clear_cache_dialog_title">Clear cached thumbnails?</string>
+    <string name="settings_library_clear_cache_dialog_body">Cached thumbnails will be deleted and regenerated when photos are viewed again. Photos themselves are not affected.</string>
+    <string name="settings_library_clear_cache_confirm">Clear</string>
+    <string name="settings_library_clear_cache_cancel">Cancel</string>
+    <string name="settings_library_clear_cache_complete">Cache cleared</string>
 
     <!-- Settings → Photos sub-page (main.md I.4). -->
     <string name="settings_photos_title">Photos</string>

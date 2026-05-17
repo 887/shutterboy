@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,17 +23,18 @@ import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Settings
 import com.eight87.shutterboy.ui.nav.SettingsAbout
+import com.eight87.shutterboy.ui.nav.SettingsLibrary
 import com.eight87.shutterboy.ui.nav.SettingsPhotos
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
 import com.eight87.shutterboy.ui.settings.sections.AppearanceSection
-import com.eight87.shutterboy.ui.settings.sections.LibrarySection
 
 /**
  * Settings tab body. M3 Expressive grouped-cards under a shared
  * [RootTopBar] so destination switching is uniform across the three
- * root screens.
+ * root screens. Appearance stays inline (theme picker is a one-tap
+ * affordance); Library / Photos / About push into sub-pages.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,42 +65,55 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
         ) {
             AppearanceSection(themePreferences = scope.themePreferences)
-            LibrarySection(
-                libraryScanner = scope.libraryScanner,
-                snackbar = scope.snackbar,
-            )
             SettingsCard {
-                SettingsRow(
+                SubPageRow(
+                    id = "settings_library_root",
+                    icon = Icons.Outlined.Storage,
+                    label = stringResource(R.string.settings_root_library_row_label),
+                    subtitle = stringResource(R.string.settings_root_library_row_subtitle),
+                    onClick = { scope.backStack.push(SettingsLibrary) },
+                )
+                SubPageRow(
                     id = "settings_photos_root",
                     icon = Icons.Outlined.PhotoLibrary,
                     label = stringResource(R.string.settings_root_photos_row_label),
                     subtitle = stringResource(R.string.settings_root_photos_row_subtitle),
-                    trailing = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
                     onClick = { scope.backStack.push(SettingsPhotos) },
                 )
             }
             SettingsCard {
-                SettingsRow(
+                SubPageRow(
                     id = "settings_about_root",
                     icon = Icons.Filled.Info,
                     label = stringResource(R.string.settings_root_about_row_label),
                     subtitle = stringResource(R.string.settings_root_about_row_subtitle),
-                    trailing = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
                     onClick = { scope.backStack.push(SettingsAbout) },
                 )
             }
         }
     }
+}
+
+@Composable
+private fun SubPageRow(
+    id: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    SettingsRow(
+        id = id,
+        icon = icon,
+        label = label,
+        subtitle = subtitle,
+        trailing = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        onClick = onClick,
+    )
 }
