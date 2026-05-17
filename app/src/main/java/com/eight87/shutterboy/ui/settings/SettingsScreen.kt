@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +22,7 @@ import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Settings
 import com.eight87.shutterboy.ui.nav.SettingsAbout
+import com.eight87.shutterboy.ui.nav.SettingsPhotos
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
@@ -65,6 +67,22 @@ fun SettingsScreen(
                 libraryScanner = scope.libraryScanner,
                 snackbar = scope.snackbar,
             )
+            SettingsCard {
+                SettingsRow(
+                    id = "settings_photos_root",
+                    icon = Icons.Outlined.PhotoLibrary,
+                    label = stringResource(R.string.settings_root_photos_row_label),
+                    subtitle = stringResource(R.string.settings_root_photos_row_subtitle),
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                    onClick = { scope.backStack.push(SettingsPhotos) },
+                )
+            }
             SettingsCard {
                 SettingsRow(
                     id = "settings_about_root",

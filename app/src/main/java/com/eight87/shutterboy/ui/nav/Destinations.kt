@@ -34,6 +34,10 @@ data object Collections : Destination
 @Serializable
 data object Settings : Destination
 
+/** Settings → Photos sub-page. Default sort + display preferences. */
+@Serializable
+data object SettingsPhotos : Destination
+
 /**
  * Phase G — fullscreen search overlay. Pushed from the Photos TopAppBar
  * search icon. Pill-shaped search field at the top, filter chip row, results

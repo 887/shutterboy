@@ -61,6 +61,7 @@ fun ShutterboyApp(graph: AppGraph) {
                     entry<Photos> { it.Register(scope) }
                     entry<Collections> { it.Register(scope) }
                     entry<Settings> { it.Register(scope) }
+                    entry<SettingsPhotos> { it.Register(scope) }
                     entry<Search> { it.Register(scope) }
                     entry<SettingsAbout> { it.Register(scope) }
                     entry<Licenses> { it.Register(scope) }

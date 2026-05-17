@@ -120,7 +120,21 @@
     <!-- Phase C.x — Settings tab placeholder until Phase I builds the M3 Expressive root. -->
     <string name="settings_root_about_row_label">About</string>
     <string name="settings_root_about_row_subtitle">Build, license, GitHub, easter egg</string>
+    <string name="settings_root_photos_row_label">Photos</string>
+    <string name="settings_root_photos_row_subtitle">Default sort and timeline display</string>
     <string name="cd_settings_back">Back</string>
+
+    <!-- Settings → Photos sub-page (main.md I.4). -->
+    <string name="settings_photos_title">Photos</string>
+    <string name="settings_photos_default_sort_label">Default sort</string>
+    <string name="settings_photos_sort_date_taken_desc">Date taken — newest first</string>
+    <string name="settings_photos_sort_date_taken_asc">Date taken — oldest first</string>
+    <string name="settings_photos_sort_date_added_desc">Date added — newest first</string>
+    <string name="settings_photos_sort_date_added_asc">Date added — oldest first</string>
+    <string name="settings_photos_sort_name_asc">File name — A to Z</string>
+    <string name="settings_photos_sort_name_desc">File name — Z to A</string>
+    <string name="settings_photos_sort_size_desc">File size — largest first</string>
+    <string name="settings_photos_sort_size_asc">File size — smallest first</string>
 
     <!-- BaseTheme picker — ported from tonearmboy. -->
     <string name="settings_section_appearance">Appearance</string>
