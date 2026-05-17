@@ -1,11 +1,14 @@
 package com.eight87.shutterboy.ui.viewer
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -53,6 +56,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -156,6 +160,23 @@ internal fun PhotoViewerContent(
     val infoOpenThresholdPx = with(density) { ViewerGestureMath.INFO_OPEN_THRESHOLD_DP.dp.toPx() }
 
     val dismissAccumulator = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+
+    // G.3.1 + G.3.2 — pinch + double-tap zoom + pan state. Shared across
+    // pages so the LaunchedEffect on pagerState.currentPage can reset
+    // scale + pan when the user swipes to a different photo.
+    val scaleState = remember { androidx.compose.runtime.mutableFloatStateOf(ViewerZoomMath.MIN_SCALE) }
+    val panState = remember { mutableStateOf(Offset.Zero) }
+    // Animated value used for the double-tap toggle so the transition
+    // tweens rather than snaps. Pinch updates write to scaleState
+    // directly (animation off the live finger position would feel laggy).
+    val animatedScale by animateFloatAsState(
+        targetValue = scaleState.floatValue,
+        label = "viewer-zoom",
+    )
+    LaunchedEffect(pagerState.currentPage) {
+        scaleState.floatValue = ViewerZoomMath.MIN_SCALE
+        panState.value = Offset.Zero
+    }
     val dismissConnection = remember(onBack, dismissThresholdPx) {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -358,9 +379,14 @@ internal fun PhotoViewerContent(
                 HorizontalPager(
                     state = pagerState,
                     pageSize = PageSize.Fill,
+                    // G.3 — pager swipe disabled while zoomed in so a
+                    // single-finger pan past the photo edge doesn't
+                    // advance the page mid-zoom.
+                    userScrollEnabled = !ViewerZoomMath.isZoomed(scaleState.floatValue),
                     modifier = Modifier.fillMaxSize(),
                 ) { page ->
                     val pageId = pagerIds[page]
+                    val isCurrentPage = page == pagerState.currentPage
                     PhotoPage(
                         photoId = pageId,
                         photoSource = photoSource,
@@ -369,6 +395,29 @@ internal fun PhotoViewerContent(
                         onSwipeUpForInfo = { infoVisible = true },
                         onSwipeDownDismiss = onBack,
                         onTap = { chromeVisible = !chromeVisible },
+                        // G.3.1 / G.3.2 — only the visible page gets the
+                        // live zoom + pan state. Off-screen pages render
+                        // at rest so paging in/out doesn't carry zoom.
+                        scale = if (isCurrentPage) animatedScale else ViewerZoomMath.MIN_SCALE,
+                        pan = if (isCurrentPage) panState.value else Offset.Zero,
+                        onPinch = { zoomChange, panChange ->
+                            val newScale = ViewerZoomMath.clampScale(
+                                scaleState.floatValue * zoomChange,
+                            )
+                            scaleState.floatValue = newScale
+                            panState.value = if (ViewerZoomMath.isZoomed(newScale)) {
+                                panState.value + panChange
+                            } else {
+                                Offset.Zero
+                            }
+                        },
+                        onDoubleTap = {
+                            scaleState.floatValue =
+                                ViewerZoomMath.toggledScale(scaleState.floatValue)
+                            if (!ViewerZoomMath.isZoomed(scaleState.floatValue)) {
+                                panState.value = Offset.Zero
+                            }
+                        },
                     )
                 }
             }
@@ -438,6 +487,10 @@ private fun PhotoPage(
     onSwipeUpForInfo: () -> Unit,
     onSwipeDownDismiss: () -> Unit,
     onTap: () -> Unit,
+    scale: Float,
+    pan: Offset,
+    onPinch: (zoomChange: Float, panChange: Offset) -> Unit,
+    onDoubleTap: () -> Unit,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
     val photo: Photo? by flow.collectAsState(initial = null)
@@ -450,15 +503,44 @@ private fun PhotoPage(
     // (zoom) paths are untouched (G.2.3).
     val dragAccumulator = remember(photoId) { androidx.compose.runtime.mutableFloatStateOf(0f) }
 
+    // G.3.1 + G.3.2 — pinch + pan via transformable. The lambda forwards
+    // zoom + pan changes to the parent so a single scale/pan state can
+    // be reset on page change. transformable claims pointer events as
+    // soon as 2+ fingers are down, so single-finger drag still routes
+    // to the vertical-drag detector below.
+    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+        onPinch(zoomChange, panChange)
+    }
+    val zoomed = ViewerZoomMath.isZoomed(scale)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            // F.2 — single tap toggles chrome. Separate pointerInput so the
-            // tap detector doesn't fight the vertical drag detector below.
+            // G.3.1 — outermost: transformable claims pinch (2+ fingers).
+            // Single-finger drags fall through to the gesture detectors
+            // below via the canPan = { zoomed } gate — without it,
+            // transformable claims single-finger pans too and swallows
+            // both the HorizontalPager swipe and our vertical-drag
+            // dismiss/info gestures. Once zoomed, single-finger pan is
+            // wanted (the user is moving around inside the zoomed image).
+            .transformable(
+                state = transformableState,
+                canPan = { zoomed },
+            )
+            // F.2 + G.3.2 — single tap toggles chrome, double tap toggles
+            // zoom. Separate pointerInput so the tap detector doesn't
+            // fight the vertical drag detector below.
             .pointerInput(photoId) {
-                detectTapGestures(onTap = { onTap() })
+                detectTapGestures(
+                    onTap = { onTap() },
+                    onDoubleTap = { onDoubleTap() },
+                )
             }
-            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx) {
+            .pointerInput(photoId, dismissThresholdPx, infoOpenThresholdPx, zoomed) {
+                // G.3 — disable vertical-drag dismiss/info gestures while
+                // zoomed past rest, otherwise a pan-down would accidentally
+                // dismiss the viewer.
+                if (zoomed) return@pointerInput
                 detectVerticalDragGestures(
                     onDragStart = { dragAccumulator.floatValue = 0f },
                     onDragCancel = { dragAccumulator.floatValue = 0f },
@@ -497,6 +579,16 @@ private fun PhotoPage(
                 error = ColorPainter(Color.Black),
                 modifier = Modifier
                     .fillMaxSize()
+                    // G.3.1 — graphicsLayer (not Modifier.scale) so the
+                    // State reads happen at draw time, skipping composition
+                    // on every pinch frame. Clamp / pan-bounds-math is a
+                    // follow-up; for now we let the image overshoot.
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = pan.x
+                        translationY = pan.y
+                    }
                     .padding(0.dp),
             )
         } else {
