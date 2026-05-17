@@ -399,7 +399,10 @@ quarter from now.
 
 - [ ] **G.1** Track upstream `androidx.compose.material3:material3:1.5.0`
   release. Alpha18 already promoted the API; stable is plausibly a
-  quarter or two out from Phase A landing.
+  quarter or two out from Phase A landing. **Last checked 2026-05-17:**
+  `https://dl.google.com/dl/android/maven2/androidx/compose/material3/material3/1.5.0/material3-1.5.0.pom`
+  returns 404 — still not on Google Maven. Re-check before each release
+  cut.
 - [ ] **G.2** When stable lands: remove the version-catalog override
   (let the BOM drive again), delete the file-level
   `@OptIn(ExperimentalMaterial3ExpressiveApi::class)` from
