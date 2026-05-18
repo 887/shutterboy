@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -135,5 +136,22 @@ fun SettingsRow(
             trailing()
         }
     }
+}
+
+/**
+ * Hair-line divider between [SettingsRow]s inside a [SettingsCard].
+ * Indented past the icon column so the leading icons read as a vertical
+ * guideline (tonearmboy pattern).
+ */
+@Composable
+fun SettingsRowDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(
+            start = SettingsDimens.RowHorizontalPadding +
+                SettingsDimens.IconSize +
+                SettingsDimens.IconLabelGap,
+        ),
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
 }
 

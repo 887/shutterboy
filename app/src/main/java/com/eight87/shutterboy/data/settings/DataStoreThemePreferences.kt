@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Concrete [ThemePreferences] backed by the shared `shutterboy_settings`
- * DataStore. The on-disk wire format is the [BaseTheme.toStored] string;
- * an absent / malformed key resolves to [BaseTheme.Default].
+ * DataStore. Two keys: [BaseThemeKey] stores the [BaseTheme.toStored]
+ * string; [ThemeModeKey] stores the [ThemeMode] enum name.
  */
 internal class DataStoreThemePreferences(
     private val dataStore: DataStore<Preferences>,
@@ -23,7 +23,15 @@ internal class DataStoreThemePreferences(
         dataStore.edit { it[BaseThemeKey] = value.toStored() }
     }
 
+    override fun observeThemeMode(): Flow<ThemeMode> = dataStore.data
+        .map { prefs -> ThemeMode.fromStored(prefs[ThemeModeKey]) }
+
+    override suspend fun setThemeMode(value: ThemeMode) {
+        dataStore.edit { it[ThemeModeKey] = value.name }
+    }
+
     companion object {
         internal val BaseThemeKey = stringPreferencesKey("base_theme")
+        internal val ThemeModeKey = stringPreferencesKey("theme_mode")
     }
 }

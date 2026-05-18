@@ -182,11 +182,16 @@
     <!-- BaseTheme picker — ported from tonearmboy. -->
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_appearance_theme">Theme</string>
+    <string name="settings_appearance_base_theme">Base theme</string>
     <string name="settings_appearance_default_android">Material You (system)</string>
     <string name="settings_appearance_default_colors">Shutterboy palette</string>
     <string name="settings_appearance_pure_black">Pure black</string>
     <string name="settings_appearance_custom">Custom seed colour</string>
     <string name="settings_appearance_pick_colour">Pick a seed colour</string>
+    <!-- Light/dark mode override. -->
+    <string name="settings_appearance_mode_system">Automatic</string>
+    <string name="settings_appearance_mode_light">Light</string>
+    <string name="settings_appearance_mode_dark">Dark</string>
 
     <!-- Phase I.3 — Library section + Rescan photos row. -->
     <string name="settings_section_library">Library</string>

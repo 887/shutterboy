@@ -40,6 +40,7 @@ import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 
 /**
  * Phase C.x — About sub-page. Renders inside the same M3 Expressive
@@ -137,6 +138,7 @@ fun SettingsAboutScreen(
                     subtitle = stringResource(R.string.about_license_row_value),
                     onClick = { showLicenseDialog = true },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_about_github",
                     icon = Icons.Filled.Code,
@@ -146,6 +148,7 @@ fun SettingsAboutScreen(
                         context.startActivity(Intent(Intent.ACTION_VIEW, githubUrl.toUri()))
                     },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_about_licenses",
                     icon = Icons.AutoMirrored.Outlined.Article,
@@ -153,6 +156,7 @@ fun SettingsAboutScreen(
                     subtitle = stringResource(R.string.licenses_row_supporting),
                     onClick = { scope.backStack.push(Licenses) },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_about_oss",
                     icon = Icons.Filled.Favorite,

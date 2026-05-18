@@ -37,6 +37,7 @@ import com.eight87.shutterboy.ui.nav.SettingsManageSources
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 import kotlinx.coroutines.launch
 
 /**
@@ -100,6 +101,7 @@ fun SettingsLibraryScreen(
                     subtitle = stringResource(R.string.settings_library_rescan_subtitle),
                     onClick = { showRescanConfirm = true },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_library_manage_sources",
                     icon = Icons.Outlined.Folder,
@@ -107,6 +109,7 @@ fun SettingsLibraryScreen(
                     subtitle = stringResource(R.string.settings_library_manage_sources_subtitle),
                     onClick = { scope.backStack.push(SettingsManageSources) },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_library_clear_cache",
                     icon = Icons.Outlined.CleaningServices,
@@ -114,6 +117,7 @@ fun SettingsLibraryScreen(
                     subtitle = stringResource(R.string.settings_library_clear_cache_subtitle),
                     onClick = { showClearConfirm = true },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_library_reset",
                     icon = Icons.Outlined.DeleteForever,

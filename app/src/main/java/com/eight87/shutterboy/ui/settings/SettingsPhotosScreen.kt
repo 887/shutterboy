@@ -33,6 +33,7 @@ import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 import com.eight87.shutterboy.ui.sort.SortSheet
 import kotlinx.coroutines.launch
 
@@ -92,6 +93,7 @@ fun SettingsPhotosScreen(
                     subtitle = stringResource(sortSummaryRes(sort)),
                     onClick = { showSortSheet = true },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_photos_ken_burns",
                     icon = Icons.Outlined.Slideshow,

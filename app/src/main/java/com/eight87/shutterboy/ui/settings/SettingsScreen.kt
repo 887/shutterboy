@@ -7,14 +7,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -33,6 +30,7 @@ import com.eight87.shutterboy.ui.nav.SettingsSearch
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 import com.eight87.shutterboy.ui.settings.catalog.SettingsSearchBar
 
 /**
@@ -101,6 +99,7 @@ fun SettingsScreen(
                     subtitle = stringResource(R.string.settings_root_library_row_subtitle),
                     onClick = { scope.backStack.push(SettingsLibrary) },
                 )
+                SettingsRowDivider()
                 SubPageRow(
                     id = "settings_photos_root",
                     icon = Icons.Outlined.PhotoLibrary,
@@ -139,13 +138,6 @@ private fun SubPageRow(
         icon = icon,
         label = label,
         subtitle = subtitle,
-        trailing = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
         onClick = onClick,
     )
 }

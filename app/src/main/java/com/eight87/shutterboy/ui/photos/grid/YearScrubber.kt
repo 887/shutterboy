@@ -6,11 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -38,25 +37,27 @@ private const val LINGER_MS = 1200L
 private val ScrubberStripWidth = 56.dp
 
 /**
- * Right-edge year scrubber — Aves / tonearmboy FastScrollbar shape.
+ * Right-edge year scrubber — Aves shape.
  *
- * Every [YearMarker] renders as a pill on the strip; the pill matching
- * the current scroll position is emphasized (primary-tinted, bold).
- * Drag the strip to seek; tap a year directly to jump.
+ * Each [YearMarker] renders as a pill at `marker.timelineIndex /
+ * totalTimelineSize` fraction of the strip's height. That makes the
+ * spacing **density-weighted**: a year with 5000 photos gets more
+ * vertical real estate than a year with 100, so dragging through the
+ * strip feels proportional to scrolling through the actual timeline.
  *
- * Pills are laid out via a [Column] with [Arrangement.SpaceBetween], so
- * they distribute evenly along the strip regardless of how many photos
- * any one year contains (matches Aves's behaviour — equal-weight tap
- * targets per year). The strip fades in during scroll and lingers for
+ * The pill matching the current scroll position is emphasized
+ * (primary-tinted, bold). Drag the strip to seek; tap a year pill to
+ * jump directly. Strip fades in during scroll and lingers for
  * [LINGER_MS] after stop.
  */
 @Composable
 internal fun YearScrubber(
     markers: List<YearMarker>,
+    totalTimelineSize: Int,
     gridState: LazyGridState,
     modifier: Modifier = Modifier,
 ) {
-    if (markers.isEmpty()) return
+    if (markers.isEmpty() || totalTimelineSize <= 0) return
     val coroutineScope = rememberCoroutineScope()
     val scrolling = gridState.isScrollInProgress
     var dragging by remember { mutableStateOf(false) }
@@ -72,9 +73,6 @@ internal fun YearScrubber(
     }
     val visible = scrolling || dragging || lingering
 
-    // Current year = the marker whose timeline index covers the topmost
-    // visible item. Derived from the grid state so the bubble emphasis
-    // tracks scroll in real time.
     val currentYear by remember(markers) {
         derivedStateOf {
             val firstIdx = gridState.firstVisibleItemIndex
@@ -99,7 +97,7 @@ internal fun YearScrubber(
         exit = fadeOut(),
         modifier = modifier.fillMaxHeight(),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .width(ScrubberStripWidth)
                 .fillMaxHeight()
@@ -119,20 +117,22 @@ internal fun YearScrubber(
                         },
                     )
                 },
-            contentAlignment = Alignment.Center,
         ) {
-            Column(
-                modifier = Modifier.fillMaxHeight().fillMaxWidth(),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                markers.forEach { marker ->
-                    YearPill(
-                        text = marker.year.toString(),
-                        emphasized = marker.year == currentYear,
-                        modifier = Modifier.clickable { jumpToYear(marker.year) },
-                    )
-                }
+            val trackHeightDp = maxHeight
+            markers.forEach { marker ->
+                // Density-weighted Y: where this year's first photo sits
+                // relative to the full timeline. Pills crowd where the
+                // photos crowd — exactly the Aves UX.
+                val fraction = (marker.timelineIndex.toFloat() / totalTimelineSize)
+                    .coerceIn(0f, 1f)
+                YearPill(
+                    text = marker.year.toString(),
+                    emphasized = marker.year == currentYear,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = trackHeightDp * fraction)
+                        .clickable { jumpToYear(marker.year) },
+                )
             }
         }
     }

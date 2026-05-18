@@ -1,8 +1,10 @@
 package com.eight87.shutterboy.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -37,6 +39,7 @@ import com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 import com.eight87.shutterboy.ui.settings.sections.AppearanceSection
 import kotlinx.coroutines.launch
 
@@ -100,6 +103,7 @@ fun SettingsLookAndFeelScreen(
                     subtitle = stringResource(densityLabelRes(density)),
                     onClick = { densityPickerOpen = true },
                 )
+                SettingsRowDivider()
                 SettingsRow(
                     id = "settings_lookfeel_quality",
                     icon = Icons.Outlined.HighQuality,
@@ -152,12 +156,13 @@ private fun <T> RadioPickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 options.forEach { opt ->
                     androidx.compose.foundation.layout.Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
+                            .clickable { onPick(opt) }
                             .padding(vertical = 4.dp),
                     ) {
                         RadioButton(

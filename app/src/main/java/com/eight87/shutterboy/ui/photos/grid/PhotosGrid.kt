@@ -162,6 +162,7 @@ internal fun PhotosGrid(
 
         YearScrubber(
             markers = markers,
+            totalTimelineSize = timeline.size,
             gridState = gridState,
             modifier = Modifier.align(Alignment.CenterEnd),
         )

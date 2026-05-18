@@ -57,10 +57,9 @@ fun SettingsCard(
             colors = CardDefaults.cardColors(containerColor = containerColor),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            // m3-expressive C.4 — within-card row stacking is divider-less;
-            // a 2-dp gap is enough to read as separation when the surface tier
-            // is the lifted colour.
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) { content() }
+            // Rows stack flush — consumers interpose `SettingsRowDivider()`
+            // between rows. Matches tonearmboy / whisperboy.
+            Column { content() }
         }
     }
 }

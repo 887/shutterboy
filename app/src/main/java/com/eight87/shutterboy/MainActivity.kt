@@ -7,8 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.lifecycleScope
 import com.eight87.shutterboy.data.settings.BaseTheme
+import com.eight87.shutterboy.data.settings.ThemeMode
 import com.eight87.shutterboy.theme.ShutterboyTheme
 import com.eight87.shutterboy.ui.nav.ShutterboyApp
 import com.eight87.shutterboy.ui.permission.RequireMediaPermission
@@ -25,7 +27,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val baseTheme by graph.themePreferences.observeBaseTheme()
                 .collectAsStateWithLifecycle(initialValue = BaseTheme.Default)
-            ShutterboyTheme(baseTheme = baseTheme) {
+            val themeMode by graph.themePreferences.observeThemeMode()
+                .collectAsStateWithLifecycle(initialValue = ThemeMode.Default)
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (themeMode) {
+                ThemeMode.System -> systemDark
+                ThemeMode.Light -> false
+                ThemeMode.Dark -> true
+            }
+            ShutterboyTheme(darkTheme = darkTheme, baseTheme = baseTheme) {
                 RequireMediaPermission(
                     onGranted = {
                         // R.F.24 — `lifecycleScope` cancels on activity-destroy so a

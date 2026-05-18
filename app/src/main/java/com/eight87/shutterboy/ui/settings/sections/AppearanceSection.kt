@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -35,22 +36,26 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.data.settings.BaseTheme
+import com.eight87.shutterboy.data.settings.ThemeMode
 import com.eight87.shutterboy.data.settings.ThemePreferences
 import com.eight87.shutterboy.ui.settings.ColorPickerDialog
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
+import com.eight87.shutterboy.ui.settings.catalog.SettingsRowDivider
 import kotlinx.coroutines.launch
 
 /**
- * Appearance section — single "Theme" row that opens a picker dialog
- * with the four [BaseTheme] options. The current pick is shown as the
- * row subtitle (e.g. "Material You (system)"). Tapping the Custom
- * option in the picker opens [ColorPickerDialog] for a seed colour.
+ * Appearance section — two rows matching tonearmboy's Look-and-Feel
+ * shape:
  *
- * Modeled on tonearmboy's `SettingsLookAndFeelScreen` picker pattern —
- * the row is the menu point; the dialog is where the actual choice
- * happens.
+ *  - **Theme**: light/dark/auto override.
+ *  - **Base theme**: Material You / brand palette / pure black /
+ *    custom seed colour. Trailing swatch always shown — the resolved
+ *    primary for the four canned options, the picked seed for Custom.
+ *
+ * Each row opens an [AlertDialog] picker. Custom in the Base-theme
+ * picker hands off to [ColorPickerDialog] for the seed value.
  */
 @Composable
 fun AppearanceSection(
@@ -59,49 +64,70 @@ fun AppearanceSection(
 ) {
     val baseTheme by themePreferences.observeBaseTheme()
         .collectAsStateWithLifecycle(initialValue = BaseTheme.Default)
+    val themeMode by themePreferences.observeThemeMode()
+        .collectAsStateWithLifecycle(initialValue = ThemeMode.Default)
     val scope = rememberCoroutineScope()
-    var pickerOpen by remember { mutableStateOf(false) }
+    var basePickerOpen by remember { mutableStateOf(false) }
     var colorPickerOpen by remember { mutableStateOf(false) }
+    var modePickerOpen by remember { mutableStateOf(false) }
 
     val currentSeed = (baseTheme as? BaseTheme.Custom)?.seedRgb ?: DEFAULT_SEED_RGB
+    val swatchColor = swatchFor(baseTheme)
 
     SettingsCard(
         modifier = modifier,
         title = stringResource(R.string.settings_section_appearance),
     ) {
         SettingsRow(
-            id = "settings_appearance_theme",
-            icon = Icons.Outlined.Palette,
+            id = "settings_appearance_theme_mode",
+            icon = Icons.Outlined.DarkMode,
             label = stringResource(R.string.settings_appearance_theme),
+            subtitle = themeModeLabel(themeMode),
+            onClick = { modePickerOpen = true },
+        )
+        SettingsRowDivider()
+        SettingsRow(
+            id = "settings_appearance_base_theme",
+            icon = Icons.Outlined.Palette,
+            label = stringResource(R.string.settings_appearance_base_theme),
             subtitle = themeLabel(baseTheme),
-            onClick = { pickerOpen = true },
-            trailing = if (baseTheme is BaseTheme.Custom) {
-                {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF000000L or currentSeed))
-                            .semantics { testTag = "appearance_custom_swatch" },
-                    )
-                }
-            } else null,
+            onClick = { basePickerOpen = true },
+            trailing = {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(swatchColor)
+                        .semantics { testTag = "appearance_base_swatch" },
+                )
+            },
         )
     }
 
-    if (pickerOpen) {
-        ThemePickerDialog(
+    if (modePickerOpen) {
+        ThemeModePickerDialog(
+            current = themeMode,
+            onPick = { picked ->
+                scope.launch { themePreferences.setThemeMode(picked) }
+                modePickerOpen = false
+            },
+            onDismiss = { modePickerOpen = false },
+        )
+    }
+
+    if (basePickerOpen) {
+        BaseThemePickerDialog(
             current = baseTheme,
             onPick = { picked ->
                 if (picked is BaseTheme.Custom) {
-                    pickerOpen = false
+                    basePickerOpen = false
                     colorPickerOpen = true
                 } else {
                     scope.launch { themePreferences.setBaseTheme(picked) }
-                    pickerOpen = false
+                    basePickerOpen = false
                 }
             },
-            onDismiss = { pickerOpen = false },
+            onDismiss = { basePickerOpen = false },
         )
     }
 
@@ -118,6 +144,13 @@ fun AppearanceSection(
 }
 
 @Composable
+private fun swatchFor(theme: BaseTheme): Color = when (theme) {
+    is BaseTheme.Custom -> Color(0xFF000000L or theme.seedRgb)
+    is BaseTheme.PureBlack -> Color.Black
+    else -> MaterialTheme.colorScheme.primary
+}
+
+@Composable
 private fun themeLabel(theme: BaseTheme): String = when (theme) {
     is BaseTheme.DefaultAndroid -> stringResource(R.string.settings_appearance_default_android)
     is BaseTheme.DefaultColors -> stringResource(R.string.settings_appearance_default_colors)
@@ -126,32 +159,67 @@ private fun themeLabel(theme: BaseTheme): String = when (theme) {
 }
 
 @Composable
-private fun ThemePickerDialog(
-    current: BaseTheme,
-    onPick: (BaseTheme) -> Unit,
+private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
+    ThemeMode.System -> stringResource(R.string.settings_appearance_mode_system)
+    ThemeMode.Light -> stringResource(R.string.settings_appearance_mode_light)
+    ThemeMode.Dark -> stringResource(R.string.settings_appearance_mode_dark)
+}
+
+@Composable
+private fun ThemeModePickerDialog(
+    current: ThemeMode,
+    onPick: (ThemeMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_appearance_theme)) },
         text = {
-            Column {
-                ThemeOptionRow(
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ThemeMode.entries.forEach { mode ->
+                    PickerRow(
+                        label = themeModeLabel(mode),
+                        selected = mode == current,
+                        onClick = { onPick(mode) },
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.dialog_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun BaseThemePickerDialog(
+    current: BaseTheme,
+    onPick: (BaseTheme) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_appearance_base_theme)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                PickerRow(
                     label = stringResource(R.string.settings_appearance_default_android),
                     selected = current is BaseTheme.DefaultAndroid,
                     onClick = { onPick(BaseTheme.DefaultAndroid) },
                 )
-                ThemeOptionRow(
+                PickerRow(
                     label = stringResource(R.string.settings_appearance_default_colors),
                     selected = current is BaseTheme.DefaultColors,
                     onClick = { onPick(BaseTheme.DefaultColors) },
                 )
-                ThemeOptionRow(
+                PickerRow(
                     label = stringResource(R.string.settings_appearance_pure_black),
                     selected = current is BaseTheme.PureBlack,
                     onClick = { onPick(BaseTheme.PureBlack) },
                 )
-                ThemeOptionRow(
+                PickerRow(
                     label = stringResource(R.string.settings_appearance_custom),
                     selected = current is BaseTheme.Custom,
                     onClick = { onPick(BaseTheme.Custom(DEFAULT_SEED_RGB)) },
@@ -167,7 +235,7 @@ private fun ThemePickerDialog(
 }
 
 @Composable
-private fun ThemeOptionRow(
+private fun PickerRow(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,

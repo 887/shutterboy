@@ -29,7 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import coil3.request.crossfade
 import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
@@ -114,7 +113,16 @@ fun PhotoThumbnail(
             model = ImageRequest.Builder(context)
                 .data(photo.contentUri)
                 .size(Size(targetPx, targetPx))
-                .crossfade(true)
+                // Explicit per-thumbnail cache key keyed on (id, quality)
+                // — survives the viewer's full-res request (which uses
+                // "viewer-$id") so returning from the viewer hits the
+                // memory cache instantly instead of re-decoding the JPEG.
+                .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
+                .diskCacheKey("thumb-${photo.id.value}-$targetPx")
+                // Crossfade off — the animation itself is what visibly
+                // "pops in" laggy when many tiles enter viewport at once.
+                // Snap the bitmap in instantly; the placeholder fills
+                // the cell until then.
                 .build(),
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
