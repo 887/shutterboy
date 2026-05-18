@@ -9,7 +9,9 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,6 +95,13 @@ internal fun PhotosGrid(
     }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
     val gridState = rememberLazyGridState()
+    var scrubbingThumb by remember { mutableStateOf(false) }
+    // Suppress visible-tile decodes while the grid is in motion. When
+    // motion stops, the now-visible tiles all fire requests at once and
+    // the 8-worker decoder pool drains them in parallel — Aves pattern.
+    val suppressDecode by remember {
+        derivedStateOf { gridState.isScrollInProgress || scrubbingThumb }
+    }
 
     if (timeline.isEmpty()) {
         Box(modifier = modifier.fillMaxSize())
@@ -153,6 +162,7 @@ internal fun PhotosGrid(
             }
     }
 
+    CompositionLocalProvider(LocalSuppressDecode provides suppressDecode) {
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
             state = gridState,
@@ -242,7 +252,9 @@ internal fun PhotosGrid(
             level = level,
             gridState = gridState,
             modifier = Modifier.align(Alignment.CenterEnd),
+            onScrubbingChange = { scrubbingThumb = it },
         )
+    }
     }
 }
 

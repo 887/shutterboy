@@ -73,6 +73,7 @@ internal fun YearScrubber(
     level: PhotosZoomLevel,
     gridState: LazyGridState,
     modifier: Modifier = Modifier,
+    onScrubbingChange: (Boolean) -> Unit = {},
 ) {
     val totalTimelineSize = timeline.size
     if (markers.isEmpty() || totalTimelineSize <= 0) return
@@ -154,9 +155,18 @@ internal fun YearScrubber(
                     .height(thumbHeightDp.coerceAtLeast(48.dp))
                     .pointerInput(totalTimelineSize, maxThumbOffset) {
                         detectVerticalDragGestures(
-                            onDragStart = { dragging = true },
-                            onDragEnd = { dragging = false },
-                            onDragCancel = { dragging = false },
+                            onDragStart = {
+                                dragging = true
+                                onScrubbingChange(true)
+                            },
+                            onDragEnd = {
+                                dragging = false
+                                onScrubbingChange(false)
+                            },
+                            onDragCancel = {
+                                dragging = false
+                                onScrubbingChange(false)
+                            },
                         ) { change, dragAmount ->
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()

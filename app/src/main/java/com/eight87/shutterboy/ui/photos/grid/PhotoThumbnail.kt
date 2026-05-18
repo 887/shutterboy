@@ -109,13 +109,23 @@ fun PhotoThumbnail(
         val placeholderPainter = remember(placeholderColor) {
             androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)
         }
+        // Aves-style suppress-decode-while-moving: when the grid is
+        // scrolling or the thumb is being scrubbed, render the
+        // placeholder only. The full request fires the moment motion
+        // stops; with 8 decoder workers the visible tiles drain in
+        // parallel.
+        val suppressDecode = LocalSuppressDecode.current
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(photo.contentUri)
-                .size(Size(targetPx, targetPx))
-                .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
-                .diskCacheKey("thumb-${photo.id.value}-$targetPx")
-                .build(),
+            model = if (suppressDecode) {
+                null
+            } else {
+                ImageRequest.Builder(context)
+                    .data(photo.contentUri)
+                    .size(Size(targetPx, targetPx))
+                    .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
+                    .diskCacheKey("thumb-${photo.id.value}-$targetPx")
+                    .build()
+            },
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
             placeholder = placeholderPainter,
