@@ -1,6 +1,5 @@
 package com.eight87.shutterboy.ui.photos.grid
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -97,9 +96,7 @@ internal fun PhotosGrid(
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(level.columns),
-            modifier = Modifier
-                .fillMaxSize()
-                .animateContentSize(),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp),

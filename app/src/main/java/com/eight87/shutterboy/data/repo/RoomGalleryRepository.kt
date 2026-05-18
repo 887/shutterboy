@@ -43,7 +43,9 @@ import com.eight87.shutterboy.domain.ScanProgress
 import com.eight87.shutterboy.domain.sort.PhotoSort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
@@ -98,21 +100,25 @@ class RoomGalleryRepository(
 
     // --- PhotoSource ---
 
+    @OptIn(FlowPreview::class)
     override fun observePhotos(sort: PhotoSort): Flow<List<Photo>> {
         val query = SimpleSQLiteQuery(
             "SELECT * FROM photos ORDER BY ${sort.sqlOrderBy}",
         )
         return photoDao.observeAll(query)
+            .debounce(150L)
             .map { rows -> rows.map { it.toDomain() } }
             .flowOn(Dispatchers.Default)
     }
 
+    @OptIn(FlowPreview::class)
     override fun observePhotosInFolder(folderId: FolderId, sort: PhotoSort): Flow<List<Photo>> {
         val query = SimpleSQLiteQuery(
             "SELECT * FROM photos WHERE folder_id = ? ORDER BY ${sort.sqlOrderBy}",
             arrayOf<Any>(folderId.value),
         )
         return photoDao.observeAll(query)
+            .debounce(150L)
             .map { rows -> rows.map { it.toDomain() } }
             .flowOn(Dispatchers.Default)
     }

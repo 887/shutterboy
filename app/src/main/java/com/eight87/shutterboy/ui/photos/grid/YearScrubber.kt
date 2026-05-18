@@ -79,16 +79,17 @@ internal fun YearScrubber(
     val coroutineScope = rememberCoroutineScope()
     val scrolling = gridState.isScrollInProgress
     var lingering by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
 
-    LaunchedEffect(scrolling) {
-        if (scrolling) {
+    LaunchedEffect(scrolling, dragging) {
+        if (scrolling || dragging) {
             lingering = true
         } else {
             delay(LINGER_MS)
             lingering = false
         }
     }
-    val visible = scrolling || lingering
+    val visible = scrolling || lingering || dragging
 
     val currentYear by remember(markers) {
         derivedStateOf {
@@ -152,7 +153,11 @@ internal fun YearScrubber(
                     .width(ThumbTouchWidth)
                     .height(thumbHeightDp.coerceAtLeast(48.dp))
                     .pointerInput(totalTimelineSize, maxThumbOffset) {
-                        detectVerticalDragGestures { change, dragAmount ->
+                        detectVerticalDragGestures(
+                            onDragStart = { dragging = true },
+                            onDragEnd = { dragging = false },
+                            onDragCancel = { dragging = false },
+                        ) { change, dragAmount ->
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
