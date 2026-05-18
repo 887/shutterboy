@@ -14,15 +14,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.isSelected
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 
 /**
@@ -86,12 +93,61 @@ internal fun PhotosGrid(
     }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
     val gridState = rememberLazyGridState()
+    var fastScrub by remember { mutableStateOf(false) }
 
     if (timeline.isEmpty()) {
         Box(modifier = modifier.fillMaxSize())
         return
     }
 
+    // Coil prefetch: warm the next viewport-worth of thumbnails ahead
+    // of the scroll so tiles snap in already-decoded instead of popping
+    // in as they enter view. Cancels-and-restarts on each new
+    // (firstVisible, visibleCount) tuple via snapshotFlow; suspended
+    // while the user is fast-scrubbing the thumb (no point queueing
+    // requests for positions they're flying past).
+    val context = LocalContext.current
+    val targetPx = LocalThumbnailQuality.current.targetPx
+    LaunchedEffect(timeline, targetPx) {
+        val loader = SingletonImageLoader.get(context)
+        snapshotFlow {
+            Triple(
+                gridState.firstVisibleItemIndex,
+                gridState.layoutInfo.visibleItemsInfo.size,
+                fastScrub,
+            )
+        }
+            .distinctUntilChanged()
+            .collect { (first, visibleCount, scrubbing) ->
+                if (scrubbing || visibleCount <= 0) return@collect
+                fun enqueueRange(from: Int, until: Int) {
+                    val lo = from.coerceAtLeast(0)
+                    val hi = until.coerceAtMost(timeline.size)
+                    for (i in lo until hi) {
+                        val item = timeline[i]
+                        if (item is TimelineDisplayItem.PhotoCell) {
+                            val req = ImageRequest.Builder(context)
+                                .data(item.photo.contentUri)
+                                .size(Size(targetPx, targetPx))
+                                .memoryCacheKey("thumb-${item.photo.id.value}-$targetPx")
+                                .diskCacheKey("thumb-${item.photo.id.value}-$targetPx")
+                                .build()
+                            loader.enqueue(req)
+                        }
+                    }
+                }
+                // Forward — one full viewport ahead.
+                val forwardStart = first + visibleCount
+                enqueueRange(forwardStart, forwardStart + visibleCount * 2)
+                // Backward — one full viewport behind, so scrolling back
+                // up also hits warm bitmaps. LazyGrid retains a few rows
+                // in composition but evicts beyond that; the cache hit
+                // keeps the snap-in feel in both directions.
+                enqueueRange(first - visibleCount, first)
+            }
+    }
+
+    CompositionLocalProvider(LocalFastScrub provides fastScrub) {
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
             state = gridState,
@@ -181,7 +237,9 @@ internal fun PhotosGrid(
             level = level,
             gridState = gridState,
             modifier = Modifier.align(Alignment.CenterEnd),
+            onFastScrubChange = { fastScrub = it },
         )
+    }
     }
 }
 

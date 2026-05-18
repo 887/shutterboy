@@ -73,6 +73,7 @@ internal fun YearScrubber(
     level: PhotosZoomLevel,
     gridState: LazyGridState,
     modifier: Modifier = Modifier,
+    onFastScrubChange: (Boolean) -> Unit = {},
 ) {
     val totalTimelineSize = timeline.size
     if (markers.isEmpty() || totalTimelineSize <= 0) return
@@ -80,6 +81,27 @@ internal fun YearScrubber(
     val scrolling = gridState.isScrollInProgress
     var lingering by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
+    // Aves-style fast-scrub gate: ON while the user is actively dragging
+    // the thumb, but auto-OFF after 500ms of holding still on a position
+    // so loading resumes when they want to look at where they landed.
+    var lastDragMs by remember { mutableStateOf(0L) }
+    LaunchedEffect(dragging) {
+        if (!dragging) {
+            onFastScrubChange(false)
+            return@LaunchedEffect
+        }
+        onFastScrubChange(true)
+        while (dragging) {
+            val idleFor = System.currentTimeMillis() - lastDragMs
+            if (idleFor > 500L) {
+                onFastScrubChange(false)
+            } else {
+                onFastScrubChange(true)
+            }
+            delay(80L)
+        }
+        onFastScrubChange(false)
+    }
 
     LaunchedEffect(scrolling, dragging) {
         if (scrolling || dragging) {
@@ -154,11 +176,15 @@ internal fun YearScrubber(
                     .height(thumbHeightDp.coerceAtLeast(48.dp))
                     .pointerInput(totalTimelineSize, maxThumbOffset) {
                         detectVerticalDragGestures(
-                            onDragStart = { dragging = true },
+                            onDragStart = {
+                                dragging = true
+                                lastDragMs = System.currentTimeMillis()
+                            },
                             onDragEnd = { dragging = false },
                             onDragCancel = { dragging = false },
                         ) { change, dragAmount ->
                             change.consume()
+                            lastDragMs = System.currentTimeMillis()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
                             val currentFraction =
