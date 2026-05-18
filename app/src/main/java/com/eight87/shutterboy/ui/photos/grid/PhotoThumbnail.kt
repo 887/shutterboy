@@ -109,30 +109,13 @@ fun PhotoThumbnail(
         val placeholderPainter = remember(placeholderColor) {
             androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)
         }
-        // Fast-scrub: skip the decode while the user is dragging the
-        // scrollbar thumb. The placeholder fills the cell; loading
-        // resumes when they let go or pause 500ms on a position.
-        val isScrubbing = LocalFastScrub.current
         AsyncImage(
-            model = if (isScrubbing) {
-                null
-            } else {
-                ImageRequest.Builder(context)
-                    .data(photo.contentUri)
-                    .size(Size(targetPx, targetPx))
-                    // Explicit per-thumbnail cache key keyed on
-                    // (id, quality) — survives the viewer's full-res
-                    // request (which uses "viewer-$id") so returning
-                    // from the viewer hits the memory cache instantly
-                    // instead of re-decoding the JPEG.
-                    .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
-                    .diskCacheKey("thumb-${photo.id.value}-$targetPx")
-                    // Crossfade off — the animation itself is what
-                    // visibly "pops in" laggy when many tiles enter
-                    // viewport at once. Snap the bitmap in instantly;
-                    // the placeholder fills the cell until then.
-                    .build()
-            },
+            model = ImageRequest.Builder(context)
+                .data(photo.contentUri)
+                .size(Size(targetPx, targetPx))
+                .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
+                .diskCacheKey("thumb-${photo.id.value}-$targetPx")
+                .build(),
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
             placeholder = placeholderPainter,
