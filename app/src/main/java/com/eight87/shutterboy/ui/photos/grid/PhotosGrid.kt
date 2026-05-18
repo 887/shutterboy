@@ -100,18 +100,26 @@ internal fun PhotosGrid(
 
     // Aves-style prefetch: warm the memory cache for a window of photos
     // around the current viewport so tiles snap in (no decode flash) in
-    // BOTH scroll directions. Per-id dedupe set ensures each photo's
-    // request is enqueued exactly once per timeline — critical so we
-    // don't re-flood Coil's loader on every layout-info tick during a
-    // fling and starve the visible tiles.
+    // BOTH scroll directions. Two rules that together prioritize visible
+    // tiles over prefetch work:
+    //   1. Per-id dedupe set — each photo's request fires at most once
+    //      per timeline, so we don't re-flood the loader on every tick.
+    //   2. Only fire when scroll has settled (isScrollInProgress = false).
+    //      While the user is dragging the thumb or fling-scrolling, the
+    //      Coil queue is left entirely for the visible-tile requests
+    //      AsyncImage is dispatching from the grid. Prefetch resumes as
+    //      soon as their finger lifts.
     val context = LocalContext.current
     val targetPx = LocalThumbnailQuality.current.targetPx
     LaunchedEffect(timeline, targetPx) {
         val loader = SingletonImageLoader.get(context)
         val enqueued = HashSet<Long>()
-        snapshotFlow { gridState.firstVisibleItemIndex }
+        snapshotFlow {
+            gridState.firstVisibleItemIndex to gridState.isScrollInProgress
+        }
             .distinctUntilChanged()
-            .collect { first ->
+            .collect { (first, scrolling) ->
+                if (scrolling) return@collect
                 val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
                 if (visibleCount <= 0) return@collect
                 val from = (first - visibleCount * 2).coerceAtLeast(0)

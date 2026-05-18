@@ -9,6 +9,8 @@ import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
 import coil3.video.VideoFrameDecoder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * Process-scoped composition root holder. The single [AppGraph] is constructed
@@ -33,9 +35,15 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
         graph = AppGraph(applicationContext = this)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context)
             .components { add(VideoFrameDecoder.Factory()) }
+            // 8 worker coroutines stealing from the loader queue for
+            // fetch + decode, so a fling-burst of visible-tile requests
+            // doesn't stall behind a single in-flight JPEG.
+            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(8))
+            .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(8))
             // R.F.29 — Aves-class gallery libraries (10k–50k photos) blow
             // through Coil's default ~25% maxMemory budget during fast
             // scrolling; tiles fall out of cache and re-decode the
