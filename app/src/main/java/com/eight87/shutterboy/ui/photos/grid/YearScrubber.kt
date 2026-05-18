@@ -44,10 +44,10 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 private const val LINGER_MS = 1200L
-private val ScrubberStripWidth = 88.dp
+private val ScrubberStripWidth = 180.dp
 private val ThumbVisibleWidth = 22.dp
 private val ThumbTouchWidth = 32.dp
-private val PillRightInset = 40.dp
+private val PillRightInset = 36.dp
 
 /**
  * Right-edge floating labels — Aves shape, no draggable scrollbar.
@@ -205,8 +205,7 @@ internal fun YearScrubber(
                     emphasized = false,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(y = trackHeightDp * fraction)
-                        .padding(end = PillRightInset)
+                        .offset(x = -PillRightInset, y = trackHeightDp * fraction)
                         .clickable { jumpToYear(marker.year) },
                 )
             }
@@ -219,8 +218,7 @@ internal fun YearScrubber(
                     emphasized = true,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(y = trackHeightDp * scrollFraction)
-                        .padding(end = PillRightInset),
+                        .offset(x = -PillRightInset, y = trackHeightDp * scrollFraction),
                 )
             }
         }

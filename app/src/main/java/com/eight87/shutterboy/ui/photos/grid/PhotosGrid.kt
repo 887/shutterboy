@@ -10,9 +10,11 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -71,22 +73,19 @@ internal fun PhotosGrid(
     }
 
     val locale = LocalConfiguration.current.locales.get(0) ?: java.util.Locale.getDefault()
-    // Timeline assembly off the main thread — cancels-and-restarts on each
-    // new photo list / zoom level via produceState's key-driven coroutine.
-    val timeline by produceState(
-        initialValue = emptyList<TimelineDisplayItem>(),
-        key1 = loaded,
-        key2 = level,
-    ) {
-        value = withContext(Dispatchers.Default) { buildTimeline(loaded, level) }
+    // Timeline assembly off the main thread. Critically, we KEEP the
+    // previous timeline visible while a new one builds — resetting to
+    // empty on every photo emission would unmount the grid mid-scroll
+    // and freeze the UI while the user is interacting.
+    var timeline by remember { mutableStateOf<List<TimelineDisplayItem>>(emptyList()) }
+    var backingIds by remember { mutableStateOf<List<Long>>(emptyList()) }
+    LaunchedEffect(loaded, level) {
+        val newTimeline = withContext(Dispatchers.Default) { buildTimeline(loaded, level) }
+        val newIds = withContext(Dispatchers.Default) { loaded.map { it.id.value } }
+        timeline = newTimeline
+        backingIds = newIds
     }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
-    val backingIds by produceState(
-        initialValue = emptyList<Long>(),
-        key1 = loaded,
-    ) {
-        value = withContext(Dispatchers.Default) { loaded.map { it.id.value } }
-    }
     val gridState = rememberLazyGridState()
 
     if (timeline.isEmpty()) {
