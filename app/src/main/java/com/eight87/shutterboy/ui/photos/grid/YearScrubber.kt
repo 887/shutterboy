@@ -5,7 +5,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,51 +26,56 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 private const val LINGER_MS = 1200L
 private val ScrubberStripWidth = 56.dp
 
 /**
- * Right-edge year scrubber — Aves shape.
+ * Right-edge floating labels — Aves shape, no draggable scrollbar.
  *
- * Each [YearMarker] renders as a pill at `marker.timelineIndex /
- * totalTimelineSize` fraction of the strip's height. That makes the
- * spacing **density-weighted**: a year with 5000 photos gets more
- * vertical real estate than a year with 100, so dragging through the
- * strip feels proportional to scrolling through the actual timeline.
+ * Two kinds of pills render over the grid (touches in the strip area
+ * fall through to the photos beneath; only the pills themselves are
+ * clickable):
  *
- * The pill matching the current scroll position is emphasized
- * (primary-tinted, bold). Drag the strip to seek; tap a year pill to
- * jump directly. Strip fades in during scroll and lingers for
- * [LINGER_MS] after stop.
+ *  - **Year pills** — one per [YearMarker], pinned at the marker's
+ *    density-weighted fraction of the strip so they crowd where the
+ *    photos crowd. Tap to jump to that year.
+ *  - **Current-scroll pill** — tracks the current `firstVisibleItem`
+ *    fraction, labelled with the active month/year ([stickyHeaderLabel]).
+ *    Same pill style/size as the year pills; sits at the y of the
+ *    current scroll position the way Aves shows the scrubber bubble.
+ *
+ * Pills fade in while scrolling and linger [LINGER_MS] after stop.
  */
 @Composable
 internal fun YearScrubber(
     markers: List<YearMarker>,
-    totalTimelineSize: Int,
+    timeline: List<TimelineDisplayItem>,
+    level: PhotosZoomLevel,
     gridState: LazyGridState,
     modifier: Modifier = Modifier,
 ) {
+    val totalTimelineSize = timeline.size
     if (markers.isEmpty() || totalTimelineSize <= 0) return
     val coroutineScope = rememberCoroutineScope()
     val scrolling = gridState.isScrollInProgress
-    var dragging by remember { mutableStateOf(false) }
     var lingering by remember { mutableStateOf(false) }
 
-    LaunchedEffect(scrolling, dragging) {
-        if (scrolling || dragging) {
+    LaunchedEffect(scrolling) {
+        if (scrolling) {
             lingering = true
         } else {
             delay(LINGER_MS)
             lingering = false
         }
     }
-    val visible = scrolling || dragging || lingering
+    val visible = scrolling || lingering
 
     val currentYear by remember(markers) {
         derivedStateOf {
@@ -81,9 +85,18 @@ internal fun YearScrubber(
         }
     }
 
-    fun jumpToFraction(fraction: Float) {
-        val marker = yearAtFraction(markers, fraction) ?: return
-        coroutineScope.launch { gridState.scrollToItem(marker.timelineIndex) }
+    val locale = LocalConfiguration.current.locales.get(0) ?: Locale.getDefault()
+    val currentLabel by remember(timeline, level, locale) {
+        derivedStateOf {
+            stickyHeaderLabel(timeline, gridState.firstVisibleItemIndex, level, locale)
+        }
+    }
+    val scrollFraction by remember(timeline) {
+        derivedStateOf {
+            val total = totalTimelineSize.toFloat()
+            if (total <= 0f) 0f
+            else (gridState.firstVisibleItemIndex.toFloat() / total).coerceIn(0f, 1f)
+        }
     }
 
     fun jumpToYear(year: Int) {
@@ -101,22 +114,7 @@ internal fun YearScrubber(
             modifier = Modifier
                 .width(ScrubberStripWidth)
                 .fillMaxHeight()
-                .padding(end = 4.dp)
-                .pointerInput(markers, gridState) {
-                    detectVerticalDragGestures(
-                        onDragStart = { offset ->
-                            dragging = true
-                            jumpToFraction((offset.y / size.height.toFloat()).coerceIn(0f, 1f))
-                        },
-                        onDragEnd = { dragging = false },
-                        onDragCancel = { dragging = false },
-                        onVerticalDrag = { change, _ ->
-                            jumpToFraction(
-                                (change.position.y / size.height.toFloat()).coerceIn(0f, 1f),
-                            )
-                        },
-                    )
-                },
+                .padding(end = 4.dp),
         ) {
             val trackHeightDp = maxHeight
             markers.forEach { marker ->
@@ -127,11 +125,23 @@ internal fun YearScrubber(
                     .coerceIn(0f, 1f)
                 YearPill(
                     text = marker.year.toString(),
-                    emphasized = marker.year == currentYear,
+                    emphasized = false,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .offset(y = trackHeightDp * fraction)
                         .clickable { jumpToYear(marker.year) },
+                )
+            }
+            val floatingLabel = currentLabel
+            if (!floatingLabel.isNullOrBlank() &&
+                floatingLabel != currentYear?.toString()
+            ) {
+                YearPill(
+                    text = floatingLabel,
+                    emphasized = true,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = trackHeightDp * scrollFraction),
                 )
             }
         }

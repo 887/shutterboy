@@ -14,7 +14,7 @@ Translations are produced per-language by the user + Claude; English is canonica
 
 | Language | Coverage | Status |
 | --- | --- | --- |
-| [German](app/src/main/res/values-de/) | 224/224 (100%) | complete |
+| [German](app/src/main/res/values-de/) | 226/230 (98%) | complete |
 
 <!-- TRANSLATIONS-END -->
 

@@ -34,9 +34,9 @@ import com.eight87.shutterboy.ui.multiselect.isSelected
  * `.Days` and `.Months`. No bands at `.Years` (each year is a hero tile).
  *
  * Overlays composed in the same `Box`:
- *   - [YearScrubber] — right-edge draggable strip, reveal-on-scroll (C.4).
- *   - [StickyHeaderBanner] — top-centred translucent label that fades in
- *     while scrolling and out when the scroll settles (C.5).
+ *   - [YearScrubber] — right-edge floating pills (year markers + a
+ *     current-scroll bubble), reveal-on-scroll, touch-through outside
+ *     the pills themselves (C.4 + C.5 merged).
  *
  * Tap on a thumbnail / cover-tile fires [onPhotoTap] with the tapped id +
  * the backing id list (every Photo currently in the grid, in display
@@ -153,16 +153,10 @@ internal fun PhotosGrid(
             }
         }
 
-        StickyHeaderBanner(
-            timeline = timeline,
-            gridState = gridState,
-            level = level,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
-
         YearScrubber(
             markers = markers,
-            totalTimelineSize = timeline.size,
+            timeline = timeline,
+            level = level,
             gridState = gridState,
             modifier = Modifier.align(Alignment.CenterEnd),
         )
