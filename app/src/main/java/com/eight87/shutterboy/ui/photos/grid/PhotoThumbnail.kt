@@ -27,7 +27,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
+import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
 import coil3.size.Size
 import com.eight87.shutterboy.R
@@ -109,23 +111,27 @@ fun PhotoThumbnail(
         val placeholderPainter = remember(placeholderColor) {
             androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)
         }
-        // Aves-style suppress-decode-while-moving: when the grid is
-        // scrolling or the thumb is being scrubbed, render the
-        // placeholder only. The full request fires the moment motion
-        // stops; with 8 decoder workers the visible tiles drain in
-        // parallel.
+        // Aves-style suppress-decode-while-moving — but ONLY for tiles
+        // that aren't already in the memory cache. Already-decoded
+        // bitmaps stay shown during scroll (memory-cache hits are free);
+        // only NEW tiles scrolling into view get the placeholder until
+        // motion stops, so the queue doesn't flood with in-between
+        // requests.
         val suppressDecode = LocalSuppressDecode.current
+        val cacheKey = remember(photo.id.value, targetPx) {
+            MemoryCache.Key("thumb-${photo.id.value}-$targetPx")
+        }
+        val inMemoryCache = remember(suppressDecode, cacheKey) {
+            SingletonImageLoader.get(context).memoryCache?.get(cacheKey) != null
+        }
+        val request = ImageRequest.Builder(context)
+            .data(photo.contentUri)
+            .size(Size(targetPx, targetPx))
+            .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
+            .diskCacheKey("thumb-${photo.id.value}-$targetPx")
+            .build()
         AsyncImage(
-            model = if (suppressDecode) {
-                null
-            } else {
-                ImageRequest.Builder(context)
-                    .data(photo.contentUri)
-                    .size(Size(targetPx, targetPx))
-                    .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
-                    .diskCacheKey("thumb-${photo.id.value}-$targetPx")
-                    .build()
-            },
+            model = if (suppressDecode && !inMemoryCache) null else request,
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
             placeholder = placeholderPainter,

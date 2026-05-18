@@ -1,5 +1,6 @@
 package com.eight87.shutterboy.ui.photos.grid
 
+import android.util.Log
 import coil3.ImageLoader
 import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
@@ -51,28 +52,45 @@ class ThumbnailPrefetcher(
 
     suspend fun submit(req: ImageRequest) {
         val key = req.memoryCacheKey?.let { MemoryCache.Key(it) }
-        if (key != null && loader.memoryCache?.get(key) != null) return
-        lock.withLock {
+        if (key != null && loader.memoryCache?.get(key) != null) {
+            Log.d(TAG, "skip ${req.memoryCacheKey} (cache hit)")
+            return
+        }
+        val size = lock.withLock {
             deque.addLast(req)
             while (deque.size > maxPending) {
                 deque.removeFirst()
             }
+            deque.size
         }
+        Log.d(TAG, "submit ${req.memoryCacheKey} (queue size: $size)")
         signal.trySend(Unit)
     }
 
     suspend fun clear() {
-        lock.withLock { deque.clear() }
+        val cleared = lock.withLock {
+            val n = deque.size
+            deque.clear()
+            n
+        }
+        Log.d(TAG, "clear (dropped $cleared)")
     }
 
     private suspend fun worker() {
+        Log.d(TAG, "worker started")
         while (true) {
             val req = lock.withLock { deque.removeLastOrNull() }
             if (req == null) {
                 signal.receive()
             } else {
+                Log.d(TAG, "decode ${req.memoryCacheKey}")
                 runCatching { loader.execute(req) }
+                    .onFailure { Log.w(TAG, "decode failed: ${req.memoryCacheKey}", it) }
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "ThumbnailPrefetcher"
     }
 }
