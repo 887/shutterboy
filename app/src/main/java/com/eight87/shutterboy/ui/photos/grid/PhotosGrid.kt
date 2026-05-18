@@ -14,15 +14,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.isSelected
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 
 /**
@@ -90,6 +96,40 @@ internal fun PhotosGrid(
     if (timeline.isEmpty()) {
         Box(modifier = modifier.fillMaxSize())
         return
+    }
+
+    // Aves-style prefetch: warm the memory cache for a window of photos
+    // around the current viewport so tiles snap in (no decode flash) in
+    // BOTH scroll directions. Per-id dedupe set ensures each photo's
+    // request is enqueued exactly once per timeline — critical so we
+    // don't re-flood Coil's loader on every layout-info tick during a
+    // fling and starve the visible tiles.
+    val context = LocalContext.current
+    val targetPx = LocalThumbnailQuality.current.targetPx
+    LaunchedEffect(timeline, targetPx) {
+        val loader = SingletonImageLoader.get(context)
+        val enqueued = HashSet<Long>()
+        snapshotFlow { gridState.firstVisibleItemIndex }
+            .distinctUntilChanged()
+            .collect { first ->
+                val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
+                if (visibleCount <= 0) return@collect
+                val from = (first - visibleCount * 2).coerceAtLeast(0)
+                val to = (first + visibleCount * 3).coerceAtMost(timeline.size)
+                for (i in from until to) {
+                    val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
+                        ?: continue
+                    val id = cell.photo.id.value
+                    if (!enqueued.add(id)) continue
+                    val req = ImageRequest.Builder(context)
+                        .data(cell.photo.contentUri)
+                        .size(Size(targetPx, targetPx))
+                        .memoryCacheKey("thumb-$id-$targetPx")
+                        .diskCacheKey("thumb-$id-$targetPx")
+                        .build()
+                    loader.enqueue(req)
+                }
+            }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
