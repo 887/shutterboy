@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -135,13 +137,34 @@ internal fun YearScrubber(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(y = maxThumbOffset * scrollFraction)
-                    .width(3.dp)
+                    .width(16.dp)
                     .height(thumbHeightDp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f),
-                    ),
-            )
+                    .pointerInput(totalTimelineSize, maxThumbOffset) {
+                        detectVerticalDragGestures { change, dragAmount ->
+                            change.consume()
+                            val maxOffsetPx = maxThumbOffset.toPx()
+                            if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
+                            val currentFraction =
+                                gridState.firstVisibleItemIndex.toFloat() / totalTimelineSize
+                            val newFraction =
+                                (currentFraction + dragAmount / maxOffsetPx).coerceIn(0f, 1f)
+                            val target = (newFraction * totalTimelineSize).toInt()
+                                .coerceIn(0, totalTimelineSize - 1)
+                            coroutineScope.launch { gridState.scrollToItem(target) }
+                        }
+                    },
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(thumbHeightDp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                        ),
+                )
+            }
             markers.forEach { marker ->
                 // Density-weighted Y: where this year's first photo sits
                 // relative to the full timeline. Pills crowd where the
