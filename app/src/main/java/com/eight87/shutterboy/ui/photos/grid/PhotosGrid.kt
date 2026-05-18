@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.isSelected
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Phase C.2 + C.3 + C.4 + C.5 + D.3.5 — Photos timeline body.
@@ -68,10 +71,28 @@ internal fun PhotosGrid(
     }
 
     val locale = LocalConfiguration.current.locales.get(0) ?: java.util.Locale.getDefault()
-    val timeline = remember(loaded, level) { buildTimeline(loaded, level) }
+    // Timeline assembly off the main thread — cancels-and-restarts on each
+    // new photo list / zoom level via produceState's key-driven coroutine.
+    val timeline by produceState(
+        initialValue = emptyList<TimelineDisplayItem>(),
+        key1 = loaded,
+        key2 = level,
+    ) {
+        value = withContext(Dispatchers.Default) { buildTimeline(loaded, level) }
+    }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
-    val backingIds = remember(loaded) { loaded.map { it.id.value } }
+    val backingIds by produceState(
+        initialValue = emptyList<Long>(),
+        key1 = loaded,
+    ) {
+        value = withContext(Dispatchers.Default) { loaded.map { it.id.value } }
+    }
     val gridState = rememberLazyGridState()
+
+    if (timeline.isEmpty()) {
+        Box(modifier = modifier.fillMaxSize())
+        return
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(

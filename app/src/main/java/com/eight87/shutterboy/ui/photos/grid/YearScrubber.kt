@@ -8,13 +8,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +44,10 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 private const val LINGER_MS = 1200L
-private val ScrubberStripWidth = 56.dp
+private val ScrubberStripWidth = 88.dp
+private val ThumbVisibleWidth = 22.dp
+private val ThumbTouchWidth = 32.dp
+private val PillRightInset = 40.dp
 
 /**
  * Right-edge floating labels — Aves shape, no draggable scrollbar.
@@ -133,12 +143,14 @@ internal fun YearScrubber(
             }
             val thumbHeightDp = trackHeightDp * viewportFraction
             val maxThumbOffset = trackHeightDp - thumbHeightDp
+            // Aves-style chunky thumb with up/down chevrons; wider invisible
+            // touch target around it for easy grabbing.
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(y = maxThumbOffset * scrollFraction)
-                    .width(16.dp)
-                    .height(thumbHeightDp)
+                    .width(ThumbTouchWidth)
+                    .height(thumbHeightDp.coerceAtLeast(48.dp))
                     .pointerInput(totalTimelineSize, maxThumbOffset) {
                         detectVerticalDragGestures { change, dragAmount ->
                             change.consume()
@@ -155,28 +167,46 @@ internal fun YearScrubber(
                     },
                 contentAlignment = Alignment.CenterEnd,
             ) {
-                Box(
+                Column(
                     modifier = Modifier
-                        .width(4.dp)
-                        .height(thumbHeightDp)
+                        .width(ThumbVisibleWidth)
+                        .height(thumbHeightDp.coerceAtLeast(48.dp))
                         .clip(RoundedCornerShape(percent = 50))
                         .background(
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                        ),
-                )
+                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
+                        )
+                        .padding(vertical = 2.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowUp,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
             markers.forEach { marker ->
                 // Density-weighted Y: where this year's first photo sits
-                // relative to the full timeline. Pills crowd where the
-                // photos crowd — exactly the Aves UX.
+                // relative to the full timeline. Pills sit to the LEFT of
+                // the thumb so a thumb-grab doesn't hide them under the
+                // finger.
                 val fraction = (marker.timelineIndex.toFloat() / totalTimelineSize)
                     .coerceIn(0f, 1f)
                 YearPill(
                     text = marker.year.toString(),
                     emphasized = false,
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
+                        .align(Alignment.TopEnd)
                         .offset(y = trackHeightDp * fraction)
+                        .padding(end = PillRightInset)
                         .clickable { jumpToYear(marker.year) },
                 )
             }
@@ -188,8 +218,9 @@ internal fun YearScrubber(
                     text = floatingLabel,
                     emphasized = true,
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .offset(y = trackHeightDp * scrollFraction),
+                        .align(Alignment.TopEnd)
+                        .offset(y = trackHeightDp * scrollFraction)
+                        .padding(end = PillRightInset),
                 )
             }
         }

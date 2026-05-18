@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -101,7 +102,9 @@ class RoomGalleryRepository(
         val query = SimpleSQLiteQuery(
             "SELECT * FROM photos ORDER BY ${sort.sqlOrderBy}",
         )
-        return photoDao.observeAll(query).map { rows -> rows.map { it.toDomain() } }
+        return photoDao.observeAll(query)
+            .map { rows -> rows.map { it.toDomain() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override fun observePhotosInFolder(folderId: FolderId, sort: PhotoSort): Flow<List<Photo>> {
@@ -109,7 +112,9 @@ class RoomGalleryRepository(
             "SELECT * FROM photos WHERE folder_id = ? ORDER BY ${sort.sqlOrderBy}",
             arrayOf<Any>(folderId.value),
         )
-        return photoDao.observeAll(query).map { rows -> rows.map { it.toDomain() } }
+        return photoDao.observeAll(query)
+            .map { rows -> rows.map { it.toDomain() } }
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun photosByIds(ids: List<Long>): List<Photo> =
