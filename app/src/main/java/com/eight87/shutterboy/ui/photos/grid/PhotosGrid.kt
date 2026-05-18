@@ -55,17 +55,22 @@ internal fun PhotosGrid(
 ) {
     val inSelectionMode = selectionState is SelectionState.Active
     val photos by stream.observe()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+        .collectAsStateWithLifecycle(initialValue = null)
 
-    if (photos.isEmpty()) {
+    val loaded = photos
+    if (loaded == null) {
+        Box(modifier = modifier.fillMaxSize())
+        return
+    }
+    if (loaded.isEmpty()) {
         if (emptyState != null) emptyState(modifier) else EmptyPhotosState(modifier = modifier)
         return
     }
 
     val locale = LocalConfiguration.current.locales.get(0) ?: java.util.Locale.getDefault()
-    val timeline = remember(photos, level) { buildTimeline(photos, level) }
+    val timeline = remember(loaded, level) { buildTimeline(loaded, level) }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
-    val backingIds = remember(photos) { photos.map { it.id.value } }
+    val backingIds = remember(loaded) { loaded.map { it.id.value } }
     val gridState = rememberLazyGridState()
 
     Box(modifier = modifier.fillMaxSize()) {
