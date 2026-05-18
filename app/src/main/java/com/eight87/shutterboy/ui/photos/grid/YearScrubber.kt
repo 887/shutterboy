@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -117,6 +118,30 @@ internal fun YearScrubber(
                 .padding(end = 4.dp),
         ) {
             val trackHeightDp = maxHeight
+            // Aves-style thin scrollbar: a vertical thumb on the right edge
+            // showing viewport-to-content ratio. Non-interactive — visual
+            // only; the year pills are still the tap targets.
+            val viewportFraction by remember(totalTimelineSize) {
+                derivedStateOf {
+                    val info = gridState.layoutInfo
+                    val visible = info.visibleItemsInfo.size.toFloat()
+                    if (totalTimelineSize <= 0 || visible <= 0f) 0f
+                    else (visible / totalTimelineSize).coerceIn(0.04f, 1f)
+                }
+            }
+            val thumbHeightDp = trackHeightDp * viewportFraction
+            val maxThumbOffset = trackHeightDp - thumbHeightDp
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(y = maxThumbOffset * scrollFraction)
+                    .width(3.dp)
+                    .height(thumbHeightDp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f),
+                    ),
+            )
             markers.forEach { marker ->
                 // Density-weighted Y: where this year's first photo sits
                 // relative to the full timeline. Pills crowd where the
