@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -98,44 +99,56 @@ internal fun PhotosGrid(
         return
     }
 
-    // Aves-style prefetch: warm the memory cache for a window of photos
-    // around the current viewport so tiles snap in (no decode flash) in
-    // BOTH scroll directions. Two rules that together prioritize visible
-    // tiles over prefetch work:
-    //   1. Per-id dedupe set — each photo's request fires at most once
-    //      per timeline, so we don't re-flood the loader on every tick.
-    //   2. Only fire when scroll has settled (isScrollInProgress = false).
-    //      While the user is dragging the thumb or fling-scrolling, the
-    //      Coil queue is left entirely for the visible-tile requests
-    //      AsyncImage is dispatching from the grid. Prefetch resumes as
-    //      soon as their finger lifts.
+    // Aves-style prefetch: bounded LIFO queue (max ~3 viewports) with
+    // 4 IO workers stealing the freshest submissions first. The queue
+    // is cleared every time scrolling starts so a long fling doesn't
+    // bury fresh visible positions under stale earlier ones. Per-id
+    // dedupe via memory-cache hit check inside the prefetcher.
     val context = LocalContext.current
     val targetPx = LocalThumbnailQuality.current.targetPx
-    LaunchedEffect(timeline, targetPx) {
-        val loader = SingletonImageLoader.get(context)
-        val enqueued = HashSet<Long>()
+    val prefetchScope = rememberCoroutineScope()
+    val prefetcher = remember(targetPx) {
+        ThumbnailPrefetcher(
+            loader = SingletonImageLoader.get(context),
+            maxPending = 100,
+            scope = prefetchScope,
+        )
+    }
+    LaunchedEffect(timeline, targetPx, prefetcher) {
         snapshotFlow {
             gridState.firstVisibleItemIndex to gridState.isScrollInProgress
         }
             .distinctUntilChanged()
             .collect { (first, scrolling) ->
-                if (scrolling) return@collect
+                if (scrolling) {
+                    // Drop everything pending — when the user starts
+                    // scrolling/scrubbing, the existing prefetch queue
+                    // is by definition stale.
+                    prefetcher.clear()
+                    return@collect
+                }
                 val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
                 if (visibleCount <= 0) return@collect
                 val from = (first - visibleCount * 2).coerceAtLeast(0)
                 val to = (first + visibleCount * 3).coerceAtMost(timeline.size)
-                for (i in from until to) {
+                // Submit OUTWARDS from the viewport so items immediately
+                // next to it (most likely to scroll into view) land on
+                // the top of the LIFO stack and get serviced first.
+                val center = first + visibleCount / 2
+                val orderedIndices = (from until to).sortedBy {
+                    Math.abs(it - center)
+                }
+                for (i in orderedIndices) {
                     val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
                         ?: continue
                     val id = cell.photo.id.value
-                    if (!enqueued.add(id)) continue
                     val req = ImageRequest.Builder(context)
                         .data(cell.photo.contentUri)
                         .size(Size(targetPx, targetPx))
                         .memoryCacheKey("thumb-$id-$targetPx")
                         .diskCacheKey("thumb-$id-$targetPx")
                         .build()
-                    loader.enqueue(req)
+                    prefetcher.submit(req)
                 }
             }
     }
