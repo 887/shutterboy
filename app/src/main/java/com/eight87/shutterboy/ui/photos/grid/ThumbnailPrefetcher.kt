@@ -58,13 +58,24 @@ class ThumbnailPrefetcher(
         }
     }
 
-    suspend fun submit(id: Long, uri: Uri) {
-        // Two tiers per submission: tiny preview first, then target.
-        // The tiny shows instantly as a placeholder (via
-        // placeholderMemoryCacheKey in PhotoThumbnail) so cells never
-        // render fully-grey even before the target decodes.
+    /**
+     * Both tiers — for the NEAR window. Use this for items close to the
+     * viewport where we want sharp tiles ready to go.
+     */
+    suspend fun submitBoth(id: Long, uri: Uri) {
         submitTier(id, uri, "thumb-$id-$TINY_PX", TINY_PX)
         submitTier(id, uri, "thumb-$id-$targetPx", targetPx)
+    }
+
+    /**
+     * Tiny tier only — for the FAR window. ~36 KB per tile so we can
+     * keep the whole library's tinies resident without thrashing the
+     * cache. When the user scrolls there, the tiny renders upscaled as
+     * a placeholder until the target decodes via AsyncImage's normal
+     * path.
+     */
+    suspend fun submitTiny(id: Long, uri: Uri) {
+        submitTier(id, uri, "thumb-$id-$TINY_PX", TINY_PX)
     }
 
     private suspend fun submitTier(id: Long, uri: Uri, key: String, px: Int) {

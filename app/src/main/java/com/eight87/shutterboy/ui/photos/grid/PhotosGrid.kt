@@ -124,7 +124,7 @@ internal fun PhotosGrid(
             loader = SingletonImageLoader.get(context),
             targetPx = targetPx,
             maxPending = 1500,
-            workerCount = 16,
+            workerCount = 8,
             scope = prefetchScope,
         )
     }
@@ -141,20 +141,40 @@ internal fun PhotosGrid(
             .collect { first ->
                 val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
                 if (visibleCount <= 0) return@collect
-                // 15 viewports behind + 15 ahead.
-                val from = (first - visibleCount * 15).coerceAtLeast(0)
-                val to = (first + visibleCount * 16).coerceAtMost(timeline.size)
-                // LIFO ordering: submitted-last is popped first. Submit
-                // far edges first, near-viewport LAST so near items
-                // land on top of the stack and decode immediately.
+                // Two concentric prefetch rings:
+                //   FAR (15 viewports each side): tiny tier only —
+                //   ~36 KB per tile, so even a huge window doesn't
+                //   thrash Coil's memory cache. Tinies render
+                //   upscaled as placeholder when scrolled to.
+                //   NEAR (3 viewports each side): both tiers, so the
+                //   about-to-be-visible tiles are decoded at full
+                //   target quality already.
+                val nearFrom = (first - visibleCount * 3).coerceAtLeast(0)
+                val nearTo = (first + visibleCount * 4).coerceAtMost(timeline.size)
+                val farFrom = (first - visibleCount * 15).coerceAtLeast(0)
+                val farTo = (first + visibleCount * 16).coerceAtMost(timeline.size)
                 val center = first + visibleCount / 2
-                val orderedIndices = (from until to).sortedByDescending {
+
+                // FAR ring: submit FAR first so it sits at the bottom
+                // of the LIFO stack (workers process it last).
+                val farIndices = (farFrom until farTo).sortedByDescending {
                     Math.abs(it - center)
                 }
-                for (i in orderedIndices) {
+                for (i in farIndices) {
+                    if (i in nearFrom until nearTo) continue
                     val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
                         ?: continue
-                    prefetcher.submit(cell.photo.id.value, cell.photo.contentUri)
+                    prefetcher.submitTiny(cell.photo.id.value, cell.photo.contentUri)
+                }
+                // NEAR ring: edges first, center last, so near-center
+                // items end up on TOP of the LIFO.
+                val nearIndices = (nearFrom until nearTo).sortedByDescending {
+                    Math.abs(it - center)
+                }
+                for (i in nearIndices) {
+                    val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
+                        ?: continue
+                    prefetcher.submitBoth(cell.photo.id.value, cell.photo.contentUri)
                 }
             }
     }

@@ -49,13 +49,10 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
                 add(MediaStoreThumbnailFetcher.Factory())
                 add(VideoFrameDecoder.Factory())
             }
-            // 32 workers on fetch + decode. Now that each work-item is
-            // a ~1-3 ms MediaStore loadThumbnail call (not a 50 ms full
-            // JPEG decode), it's cheap to fan out widely — more in-
-            // flight requests = a deeper prefetch window stays warm
-            // even during sustained scroll.
-            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(32))
-            .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(32))
+            // 8 workers each — enough parallelism for fast scrolls
+            // without the GC/contention overhead of larger pools.
+            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(8))
+            .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(8))
             // R.F.29 — Aves-class gallery libraries (10k–50k photos) blow
             // through Coil's default ~25% maxMemory budget during fast
             // scrolling; tiles fall out of cache and re-decode the
