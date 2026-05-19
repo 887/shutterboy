@@ -98,13 +98,15 @@ internal fun YearScrubber(
     }
     val visible = scrolling || lingering || dragging
 
-    // AndroidFastScroll's canonical pattern (also used by Material
-    // Files / Open Camera): on every drag delta, cancel the in-flight
-    // scroll job and launch a fresh one for the latest target. The
-    // thumb visual reads `thumbFraction` directly (renders smoothly
-    // regardless of grid catch-up); the grid scrolls asynchronously.
-    // That's what makes the scrollbar feel decoupled from the loading.
+    // AndroidFastScroll-inspired: thumb visual reads `thumbFraction`
+    // synchronously (frame-locked to finger). Grid scroll is dispatched
+    // ASYNCHRONOUSLY with throttling — at most one scrollToItem in
+    // flight, AND at most one started per ~80 ms. Throttling gives the
+    // main thread frames between measure passes so the gesture pipeline
+    // doesn't starve.
     val scrollJob = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    val lastScrollMs = remember { mutableStateOf(0L) }
+    var pendingTarget by remember { mutableStateOf(-1) }
 
     val currentYear by remember(markers) {
         derivedStateOf {
@@ -184,10 +186,27 @@ internal fun YearScrubber(
                             onDragEnd = {
                                 dragging = false
                                 onScrubbingChange(false)
+                                // Final snap: scroll to the released
+                                // position with no throttle. If a
+                                // throttled scroll is still pending,
+                                // this overrides it with the exact
+                                // landing target.
+                                if (pendingTarget >= 0) {
+                                    scrollJob.value?.cancel()
+                                    scrollJob.value = coroutineScope.launch {
+                                        gridState.scrollToItem(pendingTarget)
+                                    }
+                                }
                             },
                             onDragCancel = {
                                 dragging = false
                                 onScrubbingChange(false)
+                                if (pendingTarget >= 0) {
+                                    scrollJob.value?.cancel()
+                                    scrollJob.value = coroutineScope.launch {
+                                        gridState.scrollToItem(pendingTarget)
+                                    }
+                                }
                             },
                         ) { change, dragAmount ->
                             change.consume()
@@ -197,18 +216,22 @@ internal fun YearScrubber(
                             // the accumulator — finger tracks 1:1.
                             thumbFraction = (thumbFraction + dragAmount / maxOffsetPx)
                                 .coerceIn(0f, 1f)
-                            // Grid scroll: cancel the previous in-flight
-                            // job, launch a fresh one for the latest
-                            // target. Only ever one scrollToItem in
-                            // progress; older targets get cancelled
-                            // before they complete. Matches
-                            // AndroidFastScroll's stopScroll() +
-                            // scrollToPositionWithOffset() pattern.
                             val target = (thumbFraction * totalTimelineSize).toInt()
                                 .coerceIn(0, totalTimelineSize - 1)
-                            scrollJob.value?.cancel()
-                            scrollJob.value = coroutineScope.launch {
-                                gridState.scrollToItem(target)
+                            pendingTarget = target
+                            // Throttle scrollToItem to ~12 Hz max so
+                            // the measure pass between dispatches has
+                            // a frame to settle. Without the throttle
+                            // the main thread does a measure pass
+                            // every gesture frame (60+ Hz) and starves
+                            // the gesture pipeline → drag stutters.
+                            val now = System.currentTimeMillis()
+                            if (now - lastScrollMs.value >= 80L) {
+                                lastScrollMs.value = now
+                                scrollJob.value?.cancel()
+                                scrollJob.value = coroutineScope.launch {
+                                    gridState.scrollToItem(pendingTarget)
+                                }
                             }
                         }
                     },

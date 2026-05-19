@@ -144,11 +144,12 @@ internal fun PhotosGrid(
                 // already-decoded thumbnails.
                 val from = (first - visibleCount * 5).coerceAtLeast(0)
                 val to = (first + visibleCount * 6).coerceAtMost(timeline.size)
-                // Submit OUTWARDS from the viewport so items immediately
-                // next to it (most likely to scroll into view) land on
-                // the top of the LIFO stack and get serviced first.
+                // Order matters with a LIFO worker pool: submitted-last
+                // gets serviced first. So submit the FAR edges first
+                // and the near-viewport items LAST — that puts the
+                // most-likely-to-be-visible items on TOP of the stack.
                 val center = first + visibleCount / 2
-                val orderedIndices = (from until to).sortedBy {
+                val orderedIndices = (from until to).sortedByDescending {
                     Math.abs(it - center)
                 }
                 for (i in orderedIndices) {
