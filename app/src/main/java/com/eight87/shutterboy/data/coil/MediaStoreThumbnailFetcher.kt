@@ -44,15 +44,33 @@ class MediaStoreThumbnailFetcher(
             AndroidSize(width, height),
             null,
         )
+        // ContentResolver.loadThumbnail returns a thumbnail "of
+        // approximately the given size" — for camera-sourced photos
+        // the OS hands back its MediaStore MINI_KIND (typically
+        // 512x384), regardless of the size we asked for. HARDWARE-
+        // copying that oversized bitmap pays a bigger GPU texture
+        // upload per cell + uses more VRAM per cached tile.
+        //
+        // Resize down to the actually-requested size on the IO thread
+        // (cheap CPU resample, well off the main thread). Skip when
+        // raw is already at or below target — costs nothing in the
+        // common case.
+        val resized = if (raw.width > width || raw.height > height) {
+            runCatching { Bitmap.createScaledBitmap(raw, width, height, true) }
+                .getOrNull() ?: raw
+        } else {
+            raw
+        }
+        if (resized !== raw) raw.recycle()
         // HARDWARE config → GPU-resident bitmap → zero-copy draws. The
         // micro-stutter while scrolling a tile grid is the GPU
         // re-uploading software bitmaps every frame; HARDWARE bitmaps
         // upload once and are bound directly.
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            runCatching { raw.copy(Bitmap.Config.HARDWARE, false) }
-                .getOrNull() ?: raw
+            runCatching { resized.copy(Bitmap.Config.HARDWARE, false) }
+                .getOrNull() ?: resized
         } else {
-            raw
+            resized
         }
         return ImageFetchResult(
             image = bitmap.asImage(),

@@ -106,6 +106,18 @@ class ThumbnailPrefetcher(
                         AndroidSize(task.px, task.px),
                         null,
                     )
+                    // OS may return larger than requested (MINI_KIND
+                    // 512x384 for camera 4K sources). Resize on the IO
+                    // thread before HARDWARE-copying so the cached
+                    // bitmap is the size we actually want — smaller
+                    // texture uploads, smaller VRAM footprint per tile.
+                    val resized = if (raw.width > task.px || raw.height > task.px) {
+                        runCatching { Bitmap.createScaledBitmap(raw, task.px, task.px, true) }
+                            .getOrNull() ?: raw
+                    } else {
+                        raw
+                    }
+                    if (resized !== raw) raw.recycle()
                     // Copy to HARDWARE config so the bitmap lives in
                     // GPU memory and draws are zero-copy. Software
                     // bitmaps would re-upload to the GPU every frame
@@ -115,10 +127,10 @@ class ThumbnailPrefetcher(
                     // higher). Falls back to the original ARGB_8888 if
                     // hardware copy fails (rare — only on degraded GPUs).
                     val hw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        runCatching { raw.copy(Bitmap.Config.HARDWARE, false) }
-                            .getOrNull() ?: raw
+                        runCatching { resized.copy(Bitmap.Config.HARDWARE, false) }
+                            .getOrNull() ?: resized
                     } else {
-                        raw
+                        resized
                     }
                     loader.memoryCache?.set(
                         MemoryCache.Key(task.cacheKey),
