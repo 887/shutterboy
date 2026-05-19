@@ -13,9 +13,22 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
@@ -491,6 +504,25 @@ internal fun PhotoViewerContent(
                 )
             }
         },
+        bottomBar = {
+            // Filmstrip + page counter. Hidden when the chrome is hidden
+            // OR when the current photo is zoomed in (per user request:
+            // "unless I zoom in on the photo, that should vanish").
+            val zoomed = ViewerZoomMath.isZoomed(scaleState.floatValue)
+            AnimatedVisibility(
+                visible = chromeVisible && !zoomed,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it },
+            ) {
+                FilmstripBar(
+                    pagerIds = pagerIds,
+                    currentPage = pagerState.currentPage,
+                    onJumpTo = { idx ->
+                        coroutineScope.launch { pagerState.scrollToPage(idx) }
+                    },
+                )
+            }
+        },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
         Box(
@@ -825,3 +857,110 @@ internal const val VIEWER_PAGER_TAG = "viewer_pager"
 internal const val VIEWER_PAGE_TAG_PREFIX = "viewer_page_"
 // F.2 — chrome auto-hide after 3 s of no chrome-toggle interaction.
 private const val CHROME_AUTO_HIDE_MS: Long = 3000L
+
+/**
+ * Viewer bottom chrome — filmstrip of [FILMSTRIP_RADIUS] neighbours on
+ * each side of the current pager page + a "N / total" counter beneath.
+ * Tapping a neighbour jumps the pager there. Renders nothing for
+ * indices out of range so the current tile stays centred (the user
+ * always knows where they are even at the start / end of the list).
+ */
+private const val FILMSTRIP_RADIUS = 3
+
+@Composable
+private fun FilmstripBar(
+    pagerIds: List<Long>,
+    currentPage: Int,
+    onJumpTo: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.4f))
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        ) {
+            for (offset in -FILMSTRIP_RADIUS..FILMSTRIP_RADIUS) {
+                val idx = currentPage + offset
+                val isCurrent = offset == 0
+                FilmstripTile(
+                    photoId = pagerIds.getOrNull(idx),
+                    isCurrent = isCurrent,
+                    onClick = {
+                        if (idx in pagerIds.indices && !isCurrent) onJumpTo(idx)
+                    },
+                )
+            }
+        }
+        Spacer(Modifier.size(4.dp))
+        Text(
+            text = "${currentPage + 1} / ${pagerIds.size}",
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun FilmstripTile(
+    photoId: Long?,
+    isCurrent: Boolean,
+    onClick: () -> Unit,
+) {
+    val tileSize = if (isCurrent) 56.dp else 44.dp
+    Box(
+        modifier = Modifier
+            .width(tileSize)
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color.Black.copy(alpha = 0.55f))
+            .clickable(enabled = photoId != null && !isCurrent, onClick = onClick),
+    ) {
+        if (photoId != null) {
+            // Use the same thumb cache key the grid + prefetcher
+            // populate so this is a synchronous memory-cache hit when
+            // the neighbours are already warm.
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val targetPx = with(LocalDensity.current) { tileSize.roundToPx() }
+            val tinyKey =
+                "thumb-$photoId-${com.eight87.shutterboy.ui.photos.grid.ThumbnailPrefetcher.TINY_PX}"
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(
+                        android.content.ContentUris.withAppendedId(
+                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            photoId,
+                        ),
+                    )
+                    .size(coil3.size.Size(targetPx, targetPx))
+                    .precision(coil3.size.Precision.INEXACT)
+                    .placeholderMemoryCacheKey(tinyKey)
+                    .memoryCacheKey("thumb-$photoId-$targetPx")
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        if (isCurrent) {
+            // Outlined ring around the current tile so the user knows
+            // at a glance which photo they're on.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(
+                        width = 2.dp,
+                        color = Color.White,
+                        shape = RoundedCornerShape(4.dp),
+                    ),
+            )
+        }
+    }
+}
