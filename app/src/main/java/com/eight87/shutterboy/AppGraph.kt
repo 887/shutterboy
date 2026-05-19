@@ -42,7 +42,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 private val Context.shutterboyPrefs: DataStore<Preferences> by preferencesDataStore(
     name = "shutterboy_settings",
@@ -148,4 +151,15 @@ class AppGraph(applicationContext: Context) {
         sortPreferences.observePhotosSort()
             .flatMapLatest { sort -> photoSource.observePhotos(sort) }
             .stateIn(graphScope, SharingStarted.Eagerly, null)
+
+    init {
+        // Auto-rescan when MediaStore notifies of a change (delete /
+        // edit / new). Without this, deleting photos through our
+        // selection toolbar gets the file off disk but our Room table
+        // still has the row — the gallery keeps showing the deleted
+        // photo until something else triggers a rescan.
+        mediaChangeSource.observeChanges()
+            .onEach { graphScope.launch { libraryScanner.scanIfChanged() } }
+            .launchIn(graphScope)
+    }
 }
