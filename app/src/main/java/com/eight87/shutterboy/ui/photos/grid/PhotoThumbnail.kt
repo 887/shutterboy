@@ -131,16 +131,19 @@ fun PhotoThumbnail(
         // exactly when smoothness matters most.
         val request = remember(photo.id.value, targetPx) {
             val cacheKeyStr = "thumb-${photo.id.value}-$targetPx"
+            val tinyKeyStr = "thumb-${photo.id.value}-${ThumbnailPrefetcher.TINY_PX}"
             ImageRequest.Builder(context)
                 .data(photo.contentUri)
                 .size(Size(targetPx, targetPx))
                 .memoryCacheKey(cacheKeyStr)
                 .diskCacheKey(cacheKeyStr)
-                // AsyncImage synchronously checks this key in the
-                // memory cache at mount time and uses the cached
-                // bitmap AS the placeholder — eliminates the one-
-                // frame grey flash when prefetch has warmed the cache.
-                .placeholderMemoryCacheKey(cacheKeyStr)
+                // Progressive preview: when AsyncImage mounts, it first
+                // checks the TINY tier (96 px, populated by the
+                // prefetcher) and renders it upscaled. The target-px
+                // bitmap then decodes underneath and swaps in. So tiles
+                // never show fully-grey — they fade from blurry-but-
+                // recognisable to sharp.
+                .placeholderMemoryCacheKey(tinyKeyStr)
                 .build()
         }
         AsyncImage(

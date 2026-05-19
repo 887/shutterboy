@@ -39,9 +39,16 @@ class ThumbnailPrefetcher(
     scope: CoroutineScope,
 ) {
 
-    data class Task(val id: Long, val uri: Uri, val cacheKey: String)
+    data class Task(val id: Long, val uri: Uri, val cacheKey: String, val px: Int)
 
     private val deque = ArrayDeque<Task>()
+
+    companion object {
+        // Tiny preview tier — 96 px decodes in ~1 ms via MediaStore
+        // loadThumbnail and uses only ~36 KB of memory cache per tile,
+        // so we can keep the whole library's tinies resident.
+        const val TINY_PX = 96
+    }
     private val signal = Channel<Unit>(Channel.UNLIMITED)
     private val lock = Mutex()
 
@@ -52,10 +59,18 @@ class ThumbnailPrefetcher(
     }
 
     suspend fun submit(id: Long, uri: Uri) {
-        val cacheKey = "thumb-$id-$targetPx"
-        if (loader.memoryCache?.get(MemoryCache.Key(cacheKey)) != null) return
+        // Two tiers per submission: tiny preview first, then target.
+        // The tiny shows instantly as a placeholder (via
+        // placeholderMemoryCacheKey in PhotoThumbnail) so cells never
+        // render fully-grey even before the target decodes.
+        submitTier(id, uri, "thumb-$id-$TINY_PX", TINY_PX)
+        submitTier(id, uri, "thumb-$id-$targetPx", targetPx)
+    }
+
+    private suspend fun submitTier(id: Long, uri: Uri, key: String, px: Int) {
+        if (loader.memoryCache?.get(MemoryCache.Key(key)) != null) return
         lock.withLock {
-            deque.addLast(Task(id, uri, cacheKey))
+            deque.addLast(Task(id, uri, key, px))
             while (deque.size > maxPending) deque.removeFirst()
         }
         signal.trySend(Unit)
@@ -76,7 +91,7 @@ class ThumbnailPrefetcher(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val bitmap = context.contentResolver.loadThumbnail(
                         task.uri,
-                        AndroidSize(targetPx, targetPx),
+                        AndroidSize(task.px, task.px),
                         null,
                     )
                     loader.memoryCache?.set(
