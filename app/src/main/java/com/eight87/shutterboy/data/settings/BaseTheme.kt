@@ -1,26 +1,25 @@
 package com.eight87.shutterboy.data.settings
 
 /**
- * Base theme picker — ported from tonearmboy. Four variants:
+ * Base theme picker — the same three variants shared across all four
+ * boy apps (shutterboy / tonearmboy / whisperboy / strictlykeptboy).
  *
  *  - [DefaultAndroid] — Material You / dynamic colour on API 31+,
- *    falls back to the brand palette on older devices.
- *  - [DefaultColors] — the static shutterboy brand palette regardless
- *    of API.
+ *    falls back to a neutral scheme on older devices.
  *  - [PureBlack] — true-black surface family for AMOLED screens. The
- *    primary / secondary / tertiary still come from the dynamic or
- *    brand palette underneath; only `surface` / `background` go black.
+ *    primary / secondary / tertiary still come from the dynamic
+ *    palette underneath; only `surface` / `background` go black.
  *  - [Custom] — user picked a seed colour via the in-app HSV picker;
  *    `lightColorScheme` / `darkColorScheme` are derived from it.
  *
- * Persisted as a string. The first three serialise as their class
- * names ("DefaultAndroid" / "DefaultColors" / "PureBlack"); [Custom]
- * serialises as `Custom:0xRRGGBB`. Unknown / malformed strings fall
- * back to [Default].
+ * Persisted as a string. The first two serialise as their class names
+ * ("DefaultAndroid" / "PureBlack"); [Custom] serialises as
+ * `Custom:0xRRGGBB`. Unknown / malformed strings (including the
+ * legacy "DefaultColors" shutterboy-only palette that used to live
+ * here) fall back to [Default].
  */
 sealed class BaseTheme {
     data object DefaultAndroid : BaseTheme()
-    data object DefaultColors : BaseTheme()
     data object PureBlack : BaseTheme()
 
     /**
@@ -33,7 +32,6 @@ sealed class BaseTheme {
     /** Storage form. Inverse of [fromStored]. */
     fun toStored(): String = when (this) {
         is DefaultAndroid -> "DefaultAndroid"
-        is DefaultColors -> "DefaultColors"
         is PureBlack -> "PureBlack"
         is Custom -> "Custom:0x${(seedRgb and 0xFFFFFFL).toString(16).padStart(6, '0').uppercase()}"
     }
@@ -50,8 +48,10 @@ sealed class BaseTheme {
             }
             return when (raw) {
                 "DefaultAndroid" -> DefaultAndroid
-                "DefaultColors" -> DefaultColors
                 "PureBlack" -> PureBlack
+                // Legacy: "DefaultColors" was the shutterboy-only
+                // brand palette; map any old stored value to the
+                // shared default.
                 else -> Default
             }
         }

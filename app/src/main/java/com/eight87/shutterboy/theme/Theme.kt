@@ -20,9 +20,7 @@ import com.eight87.shutterboy.data.settings.BaseTheme
  * determined by [baseTheme]:
  *
  *  - [BaseTheme.DefaultAndroid] — Material You / dynamic colour on API 31+,
- *    falls back to the shutterboy brand palette on older devices.
- *  - [BaseTheme.DefaultColors] — the static shutterboy brand palette regardless
- *    of API.
+ *    falls back to a neutral scheme on older devices.
  *  - [BaseTheme.PureBlack] — same primary colours as DefaultAndroid but with
  *    `surface` / `background` collapsed to pure black for AMOLED displays.
  *  - [BaseTheme.Custom] — a `ColorScheme` derived from a user-picked seed
@@ -66,8 +64,6 @@ internal fun resolveBaseScheme(darkTheme: Boolean, baseTheme: BaseTheme): ColorS
                 if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
             }
         }
-        BaseTheme.DefaultColors ->
-            if (darkTheme) ShutterboyDarkColorScheme else ShutterboyLightColorScheme
         BaseTheme.PureBlack -> {
             val foundation = if (dynamicAvailable) {
                 val context = LocalContext.current

@@ -52,12 +52,6 @@ class DataStoreThemePreferencesTest {
     }
 
     @Test
-    fun `DefaultColors round-trips through DataStore`() = runTest(testScope.testScheduler) {
-        prefs.setBaseTheme(BaseTheme.DefaultColors)
-        assertEquals(BaseTheme.DefaultColors, prefs.observeBaseTheme().first())
-    }
-
-    @Test
     fun `PureBlack round-trips through DataStore`() = runTest(testScope.testScheduler) {
         prefs.setBaseTheme(BaseTheme.PureBlack)
         assertEquals(BaseTheme.PureBlack, prefs.observeBaseTheme().first())

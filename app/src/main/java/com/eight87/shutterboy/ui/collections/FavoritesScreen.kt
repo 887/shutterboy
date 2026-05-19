@@ -16,7 +16,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -68,17 +71,23 @@ internal fun FavoritesScreenContent(
     val stream = remember(favoriteCommands) {
         PhotoStream { favoriteCommands.observeFavoritePhotos() }
     }
+    var zoomLevel by remember {
+        mutableStateOf<com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel>(
+            com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel.Items,
+        )
+    }
     Scaffold(
         topBar = {
             if (backStack != null) {
-                // Favorites is a root tab now — use the same shared
-                // top bar as Photos / Collections so the user can
-                // switch between all four (Photos / Favorites /
-                // Collections / Settings) without going through back.
                 RootTopBar(
                     current = Favorites,
                     onSelect = { dest -> backStack.selectTab(dest) },
-                )
+                ) {
+                    com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
+                        level = zoomLevel,
+                        onLevelChange = { zoomLevel = it },
+                    )
+                }
             } else {
                 // Legacy back-arrow header — kept for tests + any
                 // call-site that still pushes Favorites onto the
@@ -106,6 +115,8 @@ internal fun FavoritesScreenContent(
                 .fillMaxSize()
                 .padding(innerPadding),
             emptyState = { mod -> FavoritesEmptyState(modifier = mod) },
+            level = zoomLevel,
+            onLevelChange = { zoomLevel = it },
         )
     }
 }

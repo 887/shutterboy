@@ -19,9 +19,10 @@ class BaseThemeCodecTest {
     }
 
     @Test
-    fun `DefaultColors round-trips`() {
-        val v: BaseTheme = BaseTheme.DefaultColors
-        assertEquals(v, BaseTheme.fromStored(v.toStored()))
+    fun `legacy DefaultColors stored value falls back to Default`() {
+        // "DefaultColors" was the old shutterboy-only brand palette;
+        // it no longer exists and is mapped to the shared default.
+        assertEquals(BaseTheme.Default, BaseTheme.fromStored("DefaultColors"))
     }
 
     @Test

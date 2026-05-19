@@ -165,7 +165,6 @@
     <string name="settings_section_appearance">Erscheinungsbild</string>
     <string name="settings_appearance_theme">Design</string>
     <string name="settings_appearance_default_android">Material You (System)</string>
-    <string name="settings_appearance_default_colors">Shutterboy-Palette</string>
     <string name="settings_appearance_pure_black">Reines Schwarz</string>
     <string name="settings_appearance_custom">Eigene Grundfarbe</string>
     <string name="settings_appearance_pick_colour">Grundfarbe auswählen</string>

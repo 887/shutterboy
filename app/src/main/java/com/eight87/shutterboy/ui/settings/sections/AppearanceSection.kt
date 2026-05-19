@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.AlertDialog
@@ -102,6 +103,26 @@ fun AppearanceSection(
                 )
             },
         )
+        SettingsRowDivider()
+        // Tint colour shortcut — same UX as tonearmboy. Opens the HSV
+        // picker directly; picking forces a Custom theme with that
+        // seed (no need to dig through the base-theme dialog first).
+        SettingsRow(
+            id = "settings_appearance_tint",
+            icon = Icons.Outlined.Colorize,
+            label = stringResource(R.string.settings_appearance_tint),
+            subtitle = stringResource(R.string.settings_appearance_tint_subtitle),
+            onClick = { colorPickerOpen = true },
+            trailing = {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF000000L or currentSeed))
+                        .semantics { testTag = "appearance_tint_swatch" },
+                )
+            },
+        )
     }
 
     if (modePickerOpen) {
@@ -153,7 +174,6 @@ private fun swatchFor(theme: BaseTheme): Color = when (theme) {
 @Composable
 private fun themeLabel(theme: BaseTheme): String = when (theme) {
     is BaseTheme.DefaultAndroid -> stringResource(R.string.settings_appearance_default_android)
-    is BaseTheme.DefaultColors -> stringResource(R.string.settings_appearance_default_colors)
     is BaseTheme.PureBlack -> stringResource(R.string.settings_appearance_pure_black)
     is BaseTheme.Custom -> stringResource(R.string.settings_appearance_custom)
 }
@@ -208,11 +228,6 @@ private fun BaseThemePickerDialog(
                     label = stringResource(R.string.settings_appearance_default_android),
                     selected = current is BaseTheme.DefaultAndroid,
                     onClick = { onPick(BaseTheme.DefaultAndroid) },
-                )
-                PickerRow(
-                    label = stringResource(R.string.settings_appearance_default_colors),
-                    selected = current is BaseTheme.DefaultColors,
-                    onClick = { onPick(BaseTheme.DefaultColors) },
                 )
                 PickerRow(
                     label = stringResource(R.string.settings_appearance_pure_black),
