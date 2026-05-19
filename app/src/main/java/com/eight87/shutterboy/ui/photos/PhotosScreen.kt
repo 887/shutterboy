@@ -148,7 +148,8 @@ fun PhotosScreen(
                 if (selectionHolder.state is SelectionState.Active) {
                     selectionHolder.toggle(photoId)
                 } else {
-                    scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+                    val key = scope.graph.stashBackingIds(backingIds)
+                    scope.backStack.push(PhotoViewer(photoId.value, key))
                 }
             },
             selectionState = selectionHolder.state,

@@ -119,8 +119,15 @@ fun PhotoViewerScreen(
     scope: RouteScope,
     modifier: Modifier = Modifier,
 ) {
+    val resolvedBackingIds = remember(destination.backingKey, destination.photoIdValue) {
+        // Stash miss (cold restart, process death) falls back to a
+        // one-element pager containing just the tapped photo so the
+        // viewer still opens correctly without the swipe-neighbours.
+        scope.graph.takeBackingIds(destination.backingKey)
+            ?: listOf(destination.photoIdValue)
+    }
     PhotoViewerContent(
-        backingIds = destination.backingIds,
+        backingIds = resolvedBackingIds,
         initialPhotoId = destination.photoIdValue,
         photoSource = scope.photoSource,
         photoDeleter = scope.photoDeleter,

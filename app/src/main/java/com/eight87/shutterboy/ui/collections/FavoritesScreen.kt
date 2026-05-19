@@ -53,7 +53,8 @@ fun FavoritesScreen(
         backStack = scope.backStack,
         onBack = { scope.backStack.pop() },
         onPhotoTap = { photoId, backingIds ->
-            scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+            val key = scope.graph.stashBackingIds(backingIds)
+            scope.backStack.push(PhotoViewer(photoId.value, key))
         },
         modifier = modifier,
     )

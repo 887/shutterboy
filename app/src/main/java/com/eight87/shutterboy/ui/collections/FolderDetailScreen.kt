@@ -121,7 +121,8 @@ fun FolderDetailScreen(
                             onStartSlideshow = {
                                 val ids = allPhotos.orEmpty().map { it.id.value }
                                 if (ids.isNotEmpty()) {
-                                    scope.backStack.push(Slideshow(backingIds = ids))
+                                    val key = scope.graph.stashBackingIds(ids)
+                                    scope.backStack.push(Slideshow(backingKey = key))
                                 }
                             },
                         )
@@ -138,7 +139,8 @@ fun FolderDetailScreen(
                 if (selectionHolder.state is SelectionState.Active) {
                     selectionHolder.toggle(photoId)
                 } else {
-                    scope.backStack.push(PhotoViewer(photoId.value, backingIds))
+                    val key = scope.graph.stashBackingIds(backingIds)
+                    scope.backStack.push(PhotoViewer(photoId.value, key))
                 }
             },
             selectionState = selectionHolder.state,

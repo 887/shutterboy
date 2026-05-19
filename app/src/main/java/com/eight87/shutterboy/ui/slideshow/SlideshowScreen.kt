@@ -63,8 +63,11 @@ fun SlideshowScreen(
 ) {
     val kenBurnsEnabled by scope.slideshowPreferences.observeKenBurnsEnabled()
         .collectAsStateWithLifecycle(initialValue = true)
+    val resolvedBackingIds = remember(destination.backingKey) {
+        scope.graph.takeBackingIds(destination.backingKey).orEmpty()
+    }
     SlideshowContent(
-        backingIds = destination.backingIds,
+        backingIds = resolvedBackingIds,
         photoSource = scope.photoSource,
         onBack = { scope.backStack.pop() },
         kenBurnsEnabled = kenBurnsEnabled,

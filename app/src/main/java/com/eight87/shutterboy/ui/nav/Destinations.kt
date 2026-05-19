@@ -101,7 +101,10 @@ data object Licenses : Destination
 @Serializable
 data class PhotoViewer(
     val photoIdValue: Long,
-    val backingIds: List<Long>,
+    // Process-lifetime stash key into AppGraph.backingIdsStash. Avoids
+    // parceling 26k longs into the back stack on activity stop
+    // (TransactionTooLargeException). Resolved at composition.
+    val backingKey: String,
 ) : Destination
 
 /**
@@ -130,7 +133,7 @@ data class FolderDetail(val folderIdValue: Long) : Destination
  * No `initialPhotoId` — slideshows start at page 0 of the scope.
  */
 @Serializable
-data class Slideshow(val backingIds: List<Long>) : Destination
+data class Slideshow(val backingKey: String) : Destination
 
 /** The top-level destinations a top-bar tab can route to. */
 internal val rootDestinations: List<Destination> = listOf(Photos, Favorites, Collections, Settings)

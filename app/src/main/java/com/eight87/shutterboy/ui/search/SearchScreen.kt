@@ -101,10 +101,12 @@ fun SearchScreen(
         folderSource = scope.folderSource,
         onBack = { scope.backStack.pop() },
         onResultTap = { photoId, backingIds ->
-            scope.backStack.push(PhotoViewer(photoId, backingIds))
+            val key = scope.graph.stashBackingIds(backingIds)
+            scope.backStack.push(PhotoViewer(photoId, key))
         },
         onStartSlideshow = { backingIds ->
-            scope.backStack.push(Slideshow(backingIds = backingIds))
+            val key = scope.graph.stashBackingIds(backingIds)
+            scope.backStack.push(Slideshow(backingKey = key))
         },
         modifier = modifier,
     )

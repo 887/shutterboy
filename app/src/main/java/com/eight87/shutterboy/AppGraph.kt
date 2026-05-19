@@ -162,4 +162,27 @@ class AppGraph(applicationContext: Context) {
             .onEach { graphScope.launch { libraryScanner.scanIfChanged() } }
             .launchIn(graphScope)
     }
+
+    /**
+     * Process-lifetime stash of backing photo-id lists for the viewer
+     * pager. The PhotoViewer / Slideshow routes can't carry the full
+     * id list as a route argument — 26k longs gets to ~600 KB once
+     * kotlinx-serialization stringifies them, which blows past the
+     * Binder transaction limit on activity stop
+     * (TransactionTooLargeException). Instead, the caller stashes the
+     * list here under a UUID key and the route only carries the key.
+     *
+     * Surviving process death is intentionally NOT supported — the
+     * stash is in-process. On cold restart the viewer falls back to a
+     * one-element pager containing just the tapped photo.
+     */
+    private val backingIdsStash = java.util.concurrent.ConcurrentHashMap<String, List<Long>>()
+
+    fun stashBackingIds(ids: List<Long>): String {
+        val key = java.util.UUID.randomUUID().toString()
+        backingIdsStash[key] = ids
+        return key
+    }
+
+    fun takeBackingIds(key: String): List<Long>? = backingIdsStash[key]
 }
