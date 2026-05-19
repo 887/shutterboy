@@ -288,7 +288,16 @@ internal fun YearScrubber(
                     emphasized = true,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = -PillRightInset, y = trackHeightDp * scrollFraction),
+                        .offset(
+                            x = -PillRightInset,
+                            // During drag, the pill follows the
+                            // finger via thumbFraction (the grid is
+                            // intentionally frozen). On release, it
+                            // tracks the grid's actual scroll
+                            // position.
+                            y = trackHeightDp *
+                                if (dragging) thumbFraction else scrollFraction,
+                        ),
                 )
             }
         }

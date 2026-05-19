@@ -96,11 +96,15 @@ internal fun PhotosGrid(
     val markers = remember(timeline) { extractYearMarkers(timeline) }
     val gridState = rememberLazyGridState()
     var scrubbingThumb by remember { mutableStateOf(false) }
-    // Suppress visible-tile decodes while the grid is in motion. When
-    // motion stops, the now-visible tiles all fire requests at once and
-    // the 8-worker decoder pool drains them in parallel — Aves pattern.
+    // Only suppress decodes during THUMB SCRUB (where the grid intentionally
+    // doesn't scroll and there's no point firing requests for in-between
+    // positions). Normal fling scrolling lets requests fire as cells enter
+    // view — each one is ~3 ms via MediaStore loadThumbnail, so tiles
+    // fade in progressively instead of waiting for a big synchronized
+    // batch when the scroll stops. That's what was causing the
+    // "everything pops in at once at the end" feeling.
     val suppressDecode by remember {
-        derivedStateOf { gridState.isScrollInProgress || scrubbingThumb }
+        derivedStateOf { scrubbingThumb }
     }
 
     if (timeline.isEmpty()) {
