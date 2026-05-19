@@ -788,39 +788,11 @@ private fun PhotoPage(
                 modifier = Modifier.fillMaxSize(),
             )
         } else if (model != null) {
-            // F.7 — viewer half of the grid → viewer shared element. Same
-            // composition-local pair as the tile side; same key shape
-            // (`photo-<id>`). Falls back to plain modifier when scopes
-            // are absent (unit tests, mounts outside the nav graph) or
-            // if the experimental API throws — the Coil crossfade above
-            // covers the no-shared-element case.
-            val sharedScope = LocalSharedTransitionScope.current
-            // Nullable mirror of LocalNavAnimatedContentScope, published by
-            // WithNavAnimatedContentScope inside each route entry. Null when
-            // mounted outside a NavEntry (PhotoViewerScreenSmokeTest).
-            val animatedScope = LocalAnimatedContentScopeOrNull.current
-            val sharedModifier: Modifier =
-                if (sharedScope != null && animatedScope != null) {
-                    val contentState = with(sharedScope) {
-                        rememberSharedContentState(key = photoSharedElementKey(photoId))
-                    }
-                    runCatching {
-                        with(sharedScope) {
-                            Modifier.sharedElement(
-                                sharedContentState = contentState,
-                                animatedVisibilityScope = animatedScope,
-                                // Match the grid-tile side's fast tween.
-                                // Default spring runs ~300 ms and locks
-                                // the pager's swipe input behind the
-                                // Nav3 AnimatedContent gate that long.
-                                boundsTransform =
-                                    com.eight87.shutterboy.ui.photos.grid.SharedElementFastBoundsTransform,
-                            )
-                        }
-                    }.getOrDefault(Modifier)
-                } else {
-                    Modifier
-                }
+            // Lean pass: dropped the grid → viewer shared-element open
+            // animation. Coil's crossfade still gives a brief fade-in,
+            // and the pager + chrome are now usable immediately on
+            // open (Nav3's AnimatedContent no longer gates pointer
+            // routing on a multi-hundred-ms bounds transform).
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(model)
@@ -846,7 +818,6 @@ private fun PhotoPage(
                 error = ColorPainter(Color.Black),
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(sharedModifier)
                     // G.3.1 — graphicsLayer (not Modifier.scale) so the
                     // State reads happen at draw time, skipping composition
                     // on every pinch frame. Clamp / pan-bounds-math is a

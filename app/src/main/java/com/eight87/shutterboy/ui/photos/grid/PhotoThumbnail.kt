@@ -1,8 +1,5 @@
 package com.eight87.shutterboy.ui.photos.grid
 
-import androidx.compose.animation.BoundsTransform
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -25,190 +22,81 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
-import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
 import coil3.size.Precision
 import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
+import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.theme.SelectionAccent
-import com.eight87.shutterboy.ui.nav.LocalAnimatedContentScopeOrNull
-import com.eight87.shutterboy.ui.nav.LocalSharedTransitionScope
-import com.eight87.shutterboy.ui.nav.photoSharedElementKey
 
 /**
- * Phase H.2 + m3-expressive F.3 pattern 2 — single-thumbnail tile with
- * multi-select chrome.
+ * Lean grid tile. The per-cell composition is intentionally minimal so
+ * cells entering the viewport during fast scroll don't pile measure +
+ * layout + composition-local-read work onto the main thread:
  *
- * Three render modes determined by [inSelectionMode] + [selected]:
- *  - idle (`inSelectionMode = false`): plain Coil thumbnail; single-tap fires
- *    [onTap]; long-press fires [onLongPress] to enter selection mode (the
- *    caller seeds the selection with this photo).
- *  - selection-mode unselected: same plain render; tap toggles via [onTap].
- *  - selection-mode selected: 3-dp [SelectionAccent] border around the
- *    thumbnail, content dimmed to alpha 0.55, filled-check badge top-left.
- *
- * Active-state colours are pinned ([SelectionAccent]) so a Custom-seed theme
- * can't drift them onto a clashing hue (m3-expressive Finding 11).
+ * - No shared-element transition scope reads. The viewer crossfade
+ *   covers the open animation now.
+ * - No LocalSuppressDecode / per-cell memory-cache probe. The scrubber
+ *   no longer scrolls the grid mid-drag so there's nothing to suppress.
+ * - No `inSelectionMode` plumbing — the selection chrome reads from
+ *   `selected` alone and the parent threads selection-state via its
+ *   own `selected` lookup.
+ * - Static spinner placeholder (no infinite animation tied to Compose's
+ *   clock) lives behind the AsyncImage. The opaque thumbnail covers
+ *   it once Coil paints; Compose's overdraw culling does the rest.
  */
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun PhotoThumbnail(
     photo: Photo,
     selected: Boolean,
-    inSelectionMode: Boolean,
-    // Stable callbacks: take the PhotoId at call time so the SAME
-    // lambda instance can be reused across every cell in the grid. With
-    // per-cell `{ onPhotoTap(item.photo.id, backingIds) }` the Compose
-    // compiler can't infer the lambda as stable; every parent recompose
-    // (i.e. every scroll frame) gives every cell a "new" callback and
-    // forces a full recomposition of all ~28 visible cells per frame.
-    // With (PhotoId) -> Unit the caller hoists one stable lambda and
-    // only the cells that genuinely changed (newly entered) recompose.
-    onTap: (com.eight87.shutterboy.domain.PhotoId) -> Unit,
-    onLongPress: (com.eight87.shutterboy.domain.PhotoId) -> Unit,
+    onTap: (PhotoId) -> Unit,
+    onLongPress: (PhotoId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val targetPx = LocalThumbnailQuality.current.targetPx
+    val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val request = remember(photo.id.value, targetPx) {
+        val cacheKey = "thumb-${photo.id.value}-$targetPx"
+        val tinyKey = "thumb-${photo.id.value}-${ThumbnailPrefetcher.TINY_PX}"
+        ImageRequest.Builder(context)
+            .data(photo.contentUri)
+            .size(Size(targetPx, targetPx))
+            .precision(Precision.INEXACT)
+            .memoryCacheKey(cacheKey)
+            .diskCacheKey(cacheKey)
+            .placeholderMemoryCacheKey(tinyKey)
+            .build()
+    }
+    val transparentPainter = remember { ColorPainter(Color.Transparent) }
     Box(
         modifier = modifier
             .aspectRatio(1f)
             .testTag(photoThumbnailTag(photo.id.value))
+            .background(placeholderColor)
             .combinedClickable(
                 onClick = { onTap(photo.id) },
                 onLongClick = { onLongPress(photo.id) },
             ),
-        contentAlignment = Alignment.TopStart,
     ) {
-        val context = LocalContext.current
-        val targetPx = LocalThumbnailQuality.current.targetPx
-        // F.7 — grid tile half of the shared-element transition. Wraps
-        // the Coil thumbnail in `Modifier.sharedElement(...)` when both
-        // the SharedTransitionScope (from ShutterboyApp's
-        // SharedTransitionLayout) and the AnimatedContentScope (from
-        // Navigation3's NavDisplay per-entry AnimatedContent) are in
-        // scope. Falls back to a plain modifier in unit tests, in
-        // mounts that bypass the nav graph, or if the experimental API
-        // throws — the existing crossfade on the viewer side covers the
-        // no-shared-element case.
-        val sharedScope = LocalSharedTransitionScope.current
-        val animatedScope = LocalAnimatedContentScopeOrNull.current
-        val sharedModifier: Modifier =
-            if (sharedScope != null && animatedScope != null) {
-                val contentState = with(sharedScope) {
-                    rememberSharedContentState(key = photoSharedElementKey(photo.id.value))
-                }
-                runCatching {
-                    with(sharedScope) {
-                        Modifier.sharedElement(
-                            sharedContentState = contentState,
-                            animatedVisibilityScope = animatedScope,
-                            // 120 ms tween instead of the default spring.
-                            // The Nav3 AnimatedContent gates pointer
-                            // routing on this transition; a long
-                            // bounds-transform meant the user couldn't
-                            // swipe the viewer pager until the
-                            // grid-tile-to-fullscreen animation finished.
-                            boundsTransform = SharedElementFastBoundsTransform,
-                        )
-                    }
-                }.getOrDefault(Modifier)
-            } else {
-                Modifier
-            }
-        // Background tile that's always visible behind the AsyncImage.
-        // While the image is loading and the cache miss falls through
-        // the transparent placeholder, this provides the dark fill +
-        // shows the CircularProgressIndicator (tonearmboy-style "actually
-        // loading" affordance). Once AsyncImage paints the opaque
-        // bitmap, it covers both.
-        val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        val transparentPainter = remember {
-            androidx.compose.ui.graphics.painter.ColorPainter(
-                androidx.compose.ui.graphics.Color.Transparent,
-            )
-        }
-        // Aves-style suppress-decode-while-moving — but ONLY for tiles
-        // that aren't already in the memory cache. Already-decoded
-        // bitmaps stay shown during scroll (memory-cache hits are free);
-        // only NEW tiles scrolling into view get the placeholder until
-        // motion stops, so the queue doesn't flood with in-between
-        // requests.
-        val suppressDecode = LocalSuppressDecode.current
-        val cacheKey = remember(photo.id.value, targetPx) {
-            MemoryCache.Key("thumb-${photo.id.value}-$targetPx")
-        }
-        val inMemoryCache = remember(suppressDecode, cacheKey) {
-            SingletonImageLoader.get(context).memoryCache?.get(cacheKey) != null
-        }
-        // Only paint the placeholder + spinner when the cell is NOT
-        // already cached. CircularProgressIndicator runs an infinite
-        // animation tied to Compose's clock; with ~28 visible tiles in
-        // 4-col portrait that's ~28 animation tickers all forcing
-        // recompositions at 120 Hz forever, even after the photo paints
-        // on top. Gating on !inMemoryCache cuts that to "only cells
-        // genuinely still loading", which is ~0 once you've scrolled
-        // past them once.
-        if (!inMemoryCache) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(placeholderColor),
-                contentAlignment = Alignment.Center,
-            ) {
-                // Static — determinate variant with a fixed progress so
-                // the ring renders without driving a Compose animation
-                // tick per cell. 0.75 gives a "mostly-full ring" look
-                // that reads better than the thin 0.25 arc.
-                CircularProgressIndicator(
-                    progress = { 0.75f },
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        // Memoize the request build so we don't allocate a fresh
-        // ImageRequest + Builder + string per recomposition. During a
-        // fast scroll, 30 visible tiles × 60 Hz recompose rate without
-        // this would be ~1800 builder allocations/sec — GC stalls
-        // exactly when smoothness matters most.
-        val request = remember(photo.id.value, targetPx) {
-            val cacheKeyStr = "thumb-${photo.id.value}-$targetPx"
-            val tinyKeyStr = "thumb-${photo.id.value}-${ThumbnailPrefetcher.TINY_PX}"
-            ImageRequest.Builder(context)
-                .data(photo.contentUri)
-                .size(Size(targetPx, targetPx))
-                // INEXACT lets a larger cached bitmap satisfy this request
-                // without a redecode — every cell that's been seen at any
-                // density is a free memory-cache hit instead of a fresh
-                // decode + texture upload.
-                .precision(Precision.INEXACT)
-                .memoryCacheKey(cacheKeyStr)
-                .diskCacheKey(cacheKeyStr)
-                // Progressive preview: when AsyncImage mounts, it first
-                // checks the TINY tier (96 px, populated by the
-                // prefetcher) and renders it upscaled. The target-px
-                // bitmap then decodes underneath and swaps in. So tiles
-                // never show fully-grey — they fade from blurry-but-
-                // recognisable to sharp.
-                .placeholderMemoryCacheKey(tinyKeyStr)
-                .build()
-        }
+        CircularProgressIndicator(
+            progress = { 0.75f },
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(24.dp),
+            strokeWidth = 2.dp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         AsyncImage(
-            model = if (suppressDecode && !inMemoryCache) null else request,
-            // Note: request below is built with placeholderMemoryCacheKey
-            // matching the memoryCacheKey, so if our prefetcher has
-            // populated the cache the cached bitmap is used as the
-            // placeholder synchronously — eliminating the one-frame
-            // grey flash that happens before AsyncImage's normal cache
-            // lookup resolves.
+            model = request,
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
             placeholder = transparentPainter,
@@ -217,14 +105,8 @@ fun PhotoThumbnail(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(2.dp))
-                // No background here — the spinner Box behind already
-                // fills the tile with the placeholder color. If we
-                // painted again here, AsyncImage's transparent
-                // placeholder would never reveal the spinner.
-                .then(sharedModifier)
                 .let { if (selected) it.alpha(0.55f) else it },
         )
-
         if (selected) {
             Box(
                 modifier = Modifier
@@ -247,22 +129,8 @@ fun PhotoThumbnail(
                 )
             }
         }
-
-        // inSelectionMode is currently informational; reserved for future
-        // dim-the-non-selected affordances. Kept on the signature so callers
-        // don't need to thread state through later (Phase H+).
-        @Suppress("UNUSED_EXPRESSION") inSelectionMode
     }
 }
 
 /** Stable per-thumbnail test tag so Robolectric / mobile-mcp can find the tile. */
 fun photoThumbnailTag(id: Long): String = "photo_thumbnail_$id"
-
-/**
- * Shared by the grid tile + viewer page so the open/close shared-element
- * transition uses the same fast 120 ms tween on both sides. Snappier
- * than the default spring AND it unblocks viewer-pager swipes earlier
- * (Nav3's AnimatedContent gates pointer routing on this animation).
- */
-@OptIn(ExperimentalSharedTransitionApi::class)
-val SharedElementFastBoundsTransform = BoundsTransform { _, _ -> tween(durationMillis = 120) }

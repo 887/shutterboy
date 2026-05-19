@@ -65,7 +65,6 @@ internal fun PhotosGrid(
     selectionState: SelectionState = SelectionState.Idle,
     onPhotoLongPress: (PhotoId) -> Unit = {},
 ) {
-    val inSelectionMode = selectionState is SelectionState.Active
     val photos by stream.observe()
         .collectAsStateWithLifecycle(initialValue = null)
 
@@ -109,18 +108,6 @@ internal fun PhotosGrid(
         remember { { id -> onPhotoTapRef.value(id, backingIdsRef.value) } }
     val stableOnLongPress: (com.eight87.shutterboy.domain.PhotoId) -> Unit =
         remember { { id -> onPhotoLongPressRef.value(id) } }
-    var scrubbingThumb by remember { mutableStateOf(false) }
-    // Only suppress decodes during THUMB SCRUB (where the grid intentionally
-    // doesn't scroll and there's no point firing requests for in-between
-    // positions). Normal fling scrolling lets requests fire as cells enter
-    // view — each one is ~3 ms via MediaStore loadThumbnail, so tiles
-    // fade in progressively instead of waiting for a big synchronized
-    // batch when the scroll stops. That's what was causing the
-    // "everything pops in at once at the end" feeling.
-    val suppressDecode by remember {
-        derivedStateOf { scrubbingThumb }
-    }
-
     if (timeline.isEmpty()) {
         Box(modifier = modifier.fillMaxSize())
         return
@@ -195,7 +182,6 @@ internal fun PhotosGrid(
             }
     }
 
-    CompositionLocalProvider(LocalSuppressDecode provides suppressDecode) {
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
             state = gridState,
@@ -229,7 +215,6 @@ internal fun PhotosGrid(
                             PhotoThumbnail(
                                 photo = item.photo,
                                 selected = selectionState.isSelected(item.photo.id),
-                                inSelectionMode = inSelectionMode,
                                 onTap = stableOnTap,
                                 onLongPress = stableOnLongPress,
                             )
@@ -285,9 +270,8 @@ internal fun PhotosGrid(
             level = level,
             gridState = gridState,
             modifier = Modifier.align(Alignment.CenterEnd),
-            onScrubbingChange = { scrubbingThumb = it },
+            onScrubbingChange = { /* no-op; suppress-decode dropped in the lean pass */ },
         )
-    }
     }
 }
 
