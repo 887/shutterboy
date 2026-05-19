@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.remember
@@ -103,13 +104,29 @@ fun PhotoThumbnail(
             } else {
                 Modifier
             }
-        // Aves-style grey placeholder so the grid doesn't flash blank
-        // cells during fast scroll. Coil renders the placeholder while
-        // decoding, crossfades to the bitmap on success, and falls back
-        // to the same grey on error / null URI.
+        // Background tile that's always visible behind the AsyncImage.
+        // While the image is loading and the cache miss falls through
+        // the transparent placeholder, this provides the dark fill +
+        // shows the CircularProgressIndicator (tonearmboy-style "actually
+        // loading" affordance). Once AsyncImage paints the opaque
+        // bitmap, it covers both.
         val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        val placeholderPainter = remember(placeholderColor) {
-            androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)
+        val transparentPainter = remember {
+            androidx.compose.ui.graphics.painter.ColorPainter(
+                androidx.compose.ui.graphics.Color.Transparent,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(placeholderColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         // Aves-style suppress-decode-while-moving — but ONLY for tiles
         // that aren't already in the memory cache. Already-decoded
@@ -156,13 +173,16 @@ fun PhotoThumbnail(
             // lookup resolves.
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
-            placeholder = placeholderPainter,
-            error = placeholderPainter,
-            fallback = placeholderPainter,
+            placeholder = transparentPainter,
+            error = transparentPainter,
+            fallback = transparentPainter,
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(2.dp))
-                .background(placeholderColor)
+                // No background here — the spinner Box behind already
+                // fills the tile with the placeholder color. If we
+                // painted again here, AsyncImage's transparent
+                // placeholder would never reveal the spinner.
                 .then(sharedModifier)
                 .let { if (selected) it.alpha(0.55f) else it },
         )

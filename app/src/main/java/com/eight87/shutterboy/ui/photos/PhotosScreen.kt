@@ -11,8 +11,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,6 +64,13 @@ fun PhotosScreen(
     val photosFeed = scope.graph.photosFeed
     val stream = remember(photosFeed) { PhotoStream { photosFeed } }
     val allPhotos by photosFeed.collectAsStateWithLifecycle()
+    // Density state hoisted here so the column-count action button in
+    // the top bar can drive it. Seeded from the user's persisted
+    // default density; pinch gestures inside GalleryTimelineFrame also
+    // route back into this state via onLevelChange.
+    var zoomLevel by remember(initialDensity) {
+        mutableStateOf<com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel>(initialDensity)
+    }
 
     val selectionHolder = rememberSelectionHolder()
     val deleteHandler = rememberSelectionDeleteHandler(scope.photoDeleter) {
@@ -113,6 +122,10 @@ fun PhotosScreen(
                                 contentDescription = stringResource(R.string.cd_search_open),
                             )
                         }
+                        com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
+                            level = zoomLevel,
+                            onLevelChange = { zoomLevel = it },
+                        )
                     }
                     com.eight87.shutterboy.ui.nav.ScanProgressStrip(
                         scanner = scope.libraryScanner,
@@ -134,6 +147,8 @@ fun PhotosScreen(
             selectionState = selectionHolder.state,
             onPhotoLongPress = { photoId -> selectionHolder.enterActive(photoId) },
             initialZoomLevel = initialDensity,
+            level = zoomLevel,
+            onLevelChange = { zoomLevel = it },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),

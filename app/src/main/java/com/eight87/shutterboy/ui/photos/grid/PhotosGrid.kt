@@ -124,7 +124,7 @@ internal fun PhotosGrid(
             loader = SingletonImageLoader.get(context),
             targetPx = targetPx,
             maxPending = 1500,
-            workerCount = 8,
+            workerCount = 4,
             scope = prefetchScope,
         )
     }

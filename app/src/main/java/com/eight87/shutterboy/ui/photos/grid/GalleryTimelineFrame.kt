@@ -31,16 +31,24 @@ fun GalleryTimelineFrame(
     selectionState: SelectionState = SelectionState.Idle,
     onPhotoLongPress: (PhotoId) -> Unit = {},
     initialZoomLevel: PhotosZoomLevel = PhotosZoomLevel.Items,
+    level: PhotosZoomLevel? = null,
+    onLevelChange: (PhotosZoomLevel) -> Unit = {},
 ) {
-    var accumulator by remember(initialZoomLevel) {
-        mutableStateOf(ZoomAccumulator(level = initialZoomLevel))
+    // Pinch state stays internal; if a parent supplies `level` directly
+    // (e.g. via the top-bar column-cycle button) the parent wins and the
+    // accumulator is reset on each external change.
+    var accumulator by remember(initialZoomLevel, level) {
+        mutableStateOf(ZoomAccumulator(level = level ?: initialZoomLevel))
     }
     val transformable = rememberTransformableState { zoomChange, _, _ ->
-        accumulator = accumulator.apply(zoomChange)
+        val next = accumulator.apply(zoomChange)
+        accumulator = next
+        if (next.level != accumulator.level) onLevelChange(next.level)
     }
+    val currentLevel = level ?: accumulator.level
     PhotosGrid(
         stream = stream,
-        level = accumulator.level,
+        level = currentLevel,
         onPhotoTap = onPhotoTap,
         modifier = modifier
             .fillMaxSize()

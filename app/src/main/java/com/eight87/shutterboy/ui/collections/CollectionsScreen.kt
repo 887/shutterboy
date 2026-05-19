@@ -25,7 +25,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -60,6 +62,11 @@ fun CollectionsScreen(
     val orderedFolders = remember(folders, folderOrder) {
         applyCustomOrder(folders, folderOrder) { it.id }
     }
+    // Column count for the folder grid — cycled by the top-bar button.
+    // Maps onto a PhotosZoomLevel so the icon matches Photos exactly.
+    var collectionsLevel by remember {
+        mutableStateOf(com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel.Months)
+    }
 
     Scaffold(
         topBar = {
@@ -67,7 +74,12 @@ fun CollectionsScreen(
                 RootTopBar(
                     current = Collections,
                     onSelect = { dest -> scope.backStack.selectTab(dest) },
-                )
+                ) {
+                    com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
+                        level = collectionsLevel,
+                        onLevelChange = { collectionsLevel = it },
+                    )
+                }
                 com.eight87.shutterboy.ui.nav.ScanProgressStrip(
                     scanner = scope.libraryScanner,
                 )
@@ -76,7 +88,7 @@ fun CollectionsScreen(
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(collectionsLevel.columns),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
