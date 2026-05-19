@@ -32,6 +32,7 @@ import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
+import coil3.size.Precision
 import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
@@ -152,6 +153,11 @@ fun PhotoThumbnail(
             ImageRequest.Builder(context)
                 .data(photo.contentUri)
                 .size(Size(targetPx, targetPx))
+                // INEXACT lets a larger cached bitmap satisfy this request
+                // without a redecode — every cell that's been seen at any
+                // density is a free memory-cache hit instead of a fresh
+                // decode + texture upload.
+                .precision(Precision.INEXACT)
                 .memoryCacheKey(cacheKeyStr)
                 .diskCacheKey(cacheKeyStr)
                 // Progressive preview: when AsyncImage mounts, it first
