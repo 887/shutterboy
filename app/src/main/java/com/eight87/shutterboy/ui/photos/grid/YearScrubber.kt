@@ -23,6 +23,9 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -98,16 +101,27 @@ internal fun YearScrubber(
     }
     val visible = scrolling || lingering || dragging
 
-    // Google Photos pattern: the grid does NOT scroll during drag at
-    // all — measure passes block the gesture pipeline, no amount of
-    // throttling fully fixes that on Compose. Instead, during drag we
-    // ONLY update thumbFraction (the thumb visual reads it synchronously)
-    // and a position-indicator label. The grid jumps to the target on
-    // release. This is the only way to make the thumb feel truly
-    // decoupled from main-thread work, because there is no main-thread
-    // scroll work happening during drag.
+    // During drag the grid stays frozen — measure passes block the
+    // gesture pipeline. But when the finger holds still for 200 ms
+    // (the Aves pattern), we DO fire a scrollToItem so the user can
+    // see what's at that position. Debounced snapshotFlow handles
+    // the "no movement for 200 ms" detection automatically: each new
+    // pendingTarget resets the debounce timer; the collect block
+    // only fires after the target has been stable.
     val scrollJob = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var pendingTarget by remember { mutableStateOf(-1) }
+
+    @OptIn(FlowPreview::class)
+    LaunchedEffect(dragging) {
+        if (!dragging) return@LaunchedEffect
+        snapshotFlow { pendingTarget }
+            .debounce(200L)
+            .collect { target ->
+                if (target >= 0) {
+                    gridState.scrollToItem(target)
+                }
+            }
+    }
 
     val currentYear by remember(markers) {
         derivedStateOf {
