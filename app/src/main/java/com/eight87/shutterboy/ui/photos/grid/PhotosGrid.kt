@@ -123,7 +123,10 @@ internal fun PhotosGrid(
     val prefetcher = remember(targetPx) {
         ThumbnailPrefetcher(
             loader = SingletonImageLoader.get(context),
-            maxPending = 500,
+            // 1500 = ~50 viewports worth at default density. Plenty
+            // of headroom to hold a deep prefetch window without
+            // dropping items at the bottom.
+            maxPending = 1500,
             workerCount = 16,
             scope = prefetchScope,
         )
@@ -143,11 +146,12 @@ internal fun PhotosGrid(
                 }
                 val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
                 if (visibleCount <= 0) return@collect
-                // 5 viewports behind + 5 ahead — wide enough that
-                // continued scroll in either direction lands on
-                // already-decoded thumbnails.
-                val from = (first - visibleCount * 5).coerceAtLeast(0)
-                val to = (first + visibleCount * 6).coerceAtMost(timeline.size)
+                // 15 viewports behind + 15 ahead. With ~3 ms MediaStore
+                // thumbnails decoded in parallel by 16 workers, this
+                // populates in well under a second after scroll
+                // settles, and stays ahead of even sustained flings.
+                val from = (first - visibleCount * 15).coerceAtLeast(0)
+                val to = (first + visibleCount * 16).coerceAtMost(timeline.size)
                 // Order matters with a LIFO worker pool: submitted-last
                 // gets serviced first. So submit the FAR edges first
                 // and the near-viewport items LAST — that puts the

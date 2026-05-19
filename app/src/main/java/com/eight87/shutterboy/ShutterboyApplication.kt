@@ -7,7 +7,6 @@ import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
-import coil3.request.crossfade
 import coil3.video.VideoFrameDecoder
 import com.eight87.shutterboy.data.coil.MediaStoreThumbnailFetcher
 import kotlinx.coroutines.Dispatchers
@@ -76,9 +75,8 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
                     .maxSizeBytes(512L * 1024 * 1024)
                     .build()
             }
-            // Short 80 ms crossfade — visible enough to soften the
-            // pop-in but quick enough not to stutter during scroll.
-            // Coil default is ~100 ms; shaving 20 ms helps.
-            .crossfade(80)
+            // No crossfade. Aves snaps thumbnails in; the fade is
+            // itself main-thread animation work that competes with
+            // scroll responsiveness.
             .build()
 }
