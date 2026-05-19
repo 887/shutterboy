@@ -7,8 +7,8 @@ import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
-import coil3.request.crossfade
 import coil3.video.VideoFrameDecoder
+import com.eight87.shutterboy.data.coil.MediaStoreThumbnailFetcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -38,12 +38,23 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader.Builder(context)
-            .components { add(VideoFrameDecoder.Factory()) }
-            // 8 worker coroutines stealing from the loader queue for
-            // fetch + decode, so a fling-burst of visible-tile requests
-            // doesn't stall behind a single in-flight JPEG.
-            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(8))
-            .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(8))
+            .components {
+                // MediaStore thumbnail fetcher — same trick Aves uses.
+                // ContentResolver.loadThumbnail (API 29+) returns the
+                // OS-cached thumbnail in ~1-2 ms instead of Coil's
+                // default 50-100 ms full-JPEG decode + downsample.
+                // Registered FIRST so it wins for thumbnail-sized
+                // requests to media URIs; viewer-resolution requests
+                // skip past it and hit the default ContentUriFetcher.
+                add(MediaStoreThumbnailFetcher.Factory())
+                add(VideoFrameDecoder.Factory())
+            }
+            // 4 worker coroutines on fetch + decode — matching Aves'
+            // concurrentTaskMax. More workers don't help when each
+            // work-item is cheap; they'd just add contention + GC
+            // pressure.
+            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(4))
+            .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(4))
             // R.F.29 — Aves-class gallery libraries (10k–50k photos) blow
             // through Coil's default ~25% maxMemory budget during fast
             // scrolling; tiles fall out of cache and re-decode the
@@ -63,6 +74,8 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
                     .maxSizeBytes(512L * 1024 * 1024)
                     .build()
             }
-            .crossfade(true)
+            // Crossfade OFF — the fade animation on top of fast scroll
+            // is itself main-thread work that visibly stutters during
+            // a fling. Aves snaps thumbnails in instantly; we match.
             .build()
 }
