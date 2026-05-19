@@ -1,6 +1,7 @@
 package com.eight87.shutterboy.data.coil
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.util.Size as AndroidSize
@@ -38,11 +39,21 @@ class MediaStoreThumbnailFetcher(
     override suspend fun fetch(): FetchResult {
         val width = options.size.width.pxOrElse { DEFAULT_SIZE }
         val height = options.size.height.pxOrElse { DEFAULT_SIZE }
-        val bitmap = context.contentResolver.loadThumbnail(
+        val raw = context.contentResolver.loadThumbnail(
             uri,
             AndroidSize(width, height),
             null,
         )
+        // HARDWARE config → GPU-resident bitmap → zero-copy draws. The
+        // micro-stutter while scrolling a tile grid is the GPU
+        // re-uploading software bitmaps every frame; HARDWARE bitmaps
+        // upload once and are bound directly.
+        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            runCatching { raw.copy(Bitmap.Config.HARDWARE, false) }
+                .getOrNull() ?: raw
+        } else {
+            raw
+        }
         return ImageFetchResult(
             image = bitmap.asImage(),
             isSampled = true,

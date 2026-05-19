@@ -1,6 +1,7 @@
 package com.eight87.shutterboy.ui.photos.grid
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.util.Size as AndroidSize
@@ -100,14 +101,28 @@ class ThumbnailPrefetcher(
             }
             runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val bitmap = context.contentResolver.loadThumbnail(
+                    val raw = context.contentResolver.loadThumbnail(
                         task.uri,
                         AndroidSize(task.px, task.px),
                         null,
                     )
+                    // Copy to HARDWARE config so the bitmap lives in
+                    // GPU memory and draws are zero-copy. Software
+                    // bitmaps would re-upload to the GPU every frame
+                    // they're drawn, which is exactly the micro-stutter
+                    // signature when many tiles are visible at once
+                    // (worse in portrait where the visible row count is
+                    // higher). Falls back to the original ARGB_8888 if
+                    // hardware copy fails (rare — only on degraded GPUs).
+                    val hw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        runCatching { raw.copy(Bitmap.Config.HARDWARE, false) }
+                            .getOrNull() ?: raw
+                    } else {
+                        raw
+                    }
                     loader.memoryCache?.set(
                         MemoryCache.Key(task.cacheKey),
-                        MemoryCache.Value(bitmap.asImage()),
+                        MemoryCache.Value(hw.asImage()),
                     )
                 }
             }
