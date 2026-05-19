@@ -116,12 +116,6 @@ fun PhotosScreen(
                         // started from FolderDetail's overflow + Search
                         // results — Photos timeline doesn't need its own
                         // entry point until a real use case shows up.
-                        IconButton(onClick = { scope.backStack.push(Search) }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
-                                contentDescription = stringResource(R.string.cd_search_open),
-                            )
-                        }
                         com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
                             level = zoomLevel,
                             onLevelChange = { zoomLevel = it },
@@ -133,6 +127,19 @@ fun PhotosScreen(
                 }
             }
         },
+        floatingActionButton = {
+            if (selectionHolder.state !is SelectionState.Active) {
+                androidx.compose.material3.FloatingActionButton(
+                    onClick = { scope.backStack.push(Search) },
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = stringResource(R.string.cd_search_open),
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Start,
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
         GalleryTimelineFrame(

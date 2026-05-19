@@ -23,8 +23,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.data.repo.FavoriteCommands
+import com.eight87.shutterboy.ui.nav.Favorites
 import com.eight87.shutterboy.ui.nav.PhotoViewer
+import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
+import com.eight87.shutterboy.ui.nav.ShutterboyBackStack
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 
@@ -44,6 +47,7 @@ fun FavoritesScreen(
 ) {
     FavoritesScreenContent(
         favoriteCommands = scope.favoriteCommands,
+        backStack = scope.backStack,
         onBack = { scope.backStack.pop() },
         onPhotoTap = { photoId, backingIds ->
             scope.backStack.push(PhotoViewer(photoId.value, backingIds))
@@ -56,7 +60,8 @@ fun FavoritesScreen(
 @Composable
 internal fun FavoritesScreenContent(
     favoriteCommands: FavoriteCommands,
-    onBack: () -> Unit,
+    backStack: ShutterboyBackStack? = null,
+    onBack: () -> Unit = {},
     onPhotoTap: (com.eight87.shutterboy.domain.PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -65,17 +70,32 @@ internal fun FavoritesScreenContent(
     }
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.favorites_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_favorites_back),
-                        )
-                    }
-                },
-            )
+            if (backStack != null) {
+                // Favorites is a root tab now — use the same shared
+                // top bar as Photos / Collections so the user can
+                // switch between all four (Photos / Favorites /
+                // Collections / Settings) without going through back.
+                RootTopBar(
+                    current = Favorites,
+                    onSelect = { dest -> backStack.selectTab(dest) },
+                )
+            } else {
+                // Legacy back-arrow header — kept for tests + any
+                // call-site that still pushes Favorites onto the
+                // detail stack.
+                TopAppBar(
+                    title = { Text(text = stringResource(R.string.favorites_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription =
+                                    stringResource(R.string.cd_favorites_back),
+                            )
+                        }
+                    },
+                )
+            }
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
