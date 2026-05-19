@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +54,6 @@ import kotlinx.coroutines.withContext
  * order) so the receiving viewer route can drive a `HorizontalPager`
  * (Phase F lands the actual viewer; C.6 wires the placeholder route).
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun PhotosGrid(
     stream: PhotoStream,
@@ -95,13 +92,7 @@ internal fun PhotosGrid(
         backingIds = newIds
     }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
-    // Pre-compose 2 viewports of rows on either side of the visible
-    // window. Default LazyVerticalGrid pre-composes only 1 row ahead,
-    // so the first ~10-30 frames after navigating into Photos pay the
-    // composition + GPU-upload cost on the critical path. With the
-    // cache window, that work happens during the nav transition instead.
-    val cacheWindow = remember { LazyLayoutCacheWindow(ahead = 1500.dp, behind = 1500.dp) }
-    val gridState = rememberLazyGridState(cacheWindow = cacheWindow)
+    val gridState = rememberLazyGridState()
     var scrubbingThumb by remember { mutableStateOf(false) }
     // Only suppress decodes during THUMB SCRUB (where the grid intentionally
     // doesn't scroll and there's no point firing requests for in-between
