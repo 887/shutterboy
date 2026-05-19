@@ -573,6 +573,16 @@ class RoomGalleryRepository(
         // Stream photos into Room in batches of this size so `observePhotos`
         // emits while a long cold scan is still running — the gallery fills
         // in incrementally instead of staying "No photos yet" until the end.
-        internal const val SCAN_UPSERT_BATCH = 500
+        //
+        // Each commit triggers Room's InvalidationTracker, which re-runs
+        // every Flow query over the photos table. The full-library
+        // observeAll() then iterates ~26 k rows again to materialise the
+        // new List<PhotoEntity>. If a fresh write commit lands while that
+        // read cursor is still pagingthrough CursorWindow refills, the
+        // cursor can throw "Couldn't read row N, col 0 from CursorWindow".
+        //
+        // 2500 keeps the incremental feel (10 emissions on a 26 k library)
+        // while cutting the race surface roughly 5×.
+        internal const val SCAN_UPSERT_BATCH = 2500
     }
 }
