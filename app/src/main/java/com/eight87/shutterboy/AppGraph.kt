@@ -71,7 +71,9 @@ class AppGraph(applicationContext: Context) {
         appCtx,
         ShutterboyDatabase::class.java,
         "shutterboy.db",
-    ).build()
+    )
+        .addMigrations(com.eight87.shutterboy.data.db.MIGRATION_1_2)
+        .build()
 
     private val mediaStoreScanner = MediaStoreScanner(appCtx)
     private val exifEnricher = ExifEnricher(appCtx)

@@ -1,0 +1,264 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "491a648962723f4fd652148223be5561",
+    "entities": [
+      {
+        "tableName": "photos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `content_uri` TEXT NOT NULL, `display_name` TEXT NOT NULL, `date_taken_ms` INTEGER NOT NULL, `date_added_ms` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `size_bytes` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, `folder_id` INTEGER NOT NULL, `exif_lens_model` TEXT, `exif_focal_length` REAL, `exif_iso` INTEGER, `exif_aperture` REAL, `exif_shutter_speed_sec` REAL, `latitude` REAL, `longitude` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`folder_id`) REFERENCES `folders`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentUri",
+            "columnName": "content_uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateTakenMs",
+            "columnName": "date_taken_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateAddedMs",
+            "columnName": "date_added_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "size_bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mimeType",
+            "columnName": "mime_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "folderId",
+            "columnName": "folder_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exifLensModel",
+            "columnName": "exif_lens_model",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "exifFocalLength",
+            "columnName": "exif_focal_length",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "exifIso",
+            "columnName": "exif_iso",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "exifAperture",
+            "columnName": "exif_aperture",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "exifShutterSpeedSec",
+            "columnName": "exif_shutter_speed_sec",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_photos_folder_id",
+            "unique": false,
+            "columnNames": [
+              "folder_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_photos_folder_id` ON `${TABLE_NAME}` (`folder_id`)"
+          },
+          {
+            "name": "index_photos_date_taken_ms",
+            "unique": false,
+            "columnNames": [
+              "date_taken_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_photos_date_taken_ms` ON `${TABLE_NAME}` (`date_taken_ms`)"
+          },
+          {
+            "name": "index_photos_date_added_ms",
+            "unique": false,
+            "columnNames": [
+              "date_added_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_photos_date_added_ms` ON `${TABLE_NAME}` (`date_added_ms`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "folders",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "folder_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "folders",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `display_name` TEXT NOT NULL, `source_type` TEXT NOT NULL, `saf_tree_uri` TEXT, `photo_count` INTEGER NOT NULL, `cover_photo_id` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "source_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "safTreeUri",
+            "columnName": "saf_tree_uri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoCount",
+            "columnName": "photo_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coverPhotoId",
+            "columnName": "cover_photo_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "photo_favorites",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`photo_id` INTEGER NOT NULL, PRIMARY KEY(`photo_id`))",
+        "fields": [
+          {
+            "fieldPath": "photoId",
+            "columnName": "photo_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "photo_id"
+          ]
+        }
+      },
+      {
+        "tableName": "photo_fts",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`display_name` TEXT NOT NULL, `exif_lens_model` TEXT, content=`photos`)",
+        "fields": [
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exifLensModel",
+            "columnName": "exif_lens_model",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": []
+        },
+        "ftsVersion": "FTS4",
+        "ftsOptions": {
+          "tokenizer": "simple",
+          "tokenizerArgs": [],
+          "contentTable": "photos",
+          "languageIdColumnName": "",
+          "matchInfo": "FTS4",
+          "notIndexedColumns": [],
+          "prefixSizes": [],
+          "preferredOrder": "ASC"
+        },
+        "contentSyncTriggers": [
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_photo_fts_BEFORE_UPDATE BEFORE UPDATE ON `photos` BEGIN DELETE FROM `photo_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_photo_fts_BEFORE_DELETE BEFORE DELETE ON `photos` BEGIN DELETE FROM `photo_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_photo_fts_AFTER_UPDATE AFTER UPDATE ON `photos` BEGIN INSERT INTO `photo_fts`(`docid`, `display_name`, `exif_lens_model`) VALUES (NEW.`rowid`, NEW.`display_name`, NEW.`exif_lens_model`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_photo_fts_AFTER_INSERT AFTER INSERT ON `photos` BEGIN INSERT INTO `photo_fts`(`docid`, `display_name`, `exif_lens_model`) VALUES (NEW.`rowid`, NEW.`display_name`, NEW.`exif_lens_model`); END"
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '491a648962723f4fd652148223be5561')"
+    ]
+  }
+}

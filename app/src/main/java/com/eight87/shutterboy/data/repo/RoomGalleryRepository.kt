@@ -367,8 +367,29 @@ class RoomGalleryRepository(
         //    folder we're about to drop), then dangling folders.
         val seenIds = allEntities.mapTo(HashSet(allEntities.size)) { it.id }
         val toDeletePhotos = (cachedIds - seenIds).toList()
-        if (toDeletePhotos.isNotEmpty()) photoDao.deleteByIds(toDeletePhotos)
-        for (id in toDeleteFolders) folderDao.deleteById(id)
+        // Safety net: refuse to wipe the entire library when the scanner
+        // returned zero photos but the cache wasn't empty. That state
+        // means MediaStore (or SAF) was temporarily unavailable —
+        // permission delay at boot, a transient binder hiccup, the SAF
+        // tree not mounted yet. Letting the delete run cascades onto
+        // photo_favorites and clears every favorite the user ever
+        // toggled. Skip the delete; the next successful scan will
+        // reconcile any genuinely-removed photos.
+        val isCatastrophicWipe =
+            seenIds.isEmpty() && cachedIds.isNotEmpty()
+        if (!isCatastrophicWipe && toDeletePhotos.isNotEmpty()) {
+            photoDao.deleteByIds(toDeletePhotos)
+        }
+        if (!isCatastrophicWipe) {
+            for (id in toDeleteFolders) folderDao.deleteById(id)
+        }
+        if (isCatastrophicWipe) {
+            Log.w(
+                "shutterboy",
+                "executeScan: scanner returned 0 photos but cache had ${cachedIds.size}; " +
+                    "skipping delete to protect favorites + folder cache",
+            )
+        }
 
         val deltaCount = allEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
         LibrarySnapshot(
