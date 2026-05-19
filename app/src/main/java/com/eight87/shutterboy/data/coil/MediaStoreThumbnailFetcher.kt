@@ -51,16 +51,11 @@ class MediaStoreThumbnailFetcher(
         // copying that oversized bitmap pays a bigger GPU texture
         // upload per cell + uses more VRAM per cached tile.
         //
-        // Resize down to the actually-requested size on the IO thread
-        // (cheap CPU resample, well off the main thread). Skip when
-        // raw is already at or below target — costs nothing in the
-        // common case.
-        val resized = if (raw.width > width || raw.height > height) {
-            runCatching { Bitmap.createScaledBitmap(raw, width, height, true) }
-                .getOrNull() ?: raw
-        } else {
-            raw
-        }
+        // Resize down preserving aspect ratio so the SHORTER side
+        // matches the requested bound (the Compose-side
+        // ContentScale.Crop trims the excess on the longer axis
+        // without any upscale). Off the main thread.
+        val resized = aspectFit(raw, width, height)
         if (resized !== raw) raw.recycle()
         // HARDWARE config → GPU-resident bitmap → zero-copy draws. The
         // micro-stutter while scrolling a tile grid is the GPU
@@ -105,4 +100,25 @@ class MediaStoreThumbnailFetcher(
         private const val DEFAULT_SIZE = 512
         private const val MAX_THUMBNAIL_PX = 1024
     }
+}
+
+/**
+ * Downscale [raw] so the SHORTER side matches the given bound while
+ * preserving aspect ratio. The Compose-side `ContentScale.Crop` then
+ * trims the excess on the longer axis without any upscale, so cells
+ * stay sharp without being stretched. Returns [raw] unchanged when no
+ * downscale is possible (bound ≥ source on the limiting axis).
+ */
+internal fun aspectFit(raw: android.graphics.Bitmap, boundW: Int, boundH: Int): android.graphics.Bitmap {
+    val srcW = raw.width
+    val srcH = raw.height
+    if (srcW <= 0 || srcH <= 0 || boundW <= 0 || boundH <= 0) return raw
+    // Scale by the LARGER of the two ratios so the SHORTER side lands
+    // on its bound. Clamp to ≤1 — never upscale here.
+    val scale = maxOf(boundW.toFloat() / srcW, boundH.toFloat() / srcH).coerceAtMost(1f)
+    if (scale >= 1f) return raw
+    val newW = (srcW * scale).toInt().coerceAtLeast(1)
+    val newH = (srcH * scale).toInt().coerceAtLeast(1)
+    return runCatching { android.graphics.Bitmap.createScaledBitmap(raw, newW, newH, true) }
+        .getOrNull() ?: raw
 }

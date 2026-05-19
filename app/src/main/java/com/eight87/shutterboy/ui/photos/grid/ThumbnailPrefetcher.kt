@@ -108,15 +108,11 @@ class ThumbnailPrefetcher(
                     )
                     // OS may return larger than requested (MINI_KIND
                     // 512x384 for camera 4K sources). Resize on the IO
-                    // thread before HARDWARE-copying so the cached
-                    // bitmap is the size we actually want — smaller
-                    // texture uploads, smaller VRAM footprint per tile.
-                    val resized = if (raw.width > task.px || raw.height > task.px) {
-                        runCatching { Bitmap.createScaledBitmap(raw, task.px, task.px, true) }
-                            .getOrNull() ?: raw
-                    } else {
-                        raw
-                    }
+                    // thread before HARDWARE-copying — preserves aspect
+                    // ratio so cells aren't stretched into squares.
+                    val resized = com.eight87.shutterboy.data.coil.aspectFit(
+                        raw, task.px, task.px,
+                    )
                     if (resized !== raw) raw.recycle()
                     // Copy to HARDWARE config so the bitmap lives in
                     // GPU memory and draws are zero-copy. Software
