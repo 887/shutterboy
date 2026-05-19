@@ -81,6 +81,12 @@ internal fun YearScrubber(
     val scrolling = gridState.isScrollInProgress
     var lingering by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
+    // Aves-style accumulator: track the thumb position in float pixels
+    // independently of the LazyGrid's quantized firstVisibleItemIndex.
+    // Reading the integer index back into the drag math drops small
+    // deltas (especially upward — the int lags behind), which is what
+    // makes up-drag feel frozen.
+    var thumbOffsetPx by remember { mutableStateOf(0f) }
 
     LaunchedEffect(scrolling, dragging) {
         if (scrolling || dragging) {
@@ -158,6 +164,14 @@ internal fun YearScrubber(
                             onDragStart = {
                                 dragging = true
                                 onScrubbingChange(true)
+                                // Seed accumulator from the current
+                                // scroll fraction so the thumb doesn't
+                                // jump on drag start.
+                                val maxOffsetPx = maxThumbOffset.toPx()
+                                thumbOffsetPx = if (totalTimelineSize > 0) {
+                                    (gridState.firstVisibleItemIndex.toFloat() /
+                                        totalTimelineSize) * maxOffsetPx
+                                } else 0f
                             },
                             onDragEnd = {
                                 dragging = false
@@ -171,11 +185,15 @@ internal fun YearScrubber(
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
-                            val currentFraction =
-                                gridState.firstVisibleItemIndex.toFloat() / totalTimelineSize
-                            val newFraction =
-                                (currentFraction + dragAmount / maxOffsetPx).coerceIn(0f, 1f)
-                            val target = (newFraction * totalTimelineSize).toInt()
+                            // Accumulate raw delta — never read back the
+                            // quantized scroll index. This is the Aves
+                            // _boundlessThumbOffset pattern; it keeps
+                            // up- and down-drag symmetric and prevents
+                            // small deltas from being lost to rounding.
+                            thumbOffsetPx = (thumbOffsetPx + dragAmount)
+                                .coerceIn(0f, maxOffsetPx)
+                            val fraction = thumbOffsetPx / maxOffsetPx
+                            val target = (fraction * totalTimelineSize).toInt()
                                 .coerceIn(0, totalTimelineSize - 1)
                             coroutineScope.launch { gridState.scrollToItem(target) }
                         }
