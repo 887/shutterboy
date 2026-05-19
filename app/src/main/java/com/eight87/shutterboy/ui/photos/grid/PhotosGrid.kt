@@ -132,30 +132,24 @@ internal fun PhotosGrid(
         )
     }
     LaunchedEffect(timeline, targetPx, prefetcher) {
-        snapshotFlow {
-            gridState.firstVisibleItemIndex to gridState.isScrollInProgress
-        }
+        // Continuously prefetch around the visible window — DURING
+        // scroll, not just after. Pausing prefetch during scroll was
+        // why you could "see the images flipping from grey to visible":
+        // the tiles entering view mid-scroll arrived before prefetch
+        // had warmed them. Now prefetch fires on every firstVisible
+        // change, so as you scroll down the tiles 15 viewports ahead
+        // are already cached by the time they enter view.
+        snapshotFlow { gridState.firstVisibleItemIndex }
             .distinctUntilChanged()
-            .collect { (first, scrolling) ->
-                if (scrolling) {
-                    // Drop everything pending — when the user starts
-                    // scrolling/scrubbing, the existing prefetch queue
-                    // is by definition stale.
-                    prefetcher.clear()
-                    return@collect
-                }
+            .collect { first ->
                 val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
                 if (visibleCount <= 0) return@collect
-                // 15 viewports behind + 15 ahead. With ~3 ms MediaStore
-                // thumbnails decoded in parallel by 16 workers, this
-                // populates in well under a second after scroll
-                // settles, and stays ahead of even sustained flings.
+                // 15 viewports behind + 15 ahead.
                 val from = (first - visibleCount * 15).coerceAtLeast(0)
                 val to = (first + visibleCount * 16).coerceAtMost(timeline.size)
-                // Order matters with a LIFO worker pool: submitted-last
-                // gets serviced first. So submit the FAR edges first
-                // and the near-viewport items LAST — that puts the
-                // most-likely-to-be-visible items on TOP of the stack.
+                // LIFO ordering: submitted-last is popped first. Submit
+                // far edges first, near-viewport LAST so near items
+                // land on top of the stack and decode immediately.
                 val center = first + visibleCount / 2
                 val orderedIndices = (from until to).sortedByDescending {
                     Math.abs(it - center)
