@@ -1,6 +1,8 @@
 package com.eight87.shutterboy.ui.photos.grid
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -107,6 +109,13 @@ fun PhotoThumbnail(
                         Modifier.sharedElement(
                             sharedContentState = contentState,
                             animatedVisibilityScope = animatedScope,
+                            // 120 ms tween instead of the default spring.
+                            // The Nav3 AnimatedContent gates pointer
+                            // routing on this transition; a long
+                            // bounds-transform meant the user couldn't
+                            // swipe the viewer pager until the
+                            // grid-tile-to-fullscreen animation finished.
+                            boundsTransform = SharedElementFastBoundsTransform,
                         )
                     }
                 }.getOrDefault(Modifier)
@@ -243,3 +252,12 @@ fun PhotoThumbnail(
 
 /** Stable per-thumbnail test tag so Robolectric / mobile-mcp can find the tile. */
 fun photoThumbnailTag(id: Long): String = "photo_thumbnail_$id"
+
+/**
+ * Shared by the grid tile + viewer page so the open/close shared-element
+ * transition uses the same fast 120 ms tween on both sides. Snappier
+ * than the default spring AND it unblocks viewer-pager swipes earlier
+ * (Nav3's AnimatedContent gates pointer routing on this animation).
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+val SharedElementFastBoundsTransform = BoundsTransform { _, _ -> tween(durationMillis = 120) }

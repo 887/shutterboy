@@ -796,6 +796,12 @@ private fun PhotoPage(
                             Modifier.sharedElement(
                                 sharedContentState = contentState,
                                 animatedVisibilityScope = animatedScope,
+                                // Match the grid-tile side's fast tween.
+                                // Default spring runs ~300 ms and locks
+                                // the pager's swipe input behind the
+                                // Nav3 AnimatedContent gate that long.
+                                boundsTransform =
+                                    com.eight87.shutterboy.ui.photos.grid.SharedElementFastBoundsTransform,
                             )
                         }
                     }.getOrDefault(Modifier)
