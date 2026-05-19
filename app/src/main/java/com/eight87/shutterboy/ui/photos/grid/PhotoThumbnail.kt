@@ -162,7 +162,14 @@ fun PhotoThumbnail(
                     .background(placeholderColor),
                 contentAlignment = Alignment.Center,
             ) {
+                // Determinate variant with a fixed progress value so the
+                // ring renders the recognisable "loading" arc without
+                // any infinite animation behind it. The indeterminate
+                // overload runs a Compose animation per cell at 120 Hz,
+                // which costs main-thread invalidations scaled by visible
+                // cell count.
                 CircularProgressIndicator(
+                    progress = { 0.25f },
                     modifier = Modifier.size(24.dp),
                     strokeWidth = 2.dp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
