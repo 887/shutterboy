@@ -120,12 +120,6 @@ class ThumbnailPrefetcher(
                     } else {
                         raw
                     }
-                    // Async GPU texture upload on RenderThread BEFORE the
-                    // tile is ever drawn — moves the upload off the first
-                    // DrawFrame's critical path. This is the win Glide
-                    // documents as `prepareToDraw()` and what removes the
-                    // navigate-into-Photos stutter spike.
-                    hw.prepareToDraw()
                     loader.memoryCache?.set(
                         MemoryCache.Key(task.cacheKey),
                         MemoryCache.Value(hw.asImage()),

@@ -117,17 +117,18 @@ fun PhotoThumbnail(
                 androidx.compose.ui.graphics.Color.Transparent,
             )
         }
-        // Flat background only — no spinner. Each running
-        // CircularProgressIndicator runs an infinite animation tied to
-        // Compose's clock; with ~30 visible cells × 120 Hz that's 3600
-        // forced recompositions/sec just for the placeholder. The
-        // background colour alone reads as "still loading" without
-        // costing the main thread.
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(placeholderColor),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         // Aves-style suppress-decode-while-moving — but ONLY for tiles
         // that aren't already in the memory cache. Already-decoded
         // bitmaps stay shown during scroll (memory-cache hits are free);

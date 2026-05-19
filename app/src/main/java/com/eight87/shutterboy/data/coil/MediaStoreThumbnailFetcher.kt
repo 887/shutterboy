@@ -54,12 +54,6 @@ class MediaStoreThumbnailFetcher(
         } else {
             raw
         }
-        // Kick off async GPU texture upload on RenderThread NOW (between
-        // frames), not lazily inside the first DrawFrame that paints the
-        // tile. Without this the upload lands on the critical path of
-        // the first frame after Photos becomes visible → exactly the
-        // "lag when the surface switches over" stutter.
-        bitmap.prepareToDraw()
         return ImageFetchResult(
             image = bitmap.asImage(),
             isSampled = true,
