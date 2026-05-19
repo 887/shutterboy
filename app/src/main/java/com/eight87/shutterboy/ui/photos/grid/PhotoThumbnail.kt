@@ -124,14 +124,28 @@ fun PhotoThumbnail(
         val inMemoryCache = remember(suppressDecode, cacheKey) {
             SingletonImageLoader.get(context).memoryCache?.get(cacheKey) != null
         }
+        val cacheKeyStr = "thumb-${photo.id.value}-$targetPx"
         val request = ImageRequest.Builder(context)
             .data(photo.contentUri)
             .size(Size(targetPx, targetPx))
-            .memoryCacheKey("thumb-${photo.id.value}-$targetPx")
-            .diskCacheKey("thumb-${photo.id.value}-$targetPx")
+            .memoryCacheKey(cacheKeyStr)
+            .diskCacheKey(cacheKeyStr)
+            // The critical bit for no-flash rendering: AsyncImage will
+            // synchronously look this key up in the memory cache the
+            // moment it mounts and use the cached bitmap AS the
+            // placeholder. If the prefetcher has done its job, the
+            // tile renders with the real image on its first frame —
+            // no grey flash, no fade.
+            .placeholderMemoryCacheKey(cacheKeyStr)
             .build()
         AsyncImage(
             model = if (suppressDecode && !inMemoryCache) null else request,
+            // Note: request below is built with placeholderMemoryCacheKey
+            // matching the memoryCacheKey, so if our prefetcher has
+            // populated the cache the cached bitmap is used as the
+            // placeholder synchronously — eliminating the one-frame
+            // grey flash that happens before AsyncImage's normal cache
+            // lookup resolves.
             contentDescription = photo.displayName,
             contentScale = ContentScale.Crop,
             placeholder = placeholderPainter,

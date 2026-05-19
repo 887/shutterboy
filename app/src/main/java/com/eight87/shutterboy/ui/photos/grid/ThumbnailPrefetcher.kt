@@ -1,9 +1,13 @@
 package com.eight87.shutterboy.ui.photos.grid
 
+import android.content.Context
+import android.net.Uri
+import android.os.Build
 import android.util.Log
+import android.util.Size as AndroidSize
 import coil3.ImageLoader
+import coil3.asImage
 import coil3.memory.MemoryCache
-import coil3.request.ImageRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -13,34 +17,32 @@ import kotlinx.coroutines.sync.withLock
 
 /**
  * Bounded LIFO prefetch queue feeding a fixed pool of workers off the
- * main thread.
+ * main thread, bypassing Coil's request queue entirely.
  *
- *  - Newest submission goes to the top of the stack; workers pop from
- *    the top so the FRESHEST scroll position is processed first
- *    (Aves-style fast-scrub priority). Older entries get serviced
- *    only after the freshly-added ones drain.
- *  - The stack has a hard ceiling of [maxPending] (default ~3
- *    viewport-worths). When a new submission would overflow, the
- *    OLDEST (bottom) entries are dropped first — they're the stalest
- *    scroll positions and the user has moved past them.
- *  - [clear] flushes the entire queue. Call it when the scroll
- *    direction changes, when the user grabs the thumb to scrub, or any
- *    other "the world just moved" moment so workers don't waste cycles
- *    on now-irrelevant positions.
- *  - Submissions whose memory-cache key is already present in
- *    [loader]'s memory cache short-circuit — no double-decode.
+ * Workers call `ContentResolver.loadThumbnail` directly (same API the
+ * Aves Android plugin uses) and stuff the resulting Bitmap straight
+ * into Coil's memory cache via [MemoryCache.set]. AsyncImage later
+ * gets an instant memory-cache hit when it composes — no fade, no
+ * decode flash, no queue contention with visible-tile requests.
  *
- * The whole thing lives on [Dispatchers.IO]: 4 worker coroutines steal
- * from a single `ArrayDeque` guarded by a [Mutex]. No work hits the
- * main thread.
+ *  - LIFO order: newest submission pops first.
+ *  - Bounded ([maxPending]): oldest entries drop when over capacity.
+ *  - Per-id memory-cache short-circuit on submit so we don't re-queue
+ *    items already warm.
+ *  - All work on [Dispatchers.IO].
  */
 class ThumbnailPrefetcher(
+    private val context: Context,
     private val loader: ImageLoader,
+    private val targetPx: Int,
     private val maxPending: Int,
     workerCount: Int = 4,
     scope: CoroutineScope,
 ) {
-    private val deque = ArrayDeque<ImageRequest>()
+
+    data class Task(val id: Long, val uri: Uri, val cacheKey: String)
+
+    private val deque = ArrayDeque<Task>()
     private val signal = Channel<Unit>(Channel.UNLIMITED)
     private val lock = Mutex()
 
@@ -50,42 +52,45 @@ class ThumbnailPrefetcher(
         }
     }
 
-    suspend fun submit(req: ImageRequest) {
-        val key = req.memoryCacheKey?.let { MemoryCache.Key(it) }
-        if (key != null && loader.memoryCache?.get(key) != null) {
-            Log.d(TAG, "skip ${req.memoryCacheKey} (cache hit)")
-            return
-        }
+    suspend fun submit(id: Long, uri: Uri) {
+        val cacheKey = "thumb-$id-$targetPx"
+        if (loader.memoryCache?.get(MemoryCache.Key(cacheKey)) != null) return
         val size = lock.withLock {
-            deque.addLast(req)
-            while (deque.size > maxPending) {
-                deque.removeFirst()
-            }
+            deque.addLast(Task(id, uri, cacheKey))
+            while (deque.size > maxPending) deque.removeFirst()
             deque.size
         }
-        Log.d(TAG, "submit ${req.memoryCacheKey} (queue size: $size)")
         signal.trySend(Unit)
+        Log.d(TAG, "queued $cacheKey (queue size: $size)")
     }
 
     suspend fun clear() {
-        val cleared = lock.withLock {
-            val n = deque.size
-            deque.clear()
-            n
-        }
-        Log.d(TAG, "clear (dropped $cleared)")
+        lock.withLock { deque.clear() }
     }
 
     private suspend fun worker() {
         Log.d(TAG, "worker started")
         while (true) {
-            val req = lock.withLock { deque.removeLastOrNull() }
-            if (req == null) {
+            val task = lock.withLock { deque.removeLastOrNull() }
+            if (task == null) {
                 signal.receive()
-            } else {
-                Log.d(TAG, "decode ${req.memoryCacheKey}")
-                runCatching { loader.execute(req) }
-                    .onFailure { Log.w(TAG, "decode failed: ${req.memoryCacheKey}", it) }
+                continue
+            }
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val bitmap = context.contentResolver.loadThumbnail(
+                        task.uri,
+                        AndroidSize(targetPx, targetPx),
+                        null,
+                    )
+                    loader.memoryCache?.set(
+                        MemoryCache.Key(task.cacheKey),
+                        MemoryCache.Value(bitmap.asImage()),
+                    )
+                    Log.d(TAG, "cached ${task.cacheKey}")
+                }
+            }.onFailure {
+                Log.w(TAG, "prefetch failed for ${task.cacheKey}", it)
             }
         }
     }

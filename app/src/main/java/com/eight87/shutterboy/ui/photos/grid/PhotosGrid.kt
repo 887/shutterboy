@@ -25,8 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.SingletonImageLoader
-import coil3.request.ImageRequest
-import coil3.size.Size
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.isSelected
@@ -122,10 +120,9 @@ internal fun PhotosGrid(
     val prefetchScope = rememberCoroutineScope()
     val prefetcher = remember(targetPx) {
         ThumbnailPrefetcher(
+            context = context,
             loader = SingletonImageLoader.get(context),
-            // 1500 = ~50 viewports worth at default density. Plenty
-            // of headroom to hold a deep prefetch window without
-            // dropping items at the bottom.
+            targetPx = targetPx,
             maxPending = 1500,
             workerCount = 16,
             scope = prefetchScope,
@@ -157,14 +154,7 @@ internal fun PhotosGrid(
                 for (i in orderedIndices) {
                     val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
                         ?: continue
-                    val id = cell.photo.id.value
-                    val req = ImageRequest.Builder(context)
-                        .data(cell.photo.contentUri)
-                        .size(Size(targetPx, targetPx))
-                        .memoryCacheKey("thumb-$id-$targetPx")
-                        .diskCacheKey("thumb-$id-$targetPx")
-                        .build()
-                    prefetcher.submit(req)
+                    prefetcher.submit(cell.photo.id.value, cell.photo.contentUri)
                 }
             }
     }
