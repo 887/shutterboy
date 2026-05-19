@@ -98,11 +98,13 @@ internal fun YearScrubber(
     }
     val visible = scrolling || lingering || dragging
 
-    // The Fossify Gallery / RecyclerView trick: scroll the grid via
-    // ScrollableState.dispatchRawDelta() — synchronous, non-suspending,
-    // no Mutex. Drag handler calls this directly per frame; no
-    // coroutines, no flow buffering, no lag-behind-finger. Same pattern
-    // as RecyclerView.scrollBy(), the API qtalk's FastScroller wraps.
+    // AndroidFastScroll's canonical pattern (also used by Material
+    // Files / Open Camera): on every drag delta, cancel the in-flight
+    // scroll job and launch a fresh one for the latest target. The
+    // thumb visual reads `thumbFraction` directly (renders smoothly
+    // regardless of grid catch-up); the grid scrolls asynchronously.
+    // That's what makes the scrollbar feel decoupled from the loading.
+    val scrollJob = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     val currentYear by remember(markers) {
         derivedStateOf {
@@ -191,24 +193,23 @@ internal fun YearScrubber(
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
-                            // Visible thumb position: pure float
-                            // accumulator, never read back the int.
+                            // Thumb visual updates synchronously from
+                            // the accumulator — finger tracks 1:1.
                             thumbFraction = (thumbFraction + dragAmount / maxOffsetPx)
                                 .coerceIn(0f, 1f)
-                            // Grid scroll: synchronous dispatchRawDelta
-                            // — translates 1 px of thumb drag into
-                            // ~(totalContent / track) px of grid scroll.
-                            // No coroutine, no Mutex, no suspending. The
-                            // grid moves WITH the finger.
-                            val info = gridState.layoutInfo
-                            val viewport = info.viewportSize.height.toFloat()
-                            val visible = info.visibleItemsInfo.size
-                                .coerceAtLeast(1).toFloat()
-                            val total = info.totalItemsCount
-                                .coerceAtLeast(1).toFloat()
-                            val estTotalPx = viewport * (total / visible)
-                            val scale = (estTotalPx / maxOffsetPx).coerceAtLeast(1f)
-                            gridState.dispatchRawDelta(dragAmount * scale)
+                            // Grid scroll: cancel the previous in-flight
+                            // job, launch a fresh one for the latest
+                            // target. Only ever one scrollToItem in
+                            // progress; older targets get cancelled
+                            // before they complete. Matches
+                            // AndroidFastScroll's stopScroll() +
+                            // scrollToPositionWithOffset() pattern.
+                            val target = (thumbFraction * totalTimelineSize).toInt()
+                                .coerceIn(0, totalTimelineSize - 1)
+                            scrollJob.value?.cancel()
+                            scrollJob.value = coroutineScope.launch {
+                                gridState.scrollToItem(target)
+                            }
                         }
                     },
                 contentAlignment = Alignment.CenterEnd,
