@@ -159,12 +159,6 @@ internal fun PhotoViewerContent(
     // F.2 — chrome toggle. Single tap on a page flips this; auto-hide
     // after CHROME_AUTO_HIDE_MS of no chrome-toggle interaction.
     var chromeVisible by remember { mutableStateOf(true) }
-    LaunchedEffect(chromeVisible) {
-        if (chromeVisible) {
-            delay(CHROME_AUTO_HIDE_MS)
-            chromeVisible = false
-        }
-    }
 
     // G.1 + G.2 — gesture vocabulary: vertical drag below the pager's
     // claim threshold accumulates into one of two release actions
@@ -281,6 +275,19 @@ internal fun PhotoViewerContent(
         if (currentId == null) flowOf(null) else photoSource.observePhotoById(currentId)
     }
     val currentPhoto: Photo? by currentPhotoFlow.collectAsStateWithLifecycle(initialValue = null)
+    val isCurrentVideo = currentPhoto?.mimeType?.startsWith("video/") == true
+
+    // Auto-hide chrome after CHROME_AUTO_HIDE_MS — but ONLY for photo
+    // pages. On a video page, taps go to Media3's controller (we
+    // intentionally skip our own tap detector there), so the user has
+    // no way to bring the chrome back. Keep share/favorite/etc visible
+    // for the whole video playback.
+    LaunchedEffect(chromeVisible, isCurrentVideo) {
+        if (chromeVisible && !isCurrentVideo) {
+            delay(CHROME_AUTO_HIDE_MS)
+            chromeVisible = false
+        }
+    }
 
     // G.3 — observe favorite-state for the current photo id. Falls back to
     // a no-op flow (false) when favorite commands aren't wired (test mounts).
