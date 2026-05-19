@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.conflate
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -108,6 +109,13 @@ internal fun YearScrubber(
     LaunchedEffect(dragging, totalTimelineSize) {
         if (!dragging || totalTimelineSize <= 0) return@LaunchedEffect
         snapshotFlow { thumbFraction }
+            // .conflate() is the critical bit: while the collector is
+            // suspended inside scrollToItem, drop all but the LATEST
+            // upstream fraction. Without it the collector serially
+            // processes every intermediate fraction the gesture
+            // handler produced — that's "scroll lag-behind-finger
+            // freeze" on fast drags.
+            .conflate()
             .collect { fraction ->
                 val target = (fraction * totalTimelineSize).toInt()
                     .coerceIn(0, totalTimelineSize - 1)
