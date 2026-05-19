@@ -295,39 +295,59 @@ class RoomGalleryRepository(
         val combinedFolders = device.folders + saf.folders
 
         val total = combinedPhotos.size
-        // Emit a fresh Running with total once we know it. Subsequent
-        // emissions happen as enrichment walks each item, throttled to
-        // ~5 Hz (SCAN_PROGRESS_THROTTLE_MS) to keep the UI thread free
-        // without losing visible fidelity. Tonearmboy R.F lesson.
         _scanProgress.value = ScanProgress.Running(processed = 0, total = total, currentTitle = null)
 
-        // 2. Diff vs cache: only new photos need EXIF; existing rows keep cached EXIF.
-        val cachedIds = photoDao.allIds().toSet()
-        val toEnrich = combinedPhotos.filter { it.id !in cachedIds }
-        val byId = combinedPhotos.associateBy { it.id }.toMutableMap()
+        // 2. Upsert folders FIRST so streaming photo-batches satisfy the
+        //    folder_id FK. Folder identity is fully known up-front from the
+        //    MediaStore + SAF scan; no enrichment dependency.
+        val folderEntities = combinedFolders.map { f ->
+            val photoCount = combinedPhotos.count { it.folderId == f.id }
+            val cover = combinedPhotos.firstOrNull { it.folderId == f.id }?.id
+            FolderEntity(
+                id = f.id,
+                displayName = f.displayName,
+                sourceType = if (f.source == ScannedPhoto.ScanSource.SAF_TREE) "SAF" else "DEVICE",
+                safTreeUri = f.safTreeUri?.toString(),
+                photoCount = photoCount,
+                coverPhotoId = cover,
+            )
+        }
+        val cachedFolderIds = folderDao.allIds().toSet()
+        val seenFolderIds = folderEntities.map(FolderEntity::id).toSet()
+        val toDeleteFolders = cachedFolderIds - seenFolderIds
+        folderDao.upsertAll(folderEntities)
 
+        // 3. Diff vs cache: only new photos need EXIF; existing rows keep cached EXIF.
+        val cachedIds = photoDao.allIds().toSet()
+        val toEnrichIds = combinedPhotos.asSequence()
+            .filter { it.id !in cachedIds }
+            .map { it.id }
+            .toHashSet()
+
+        // 4. Walk every combined photo, enriching new ones, and stream the
+        //    resulting entities into Room in batches of SCAN_UPSERT_BATCH.
+        //    `observePhotos` is a Room flow → each batch upsert causes the
+        //    UI to receive a fresh emission, so the gallery fills in while
+        //    the scan is still running instead of staying empty for minutes.
+        val allEntities = ArrayList<PhotoEntity>(total)
+        val pending = ArrayList<PhotoEntity>(SCAN_UPSERT_BATCH)
         var processed = 0
         var lastEmitMs = 0L
         var lastEmittedProcessed = -1
         var lastEmittedTitle: String? = null
-        // Walk every combined photo so the bar fills the whole library,
-        // not just the to-enrich slice. Enrichment is the slow per-item
-        // I/O work; cached items pass through without an open().
-        val toEnrichIds = toEnrich.map { it.id }.toHashSet()
         for (photo in combinedPhotos) {
-            if (photo.id in toEnrichIds) {
-                val enriched = exifEnricher.enrich(photo)
-                byId[enriched.id] = enriched
-            }
+            val finalPhoto = if (photo.id in toEnrichIds) exifEnricher.enrich(photo) else photo
+            val entity = finalPhoto.toEntity()
+            allEntities.add(entity)
+            pending.add(entity)
             processed += 1
-            val now = android.os.SystemClock.uptimeMillis()
             val terminal = processed == total
+            if (pending.size >= SCAN_UPSERT_BATCH || terminal) {
+                photoDao.upsertAll(pending)
+                pending.clear()
+            }
+            val now = android.os.SystemClock.uptimeMillis()
             val timeOk = terminal || now - lastEmitMs >= SCAN_PROGRESS_THROTTLE_MS
-            // Skip the emission if the cadence allows but nothing changed
-            // since the last emit. Saves a no-op StateFlow set + a wasted
-            // Compose recomposition on 30k-photo cold scans. Always fire
-            // the terminal `processed == total` emission so the bar lands
-            // on 100% and the strip collapses cleanly.
             val changed = terminal ||
                 processed != lastEmittedProcessed ||
                 photo.displayName != lastEmittedTitle
@@ -343,38 +363,16 @@ class RoomGalleryRepository(
             }
         }
 
-        // 3. Map to entities
-        val photoEntities = byId.values.map { it.toEntity() }
-        val folderEntities = combinedFolders.map { f ->
-            val photoCount = combinedPhotos.count { it.folderId == f.id }
-            val cover = combinedPhotos.firstOrNull { it.folderId == f.id }?.id
-            FolderEntity(
-                id = f.id,
-                displayName = f.displayName,
-                sourceType = if (f.source == ScannedPhoto.ScanSource.SAF_TREE) "SAF" else "DEVICE",
-                safTreeUri = f.safTreeUri?.toString(),
-                photoCount = photoCount,
-                coverPhotoId = cover,
-            )
-        }
-
-        // 4. Apply delta. FK order: upsert folders BEFORE photos (photos.folder_id
-        //    references folders.id), then delete dangling photos, then dangling
-        //    folders last so no photo still references one we're about to drop.
-        val cachedFolderIds = folderDao.allIds().toSet()
-        val seenFolderIds = folderEntities.map(FolderEntity::id).toSet()
-        val toDeleteFolders = cachedFolderIds - seenFolderIds
-        folderDao.upsertAll(folderEntities)
-
-        val seenIds = photoEntities.map(PhotoEntity::id).toSet()
+        // 5. Apply deletes. Dangling photos first (so no row references a
+        //    folder we're about to drop), then dangling folders.
+        val seenIds = allEntities.mapTo(HashSet(allEntities.size)) { it.id }
         val toDeletePhotos = (cachedIds - seenIds).toList()
-        photoDao.replaceWithDelta(toUpsert = photoEntities, toDelete = toDeletePhotos)
-
+        if (toDeletePhotos.isNotEmpty()) photoDao.deleteByIds(toDeletePhotos)
         for (id in toDeleteFolders) folderDao.deleteById(id)
 
-        val deltaCount = photoEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
+        val deltaCount = allEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
         LibrarySnapshot(
-            photos = photoEntities.map { it.toDomain() },
+            photos = allEntities.map { it.toDomain() },
             folders = folderEntities.map { it.toDomain() },
             deltaCount = deltaCount,
         )
@@ -545,5 +543,10 @@ class RoomGalleryRepository(
         // whole scan body, this is what makes a 30k-photo first scan stop
         // freezing the UI on a real device.
         internal const val SCAN_PROGRESS_THROTTLE_MS = 500L
+
+        // Stream photos into Room in batches of this size so `observePhotos`
+        // emits while a long cold scan is still running — the gallery fills
+        // in incrementally instead of staying "No photos yet" until the end.
+        internal const val SCAN_UPSERT_BATCH = 500
     }
 }
