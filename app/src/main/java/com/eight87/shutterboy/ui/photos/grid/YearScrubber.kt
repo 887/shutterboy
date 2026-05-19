@@ -28,8 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
-import kotlinx.coroutines.flow.conflate
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -100,28 +98,11 @@ internal fun YearScrubber(
     }
     val visible = scrolling || lingering || dragging
 
-    // SINGLE serialized coroutine that watches thumbFraction and drives
-    // the grid. snapshotFlow CONFLATES: the collector pulls the LATEST
-    // fraction, not every intermediate one. Even if the gesture handler
-    // updates thumbFraction at 60+ Hz, the grid only does one
-    // scrollToItem at a time and skips stale intermediates. That's the
-    // fix for the racing-coroutines main-thread freeze.
-    LaunchedEffect(dragging, totalTimelineSize) {
-        if (!dragging || totalTimelineSize <= 0) return@LaunchedEffect
-        snapshotFlow { thumbFraction }
-            // .conflate() is the critical bit: while the collector is
-            // suspended inside scrollToItem, drop all but the LATEST
-            // upstream fraction. Without it the collector serially
-            // processes every intermediate fraction the gesture
-            // handler produced — that's "scroll lag-behind-finger
-            // freeze" on fast drags.
-            .conflate()
-            .collect { fraction ->
-                val target = (fraction * totalTimelineSize).toInt()
-                    .coerceIn(0, totalTimelineSize - 1)
-                gridState.scrollToItem(target)
-            }
-    }
+    // The Fossify Gallery / RecyclerView trick: scroll the grid via
+    // ScrollableState.dispatchRawDelta() — synchronous, non-suspending,
+    // no Mutex. Drag handler calls this directly per frame; no
+    // coroutines, no flow buffering, no lag-behind-finger. Same pattern
+    // as RecyclerView.scrollBy(), the API qtalk's FastScroller wraps.
 
     val currentYear by remember(markers) {
         derivedStateOf {
@@ -210,15 +191,24 @@ internal fun YearScrubber(
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
-                            // Accumulate delta as a unitless fraction.
-                            // The scroll dispatch happens once-per-frame
-                            // in the LaunchedEffect snapshotFlow collector
-                            // above. NEVER launch a new coroutine per
-                            // drag delta — 60 racing scrollToItem calls
-                            // on the main scroll mutex is what was
-                            // freezing the screen during fast drag.
+                            // Visible thumb position: pure float
+                            // accumulator, never read back the int.
                             thumbFraction = (thumbFraction + dragAmount / maxOffsetPx)
                                 .coerceIn(0f, 1f)
+                            // Grid scroll: synchronous dispatchRawDelta
+                            // — translates 1 px of thumb drag into
+                            // ~(totalContent / track) px of grid scroll.
+                            // No coroutine, no Mutex, no suspending. The
+                            // grid moves WITH the finger.
+                            val info = gridState.layoutInfo
+                            val viewport = info.viewportSize.height.toFloat()
+                            val visible = info.visibleItemsInfo.size
+                                .coerceAtLeast(1).toFloat()
+                            val total = info.totalItemsCount
+                                .coerceAtLeast(1).toFloat()
+                            val estTotalPx = viewport * (total / visible)
+                            val scale = (estTotalPx / maxOffsetPx).coerceAtLeast(1f)
+                            gridState.dispatchRawDelta(dragAmount * scale)
                         }
                     },
                 contentAlignment = Alignment.CenterEnd,
