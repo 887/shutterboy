@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.FolderId
+import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.SourceType
 import com.eight87.shutterboy.domain.sort.PhotoSort
 import com.eight87.shutterboy.ui.multiselect.SelectionState
@@ -64,7 +65,8 @@ fun FolderDetailScreen(
     val stream = remember(scope, folderId, sort) {
         PhotoStream { scope.photoSource.observePhotosInFolder(folderId, sort) }
     }
-    val allPhotos by stream.observe().collectAsStateWithLifecycle(initialValue = emptyList())
+    val allPhotos: List<Photo>? by stream.observe()
+        .collectAsStateWithLifecycle(initialValue = null)
 
     val selectionHolder = rememberSelectionHolder()
     val deleteHandler = rememberSelectionDeleteHandler(scope.photoDeleter) {
@@ -91,7 +93,9 @@ fun FolderDetailScreen(
                 SelectionTopBar(
                     count = active.selectedIds.size,
                     onClose = { selectionHolder.exit() },
-                    onSelectAll = { selectionHolder.selectAll(allPhotos.map { it.id }) },
+                    onSelectAll = {
+                        selectionHolder.selectAll(allPhotos.orEmpty().map { it.id })
+                    },
                     onMove = { moveHandler.request(active.selectedIds) },
                     onDelete = { deleteHandler.request(active.selectedIds) },
                 )
@@ -115,7 +119,7 @@ fun FolderDetailScreen(
                                 }
                             },
                             onStartSlideshow = {
-                                val ids = allPhotos.map { it.id.value }
+                                val ids = allPhotos.orEmpty().map { it.id.value }
                                 if (ids.isNotEmpty()) {
                                     scope.backStack.push(Slideshow(backingIds = ids))
                                 }

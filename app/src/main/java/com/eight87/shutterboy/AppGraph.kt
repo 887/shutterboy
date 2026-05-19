@@ -34,6 +34,15 @@ import com.eight87.shutterboy.data.settings.SafSourcesPreferences
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
 import com.eight87.shutterboy.data.settings.ThemePreferences
+import com.eight87.shutterboy.domain.Photo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 
 private val Context.shutterboyPrefs: DataStore<Preferences> by preferencesDataStore(
     name = "shutterboy_settings",
@@ -124,4 +133,19 @@ class AppGraph(applicationContext: Context) {
     /** Phase J.2 — DataStore-backed slideshow toggles (Ken Burns, future dwell). */
     val slideshowPreferences: SlideshowPreferences =
         DataStoreSlideshowPreferences(appCtx.shutterboyPrefs)
+
+    /**
+     * App-scoped photo feed. Stays hot for the process lifetime so the
+     * gallery survives navigation away & back instantly — re-mounting
+     * PhotosScreen after a viewer round-trip immediately sees the
+     * cached list instead of a black-screen gap while Room re-queries.
+     * Replays the current value to any new subscriber (StateFlow).
+     */
+    private val graphScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val photosFeed: StateFlow<List<Photo>?> =
+        sortPreferences.observePhotosSort()
+            .flatMapLatest { sort -> photoSource.observePhotos(sort) }
+            .stateIn(graphScope, SharingStarted.Eagerly, null)
 }

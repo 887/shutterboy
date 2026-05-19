@@ -23,5 +23,13 @@ import kotlinx.coroutines.flow.Flow
  * `fun interface` so SAM-conversion lets each call-site stay a one-liner.
  */
 fun interface PhotoStream {
-    fun observe(): Flow<List<Photo>>
+    /**
+     * Emits `null` while the underlying feed hasn't produced its first
+     * value yet (e.g. during initial cold start), then a (possibly
+     * empty) list once data is available. Letting `null` propagate so
+     * [com.eight87.shutterboy.ui.photos.grid.PhotosGrid] can distinguish
+     * "still loading" from "no photos" — the former is a blank screen,
+     * the latter is the empty state.
+     */
+    fun observe(): Flow<List<Photo>?>
 }

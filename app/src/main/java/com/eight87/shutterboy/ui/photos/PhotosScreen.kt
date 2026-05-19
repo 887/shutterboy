@@ -55,10 +55,13 @@ fun PhotosScreen(
     val initialDensity: PhotosZoomLevel by scope.displayPreferences.observeDefaultGridDensity()
         .collectAsStateWithLifecycle(initialValue = PhotosZoomLevel.Items)
     val coroutineScope = rememberCoroutineScope()
-    val stream = remember(scope, sort) {
-        PhotoStream { scope.photoSource.observePhotos(sort) }
-    }
-    val allPhotos by stream.observe().collectAsStateWithLifecycle(initialValue = emptyList())
+    // Subscribe to the app-scoped photo feed (held hot by AppGraph) so
+    // navigating to the viewer and back doesn't tear down the Room
+    // subscription. New subscriptions get the cached list instantly —
+    // no black-screen gap on back.
+    val photosFeed = scope.graph.photosFeed
+    val stream = remember(photosFeed) { PhotoStream { photosFeed } }
+    val allPhotos by photosFeed.collectAsStateWithLifecycle()
 
     val selectionHolder = rememberSelectionHolder()
     val deleteHandler = rememberSelectionDeleteHandler(scope.photoDeleter) {
@@ -85,7 +88,9 @@ fun PhotosScreen(
                 SelectionTopBar(
                     count = active.selectedIds.size,
                     onClose = { selectionHolder.exit() },
-                    onSelectAll = { selectionHolder.selectAll(allPhotos.map { it.id }) },
+                    onSelectAll = {
+                        selectionHolder.selectAll(allPhotos.orEmpty().map { it.id })
+                    },
                     onMove = { moveHandler.request(active.selectedIds) },
                     onDelete = { deleteHandler.request(active.selectedIds) },
                 )
