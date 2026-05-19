@@ -162,7 +162,12 @@ fun PhotoThumbnail(
                     .background(placeholderColor),
                 contentAlignment = Alignment.Center,
             ) {
+                // Static — determinate variant with a fixed progress so
+                // the ring renders without driving a Compose animation
+                // tick per cell. 0.75 gives a "mostly-full ring" look
+                // that reads better than the thin 0.25 arc.
                 CircularProgressIndicator(
+                    progress = { 0.75f },
                     modifier = Modifier.size(24.dp),
                     strokeWidth = 2.dp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
