@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.request.CachePolicy
 import coil3.request.crossfade
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.data.repo.FavoriteCommands
@@ -542,6 +543,10 @@ private fun PhotoPage(
     val photo: Photo? by flow.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
     val isVideo = photo?.mimeType?.startsWith("video/") == true
+    // Same px the grid uses for its thumb cache key — so the viewer
+    // can use that bitmap as its placeholder via placeholderMemoryCacheKey.
+    val thumbPlaceholderPx =
+        com.eight87.shutterboy.ui.photos.grid.LocalThumbnailQuality.current.targetPx
 
     // G.2 — per-page vertical drag detector. Accumulates the vertical
     // delta; on release we classify it into swipe-up-info / swipe-down-
@@ -677,8 +682,20 @@ private fun PhotoPage(
                 model = ImageRequest.Builder(context)
                     .data(model)
                     .crossfade(true)
+                    // Viewer images are huge (~10 MB decoded). Letting
+                    // them fill Coil's shared memory cache LRU-evicts
+                    // grid thumbnails — so when the user backs out, the
+                    // tiles have to re-decode and flash from grey. Skip
+                    // memory cache here; disk cache keeps pager swipes
+                    // fast.
+                    .memoryCachePolicy(CachePolicy.DISABLED)
                     .memoryCacheKey("viewer-$photoId")
                     .diskCacheKey("viewer-$photoId")
+                    // While the full-res image is decoding, use the
+                    // grid thumbnail as placeholder — provides instant
+                    // visual continuity for the open/close transition
+                    // without paying for a separate placeholder load.
+                    .placeholderMemoryCacheKey("thumb-$photoId-$thumbPlaceholderPx")
                     .build(),
                 contentDescription = photo?.displayName,
                 contentScale = ContentScale.Fit,
