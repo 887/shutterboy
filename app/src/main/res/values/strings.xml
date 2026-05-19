@@ -91,6 +91,10 @@
     <string name="viewer_empty">No photos</string>
     <string name="cd_viewer_back">Back</string>
     <string name="cd_viewer_info">Photo info</string>
+    <string name="cd_viewer_rotate_left">Rotate left</string>
+    <string name="cd_viewer_rotate_right">Rotate right</string>
+    <string name="cd_viewer_rotate_reset">Reset rotation</string>
+    <string name="cd_viewer_flip">Flip horizontally</string>
     <string name="cd_viewer_share">Share photo</string>
     <string name="viewer_share_chooser_title">Share via</string>
     <string name="cd_viewer_edit">Edit photo</string>

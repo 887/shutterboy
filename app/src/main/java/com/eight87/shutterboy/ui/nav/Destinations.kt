@@ -132,5 +132,5 @@ data class FolderDetail(val folderIdValue: Long) : Destination
 @Serializable
 data class Slideshow(val backingIds: List<Long>) : Destination
 
-/** The three top-level destinations a bottom-nav tap can route to. */
-internal val rootDestinations: List<Destination> = listOf(Photos, Collections, Settings)
+/** The top-level destinations a top-bar tab can route to. */
+internal val rootDestinations: List<Destination> = listOf(Photos, Favorites, Collections, Settings)

@@ -27,10 +27,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Flip
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.RotateLeft
+import androidx.compose.material.icons.outlined.RotateRight
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -176,6 +182,10 @@ internal fun PhotoViewerContent(
     // scale + pan when the user swipes to a different photo.
     val scaleState = remember { androidx.compose.runtime.mutableFloatStateOf(ViewerZoomMath.MIN_SCALE) }
     val panState = remember { mutableStateOf(Offset.Zero) }
+    // Per-photo orientation: rotation in degrees + horizontal mirror.
+    // Reset on page change (alongside scale + pan).
+    val rotationState = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    val mirroredState = remember { androidx.compose.runtime.mutableStateOf(false) }
     // Animated value used for the double-tap toggle so the transition
     // tweens rather than snaps. Pinch updates write to scaleState
     // directly (animation off the live finger position would feel laggy).
@@ -186,6 +196,8 @@ internal fun PhotoViewerContent(
     LaunchedEffect(pagerState.currentPage) {
         scaleState.floatValue = ViewerZoomMath.MIN_SCALE
         panState.value = Offset.Zero
+        rotationState.floatValue = 0f
+        mirroredState.value = false
     }
     val dismissConnection = remember(onBack, dismissThresholdPx) {
         object : NestedScrollConnection {
@@ -287,10 +299,18 @@ internal fun PhotoViewerContent(
             ) {
                 TopAppBar(
                     title = {
+                        // Single-line title, horizontally scrollable when
+                        // the filename is too long for the row.
+                        val titleScroll = rememberScrollState()
                         Text(
                             text = currentPhoto?.displayName
                                 ?: stringResource(R.string.viewer_loading_title),
                             style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            softWrap = false,
+                            color = Color.White,
+                            modifier = Modifier
+                                .horizontalScroll(titleScroll),
                         )
                     },
                     navigationIcon = {
@@ -387,6 +407,54 @@ internal fun PhotoViewerContent(
                                 contentDescription = stringResource(R.string.cd_viewer_delete),
                             )
                         }
+                        // Rotate left / right / reset + horizontal flip.
+                        // Mutates the per-page transform state owned by
+                        // the viewer; resets when swiping to a new photo.
+                        IconButton(
+                            onClick = {
+                                rotationState.floatValue =
+                                    (rotationState.floatValue - 90f) % 360f
+                            },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.RotateLeft,
+                                contentDescription = stringResource(R.string.cd_viewer_rotate_left),
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                rotationState.floatValue = 0f
+                                mirroredState.value = false
+                            },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Restore,
+                                contentDescription = stringResource(R.string.cd_viewer_rotate_reset),
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                rotationState.floatValue =
+                                    (rotationState.floatValue + 90f) % 360f
+                            },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.RotateRight,
+                                contentDescription = stringResource(R.string.cd_viewer_rotate_right),
+                            )
+                        }
+                        IconButton(
+                            onClick = { mirroredState.value = !mirroredState.value },
+                            enabled = currentPhoto != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Flip,
+                                contentDescription = stringResource(R.string.cd_viewer_flip),
+                            )
+                        }
                         IconButton(
                             onClick = { infoVisible = true },
                             enabled = currentPhoto != null,
@@ -398,7 +466,13 @@ internal fun PhotoViewerContent(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        // Translucent scrim over the black viewer
+                        // background so the photo shows through
+                        // slightly. White content for contrast.
+                        containerColor = Color.Black.copy(alpha = 0.4f),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White,
                     ),
                 )
             }
@@ -445,6 +519,8 @@ internal fun PhotoViewerContent(
                         // at rest so paging in/out doesn't carry zoom.
                         scale = if (isCurrentPage) animatedScale else ViewerZoomMath.MIN_SCALE,
                         pan = if (isCurrentPage) panState.value else Offset.Zero,
+                        rotationDegrees = if (isCurrentPage) rotationState.floatValue else 0f,
+                        mirroredX = if (isCurrentPage) mirroredState.value else false,
                         onPinch = { zoomChange, panChange ->
                             val newScale = ViewerZoomMath.clampScale(
                                 scaleState.floatValue * zoomChange,
@@ -538,6 +614,8 @@ private fun PhotoPage(
     pan: Offset,
     onPinch: (zoomChange: Float, panChange: Offset) -> Unit,
     onDoubleTap: () -> Unit,
+    rotationDegrees: Float = 0f,
+    mirroredX: Boolean = false,
 ) {
     val flow = remember(photoId) { photoSource.observePhotoById(photoId) }
     val photo: Photo? by flow.collectAsStateWithLifecycle(initialValue = null)
@@ -709,10 +787,11 @@ private fun PhotoPage(
                     // on every pinch frame. Clamp / pan-bounds-math is a
                     // follow-up; for now we let the image overshoot.
                     .graphicsLayer {
-                        scaleX = scale
+                        scaleX = if (mirroredX) -scale else scale
                         scaleY = scale
                         translationX = pan.x
                         translationY = pan.y
+                        rotationZ = rotationDegrees
                     }
                     .padding(0.dp),
             )

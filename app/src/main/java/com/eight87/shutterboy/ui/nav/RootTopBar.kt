@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Collections
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.FilledTonalIconButton
@@ -123,6 +125,7 @@ private fun DestinationButton(
 
 private fun rootLabelRes(dest: Destination): Int = when (dest) {
     Photos -> R.string.nav_photos
+    Favorites -> R.string.favorites_title
     Collections -> R.string.nav_collections
     Settings -> R.string.nav_settings
     else -> error("$dest is not a root destination")
@@ -132,6 +135,8 @@ private fun rootLabelRes(dest: Destination): Int = when (dest) {
 private fun rootIconAndCd(dest: Destination, selected: Boolean): Pair<ImageVector, String> = when (dest) {
     Photos -> (if (selected) Icons.Filled.Image else Icons.Outlined.Image) to
         stringResource(R.string.cd_nav_photos)
+    Favorites -> (if (selected) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder) to
+        stringResource(R.string.favorites_title)
     Collections -> (if (selected) Icons.Filled.Collections else Icons.Outlined.Collections) to
         stringResource(R.string.cd_nav_collections)
     Settings -> (if (selected) Icons.Filled.Settings else Icons.Outlined.Settings) to
