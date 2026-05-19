@@ -3,7 +3,6 @@ package com.eight87.shutterboy.ui.photos.grid
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import android.util.Size as AndroidSize
 import coil3.ImageLoader
 import coil3.asImage
@@ -55,13 +54,11 @@ class ThumbnailPrefetcher(
     suspend fun submit(id: Long, uri: Uri) {
         val cacheKey = "thumb-$id-$targetPx"
         if (loader.memoryCache?.get(MemoryCache.Key(cacheKey)) != null) return
-        val size = lock.withLock {
+        lock.withLock {
             deque.addLast(Task(id, uri, cacheKey))
             while (deque.size > maxPending) deque.removeFirst()
-            deque.size
         }
         signal.trySend(Unit)
-        Log.d(TAG, "queued $cacheKey (queue size: $size)")
     }
 
     suspend fun clear() {
@@ -69,7 +66,6 @@ class ThumbnailPrefetcher(
     }
 
     private suspend fun worker() {
-        Log.d(TAG, "worker started")
         while (true) {
             val task = lock.withLock { deque.removeLastOrNull() }
             if (task == null) {
@@ -87,15 +83,11 @@ class ThumbnailPrefetcher(
                         MemoryCache.Key(task.cacheKey),
                         MemoryCache.Value(bitmap.asImage()),
                     )
-                    Log.d(TAG, "cached ${task.cacheKey}")
                 }
-            }.onFailure {
-                Log.w(TAG, "prefetch failed for ${task.cacheKey}", it)
             }
+            // Failures are swallowed — non-fatal per tile; we just
+            // don't pre-warm that one and AsyncImage will retry via
+            // its normal path.
         }
-    }
-
-    companion object {
-        private const val TAG = "ThumbnailPrefetcher"
     }
 }

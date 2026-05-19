@@ -124,20 +124,25 @@ fun PhotoThumbnail(
         val inMemoryCache = remember(suppressDecode, cacheKey) {
             SingletonImageLoader.get(context).memoryCache?.get(cacheKey) != null
         }
-        val cacheKeyStr = "thumb-${photo.id.value}-$targetPx"
-        val request = ImageRequest.Builder(context)
-            .data(photo.contentUri)
-            .size(Size(targetPx, targetPx))
-            .memoryCacheKey(cacheKeyStr)
-            .diskCacheKey(cacheKeyStr)
-            // The critical bit for no-flash rendering: AsyncImage will
-            // synchronously look this key up in the memory cache the
-            // moment it mounts and use the cached bitmap AS the
-            // placeholder. If the prefetcher has done its job, the
-            // tile renders with the real image on its first frame —
-            // no grey flash, no fade.
-            .placeholderMemoryCacheKey(cacheKeyStr)
-            .build()
+        // Memoize the request build so we don't allocate a fresh
+        // ImageRequest + Builder + string per recomposition. During a
+        // fast scroll, 30 visible tiles × 60 Hz recompose rate without
+        // this would be ~1800 builder allocations/sec — GC stalls
+        // exactly when smoothness matters most.
+        val request = remember(photo.id.value, targetPx) {
+            val cacheKeyStr = "thumb-${photo.id.value}-$targetPx"
+            ImageRequest.Builder(context)
+                .data(photo.contentUri)
+                .size(Size(targetPx, targetPx))
+                .memoryCacheKey(cacheKeyStr)
+                .diskCacheKey(cacheKeyStr)
+                // AsyncImage synchronously checks this key in the
+                // memory cache at mount time and uses the cached
+                // bitmap AS the placeholder — eliminates the one-
+                // frame grey flash when prefetch has warmed the cache.
+                .placeholderMemoryCacheKey(cacheKeyStr)
+                .build()
+        }
         AsyncImage(
             model = if (suppressDecode && !inMemoryCache) null else request,
             // Note: request below is built with placeholderMemoryCacheKey
