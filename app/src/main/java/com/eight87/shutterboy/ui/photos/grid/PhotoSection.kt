@@ -319,16 +319,20 @@ internal fun stickyHeaderLabel(
     for (i in clamped downTo 0) {
         when (val item = timeline[i]) {
             is TimelineDisplayItem.MonthYearBand ->
-                return if (level == PhotosZoomLevel.Items) {
-                    formatMonthBand(item.yearMonth, locale)
-                } else {
-                    formatYearBand(item.yearMonth.year)
-                }
+                return formatMonthBand(item.yearMonth, locale)
             is TimelineDisplayItem.YearBand -> return formatYearBand(item.year)
             is TimelineDisplayItem.DayCell -> return formatYearBand(item.date.year)
             is TimelineDisplayItem.MonthCell -> return formatYearBand(item.yearMonth.year)
             is TimelineDisplayItem.YearCell -> return formatYearBand(item.year)
-            is TimelineDisplayItem.PhotoCell -> Unit // keep walking
+            // Flat-grid mode: derive `MAY 2026` directly from the
+            // photo's capture date so the scrubber's floating pill
+            // shows the month even without band items in the timeline.
+            is TimelineDisplayItem.PhotoCell -> {
+                val ym = java.time.Instant.ofEpochMilli(item.photo.dateTakenMs)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .let { java.time.YearMonth.of(it.year, it.month) }
+                return formatMonthBand(ym, locale)
+            }
         }
     }
     return null
