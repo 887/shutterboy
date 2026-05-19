@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -81,12 +82,12 @@ internal fun YearScrubber(
     val scrolling = gridState.isScrollInProgress
     var lingering by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
-    // Aves-style accumulator: track the thumb position in float pixels
-    // independently of the LazyGrid's quantized firstVisibleItemIndex.
-    // Reading the integer index back into the drag math drops small
-    // deltas (especially upward — the int lags behind), which is what
-    // makes up-drag feel frozen.
-    var thumbOffsetPx by remember { mutableStateOf(0f) }
+    // Aves _boundlessThumbOffset pattern: accumulate the thumb position
+    // as a unitless fraction (0..1) independent of the LazyGrid's
+    // quantized firstVisibleItemIndex. Reading the int back into the
+    // drag math drops small deltas (especially upward — the int lags
+    // behind), which is what made up-drag feel frozen.
+    var thumbFraction by remember { mutableStateOf(0f) }
 
     LaunchedEffect(scrolling, dragging) {
         if (scrolling || dragging) {
@@ -97,6 +98,22 @@ internal fun YearScrubber(
         }
     }
     val visible = scrolling || lingering || dragging
+
+    // SINGLE serialized coroutine that watches thumbFraction and drives
+    // the grid. snapshotFlow CONFLATES: the collector pulls the LATEST
+    // fraction, not every intermediate one. Even if the gesture handler
+    // updates thumbFraction at 60+ Hz, the grid only does one
+    // scrollToItem at a time and skips stale intermediates. That's the
+    // fix for the racing-coroutines main-thread freeze.
+    LaunchedEffect(dragging, totalTimelineSize) {
+        if (!dragging || totalTimelineSize <= 0) return@LaunchedEffect
+        snapshotFlow { thumbFraction }
+            .collect { fraction ->
+                val target = (fraction * totalTimelineSize).toInt()
+                    .coerceIn(0, totalTimelineSize - 1)
+                gridState.scrollToItem(target)
+            }
+    }
 
     val currentYear by remember(markers) {
         derivedStateOf {
@@ -153,10 +170,14 @@ internal fun YearScrubber(
             val maxThumbOffset = trackHeightDp - thumbHeightDp
             // Aves-style chunky thumb with up/down chevrons; wider invisible
             // touch target around it for easy grabbing.
+            // Thumb position: during drag, follow the accumulator
+            // directly (no lag from the LazyGrid's serialized scroll).
+            // Otherwise track the grid via scrollFraction.
+            val displayFraction = if (dragging) thumbFraction else scrollFraction
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(y = maxThumbOffset * scrollFraction)
+                    .offset(y = maxThumbOffset * displayFraction)
                     .width(ThumbTouchWidth)
                     .height(thumbHeightDp.coerceAtLeast(48.dp))
                     .pointerInput(totalTimelineSize, maxThumbOffset) {
@@ -164,13 +185,9 @@ internal fun YearScrubber(
                             onDragStart = {
                                 dragging = true
                                 onScrubbingChange(true)
-                                // Seed accumulator from the current
-                                // scroll fraction so the thumb doesn't
-                                // jump on drag start.
-                                val maxOffsetPx = maxThumbOffset.toPx()
-                                thumbOffsetPx = if (totalTimelineSize > 0) {
-                                    (gridState.firstVisibleItemIndex.toFloat() /
-                                        totalTimelineSize) * maxOffsetPx
+                                thumbFraction = if (totalTimelineSize > 0) {
+                                    gridState.firstVisibleItemIndex.toFloat() /
+                                        totalTimelineSize
                                 } else 0f
                             },
                             onDragEnd = {
@@ -185,17 +202,15 @@ internal fun YearScrubber(
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
-                            // Accumulate raw delta — never read back the
-                            // quantized scroll index. This is the Aves
-                            // _boundlessThumbOffset pattern; it keeps
-                            // up- and down-drag symmetric and prevents
-                            // small deltas from being lost to rounding.
-                            thumbOffsetPx = (thumbOffsetPx + dragAmount)
-                                .coerceIn(0f, maxOffsetPx)
-                            val fraction = thumbOffsetPx / maxOffsetPx
-                            val target = (fraction * totalTimelineSize).toInt()
-                                .coerceIn(0, totalTimelineSize - 1)
-                            coroutineScope.launch { gridState.scrollToItem(target) }
+                            // Accumulate delta as a unitless fraction.
+                            // The scroll dispatch happens once-per-frame
+                            // in the LaunchedEffect snapshotFlow collector
+                            // above. NEVER launch a new coroutine per
+                            // drag delta — 60 racing scrollToItem calls
+                            // on the main scroll mutex is what was
+                            // freezing the screen during fast drag.
+                            thumbFraction = (thumbFraction + dragAmount / maxOffsetPx)
+                                .coerceIn(0f, 1f)
                         }
                     },
                 contentAlignment = Alignment.CenterEnd,
