@@ -62,8 +62,16 @@ fun PhotoThumbnail(
     photo: Photo,
     selected: Boolean,
     inSelectionMode: Boolean,
-    onTap: () -> Unit,
-    onLongPress: () -> Unit,
+    // Stable callbacks: take the PhotoId at call time so the SAME
+    // lambda instance can be reused across every cell in the grid. With
+    // per-cell `{ onPhotoTap(item.photo.id, backingIds) }` the Compose
+    // compiler can't infer the lambda as stable; every parent recompose
+    // (i.e. every scroll frame) gives every cell a "new" callback and
+    // forces a full recomposition of all ~28 visible cells per frame.
+    // With (PhotoId) -> Unit the caller hoists one stable lambda and
+    // only the cells that genuinely changed (newly entered) recompose.
+    onTap: (com.eight87.shutterboy.domain.PhotoId) -> Unit,
+    onLongPress: (com.eight87.shutterboy.domain.PhotoId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -71,8 +79,8 @@ fun PhotoThumbnail(
             .aspectRatio(1f)
             .testTag(photoThumbnailTag(photo.id.value))
             .combinedClickable(
-                onClick = onTap,
-                onLongClick = onLongPress,
+                onClick = { onTap(photo.id) },
+                onLongClick = { onLongPress(photo.id) },
             ),
         contentAlignment = Alignment.TopStart,
     ) {

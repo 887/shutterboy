@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -93,6 +94,21 @@ internal fun PhotosGrid(
     }
     val markers = remember(timeline) { extractYearMarkers(timeline) }
     val gridState = rememberLazyGridState()
+
+    // Stable cell callbacks. The lambdas below are remembered ONCE for
+    // the lifetime of PhotosGrid; they read the current onPhotoTap /
+    // onPhotoLongPress / backingIds through rememberUpdatedState refs
+    // so they never need to be recreated on grid recomposition. Every
+    // cell gets the same lambda identity → no forced per-cell
+    // recomposition when the grid recomposes for unrelated reasons
+    // (scroll, selection toggle, etc).
+    val onPhotoTapRef = rememberUpdatedState(onPhotoTap)
+    val onPhotoLongPressRef = rememberUpdatedState(onPhotoLongPress)
+    val backingIdsRef = rememberUpdatedState(backingIds)
+    val stableOnTap: (com.eight87.shutterboy.domain.PhotoId) -> Unit =
+        remember { { id -> onPhotoTapRef.value(id, backingIdsRef.value) } }
+    val stableOnLongPress: (com.eight87.shutterboy.domain.PhotoId) -> Unit =
+        remember { { id -> onPhotoLongPressRef.value(id) } }
     var scrubbingThumb by remember { mutableStateOf(false) }
     // Only suppress decodes during THUMB SCRUB (where the grid intentionally
     // doesn't scroll and there's no point firing requests for in-between
@@ -214,8 +230,8 @@ internal fun PhotosGrid(
                                 photo = item.photo,
                                 selected = selectionState.isSelected(item.photo.id),
                                 inSelectionMode = inSelectionMode,
-                                onTap = { onPhotoTap(item.photo.id, backingIds) },
-                                onLongPress = { onPhotoLongPress(item.photo.id) },
+                                onTap = stableOnTap,
+                                onLongPress = stableOnLongPress,
                             )
                         }
 
