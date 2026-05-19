@@ -37,14 +37,47 @@ import com.eight87.shutterboy.data.settings.BaseTheme
 fun ShutterboyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     baseTheme: BaseTheme = BaseTheme.Default,
+    tintColor: Long? = null,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = resolveBaseScheme(darkTheme = darkTheme, baseTheme = baseTheme)
+    val base = resolveBaseScheme(darkTheme = darkTheme, baseTheme = baseTheme)
+    val colorScheme = applyTint(base, tintColor, darkTheme)
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         shapes = ShutterboyShapes,
         typography = Typography,
         content = content,
+    )
+}
+
+/**
+ * Overlay accent colours from [tintRgb] on top of the base scheme.
+ * Critically: surface / background / surfaceContainer* are NOT
+ * touched, so the user's base-theme choice (dynamic / pure black)
+ * keeps owning the app background regardless of the tint pick. This
+ * is how tonearmboy keeps the app body dark while letting the user
+ * tint the accents.
+ */
+private fun applyTint(
+    base: ColorScheme,
+    tintRgb: Long?,
+    darkTheme: Boolean,
+): ColorScheme {
+    if (tintRgb == null) return base
+    val seed = deriveCustomScheme(tintRgb, darkTheme)
+    return base.copy(
+        primary = seed.primary,
+        onPrimary = seed.onPrimary,
+        primaryContainer = seed.primaryContainer,
+        onPrimaryContainer = seed.onPrimaryContainer,
+        secondary = seed.secondary,
+        onSecondary = seed.onSecondary,
+        secondaryContainer = seed.secondaryContainer,
+        onSecondaryContainer = seed.onSecondaryContainer,
+        tertiary = seed.tertiary,
+        onTertiary = seed.onTertiary,
+        tertiaryContainer = seed.tertiaryContainer,
+        onTertiaryContainer = seed.onTertiaryContainer,
     )
 }
 
@@ -73,7 +106,6 @@ internal fun resolveBaseScheme(darkTheme: Boolean, baseTheme: BaseTheme): ColorS
             }
             foundation.copy(background = Color.Black, surface = Color.Black)
         }
-        is BaseTheme.Custom -> deriveCustomScheme(baseTheme.seedRgb, darkTheme)
     }
 }
 

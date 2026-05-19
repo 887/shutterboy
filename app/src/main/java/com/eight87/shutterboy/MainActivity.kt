@@ -29,13 +29,19 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = BaseTheme.Default)
             val themeMode by graph.themePreferences.observeThemeMode()
                 .collectAsStateWithLifecycle(initialValue = ThemeMode.Default)
+            val tintColor by graph.themePreferences.observeTintColor()
+                .collectAsStateWithLifecycle(initialValue = null)
             val systemDark = isSystemInDarkTheme()
             val darkTheme = when (themeMode) {
                 ThemeMode.System -> systemDark
                 ThemeMode.Light -> false
                 ThemeMode.Dark -> true
             }
-            ShutterboyTheme(darkTheme = darkTheme, baseTheme = baseTheme) {
+            ShutterboyTheme(
+                darkTheme = darkTheme,
+                baseTheme = baseTheme,
+                tintColor = tintColor,
+            ) {
                 RequireMediaPermission(
                     onGranted = {
                         // R.F.24 — `lifecycleScope` cancels on activity-destroy so a

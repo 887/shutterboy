@@ -67,12 +67,14 @@ fun AppearanceSection(
         .collectAsStateWithLifecycle(initialValue = BaseTheme.Default)
     val themeMode by themePreferences.observeThemeMode()
         .collectAsStateWithLifecycle(initialValue = ThemeMode.Default)
+    val tintColor by themePreferences.observeTintColor()
+        .collectAsStateWithLifecycle(initialValue = null)
     val scope = rememberCoroutineScope()
     var basePickerOpen by remember { mutableStateOf(false) }
     var colorPickerOpen by remember { mutableStateOf(false) }
     var modePickerOpen by remember { mutableStateOf(false) }
 
-    val currentSeed = (baseTheme as? BaseTheme.Custom)?.seedRgb ?: DEFAULT_SEED_RGB
+    val currentSeed = tintColor ?: DEFAULT_SEED_RGB
     val swatchColor = swatchFor(baseTheme)
 
     SettingsCard(
@@ -140,13 +142,8 @@ fun AppearanceSection(
         BaseThemePickerDialog(
             current = baseTheme,
             onPick = { picked ->
-                if (picked is BaseTheme.Custom) {
-                    basePickerOpen = false
-                    colorPickerOpen = true
-                } else {
-                    scope.launch { themePreferences.setBaseTheme(picked) }
-                    basePickerOpen = false
-                }
+                scope.launch { themePreferences.setBaseTheme(picked) }
+                basePickerOpen = false
             },
             onDismiss = { basePickerOpen = false },
         )
@@ -156,7 +153,10 @@ fun AppearanceSection(
         ColorPickerDialog(
             initialRgb = currentSeed,
             onConfirm = { rgb ->
-                scope.launch { themePreferences.setBaseTheme(BaseTheme.Custom(rgb)) }
+                // Tint is a separate pref now — picking accent does
+                // NOT change the base scheme, so the user's surface
+                // choice (dynamic / pure black) is preserved.
+                scope.launch { themePreferences.setTintColor(rgb) }
                 colorPickerOpen = false
             },
             onDismiss = { colorPickerOpen = false },
@@ -166,16 +166,14 @@ fun AppearanceSection(
 
 @Composable
 private fun swatchFor(theme: BaseTheme): Color = when (theme) {
-    is BaseTheme.Custom -> Color(0xFF000000L or theme.seedRgb)
     is BaseTheme.PureBlack -> Color.Black
-    else -> MaterialTheme.colorScheme.primary
+    else -> MaterialTheme.colorScheme.surfaceVariant
 }
 
 @Composable
 private fun themeLabel(theme: BaseTheme): String = when (theme) {
     is BaseTheme.DefaultAndroid -> stringResource(R.string.settings_appearance_default_android)
     is BaseTheme.PureBlack -> stringResource(R.string.settings_appearance_pure_black)
-    is BaseTheme.Custom -> stringResource(R.string.settings_appearance_custom)
 }
 
 @Composable
@@ -233,11 +231,6 @@ private fun BaseThemePickerDialog(
                     label = stringResource(R.string.settings_appearance_pure_black),
                     selected = current is BaseTheme.PureBlack,
                     onClick = { onPick(BaseTheme.PureBlack) },
-                )
-                PickerRow(
-                    label = stringResource(R.string.settings_appearance_custom),
-                    selected = current is BaseTheme.Custom,
-                    onClick = { onPick(BaseTheme.Custom(DEFAULT_SEED_RGB)) },
                 )
             }
         },

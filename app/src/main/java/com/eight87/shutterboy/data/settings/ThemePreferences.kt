@@ -31,4 +31,18 @@ interface ThemePreferences {
 
     fun observeThemeMode(): Flow<ThemeMode>
     suspend fun setThemeMode(value: ThemeMode)
+
+    /**
+     * Optional accent-colour overlay. When non-null, the resolved
+     * [BaseTheme] scheme keeps its surface/background colours but the
+     * primary / secondary / tertiary slots are derived from this
+     * seed. Surface NEVER tracks tint — so the app background stays
+     * whatever the base theme dictates (dynamic surface or pure
+     * black), regardless of accent.
+     *
+     * Stored as a `Long` 24-bit RGB; null = no tint (use the base
+     * scheme's primaries as-is).
+     */
+    fun observeTintColor(): Flow<Long?>
+    suspend fun setTintColor(rgb: Long?)
 }

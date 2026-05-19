@@ -3,6 +3,7 @@ package com.eight87.shutterboy.data.settings
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,8 +31,19 @@ internal class DataStoreThemePreferences(
         dataStore.edit { it[ThemeModeKey] = value.name }
     }
 
+    override fun observeTintColor(): Flow<Long?> = dataStore.data
+        .map { prefs -> prefs[TintColorKey] }
+
+    override suspend fun setTintColor(rgb: Long?) {
+        dataStore.edit { prefs ->
+            if (rgb == null) prefs.remove(TintColorKey)
+            else prefs[TintColorKey] = rgb and 0xFFFFFFL
+        }
+    }
+
     companion object {
         internal val BaseThemeKey = stringPreferencesKey("base_theme")
         internal val ThemeModeKey = stringPreferencesKey("theme_mode")
+        internal val TintColorKey = longPreferencesKey("tint_color")
     }
 }

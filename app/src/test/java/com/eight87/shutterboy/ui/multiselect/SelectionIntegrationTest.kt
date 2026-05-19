@@ -108,7 +108,9 @@ class SelectionIntegrationTest {
                     SelectionTopBar(
                         count = active.selectedIds.size,
                         onClose = { holder.exit() },
-                        onSelectAll = { holder.selectAll(allPhotos.map { it.id }) },
+                        onSelectAll = {
+                            holder.selectAll(allPhotos.orEmpty().map { it.id })
+                        },
                         onMove = { },
                         onDelete = { },
                     )

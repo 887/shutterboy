@@ -58,17 +58,23 @@ class DataStoreThemePreferencesTest {
     }
 
     @Test
-    fun `Custom seed round-trips through DataStore`() = runTest(testScope.testScheduler) {
-        val v = BaseTheme.Custom(0xB94A1AL)
-        prefs.setBaseTheme(v)
-        assertEquals(v, prefs.observeBaseTheme().first())
+    fun `tint color round-trips through DataStore`() = runTest(testScope.testScheduler) {
+        prefs.setTintColor(0xB94A1AL)
+        assertEquals(0xB94A1AL, prefs.observeTintColor().first())
     }
 
     @Test
-    fun `setting a new value overwrites the previous one`() =
+    fun `clearing tint color writes null`() = runTest(testScope.testScheduler) {
+        prefs.setTintColor(0x123456L)
+        prefs.setTintColor(null)
+        assertEquals(null, prefs.observeTintColor().first())
+    }
+
+    @Test
+    fun `setting a new base theme overwrites the previous one`() =
         runTest(testScope.testScheduler) {
             prefs.setBaseTheme(BaseTheme.PureBlack)
-            prefs.setBaseTheme(BaseTheme.Custom(0x123456L))
-            assertEquals(BaseTheme.Custom(0x123456L), prefs.observeBaseTheme().first())
+            prefs.setBaseTheme(BaseTheme.DefaultAndroid)
+            assertEquals(BaseTheme.DefaultAndroid, prefs.observeBaseTheme().first())
         }
 }
