@@ -117,18 +117,6 @@ fun PhotoThumbnail(
                 androidx.compose.ui.graphics.Color.Transparent,
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(placeholderColor),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
         // Aves-style suppress-decode-while-moving — but ONLY for tiles
         // that aren't already in the memory cache. Already-decoded
         // bitmaps stay shown during scroll (memory-cache hits are free);
@@ -141,6 +129,28 @@ fun PhotoThumbnail(
         }
         val inMemoryCache = remember(suppressDecode, cacheKey) {
             SingletonImageLoader.get(context).memoryCache?.get(cacheKey) != null
+        }
+        // Only paint the placeholder + spinner when the cell is NOT
+        // already cached. CircularProgressIndicator runs an infinite
+        // animation tied to Compose's clock; with ~28 visible tiles in
+        // 4-col portrait that's ~28 animation tickers all forcing
+        // recompositions at 120 Hz forever, even after the photo paints
+        // on top. Gating on !inMemoryCache cuts that to "only cells
+        // genuinely still loading", which is ~0 once you've scrolled
+        // past them once.
+        if (!inMemoryCache) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(placeholderColor),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         // Memoize the request build so we don't allocate a fresh
         // ImageRequest + Builder + string per recomposition. During a
