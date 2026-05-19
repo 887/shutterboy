@@ -278,7 +278,12 @@ internal fun extractYearMarkers(timeline: List<TimelineDisplayItem>): List<YearM
 private fun TimelineDisplayItem.yearOrNull(): Int? = when (this) {
     is TimelineDisplayItem.MonthYearBand -> yearMonth.year
     is TimelineDisplayItem.YearBand -> year
-    is TimelineDisplayItem.PhotoCell -> null
+    // Flat-grid mode: derive year directly from the photo's capture
+    // date so the scrubber's marker extraction still produces year pills
+    // without the (now-removed) band items walking the timeline.
+    is TimelineDisplayItem.PhotoCell -> java.time.Instant.ofEpochMilli(photo.dateTakenMs)
+        .atZone(java.time.ZoneId.systemDefault())
+        .year
     is TimelineDisplayItem.DayCell -> date.year
     is TimelineDisplayItem.MonthCell -> yearMonth.year
     is TimelineDisplayItem.YearCell -> year
