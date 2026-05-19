@@ -98,14 +98,15 @@ internal fun YearScrubber(
     }
     val visible = scrolling || lingering || dragging
 
-    // AndroidFastScroll-inspired: thumb visual reads `thumbFraction`
-    // synchronously (frame-locked to finger). Grid scroll is dispatched
-    // ASYNCHRONOUSLY with throttling — at most one scrollToItem in
-    // flight, AND at most one started per ~80 ms. Throttling gives the
-    // main thread frames between measure passes so the gesture pipeline
-    // doesn't starve.
+    // Google Photos pattern: the grid does NOT scroll during drag at
+    // all — measure passes block the gesture pipeline, no amount of
+    // throttling fully fixes that on Compose. Instead, during drag we
+    // ONLY update thumbFraction (the thumb visual reads it synchronously)
+    // and a position-indicator label. The grid jumps to the target on
+    // release. This is the only way to make the thumb feel truly
+    // decoupled from main-thread work, because there is no main-thread
+    // scroll work happening during drag.
     val scrollJob = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
-    val lastScrollMs = remember { mutableStateOf(0L) }
     var pendingTarget by remember { mutableStateOf(-1) }
 
     val currentYear by remember(markers) {
@@ -119,7 +120,17 @@ internal fun YearScrubber(
     val locale = LocalConfiguration.current.locales.get(0) ?: Locale.getDefault()
     val currentLabel by remember(timeline, level, locale) {
         derivedStateOf {
-            stickyHeaderLabel(timeline, gridState.firstVisibleItemIndex, level, locale)
+            // During drag, label tracks the DESTINATION (where the
+            // finger is pointing), not the grid (which is intentionally
+            // frozen). On release, falls back to the grid's actual
+            // first-visible item.
+            val idx = if (dragging) {
+                (thumbFraction * timeline.size).toInt()
+                    .coerceIn(0, timeline.size - 1)
+            } else {
+                gridState.firstVisibleItemIndex
+            }
+            stickyHeaderLabel(timeline, idx, level, locale)
         }
     }
     val scrollFraction by remember(timeline) {
@@ -212,27 +223,16 @@ internal fun YearScrubber(
                             change.consume()
                             val maxOffsetPx = maxThumbOffset.toPx()
                             if (maxOffsetPx <= 0f) return@detectVerticalDragGestures
-                            // Thumb visual updates synchronously from
-                            // the accumulator — finger tracks 1:1.
+                            // ONLY update the accumulator. No coroutine,
+                            // no scroll call, no main-thread work
+                            // beyond a single state write. The thumb's
+                            // .offset() and the position-indicator pill
+                            // both read this synchronously — they're
+                            // already frame-locked.
                             thumbFraction = (thumbFraction + dragAmount / maxOffsetPx)
                                 .coerceIn(0f, 1f)
-                            val target = (thumbFraction * totalTimelineSize).toInt()
+                            pendingTarget = (thumbFraction * totalTimelineSize).toInt()
                                 .coerceIn(0, totalTimelineSize - 1)
-                            pendingTarget = target
-                            // Throttle scrollToItem to ~12 Hz max so
-                            // the measure pass between dispatches has
-                            // a frame to settle. Without the throttle
-                            // the main thread does a measure pass
-                            // every gesture frame (60+ Hz) and starves
-                            // the gesture pipeline → drag stutters.
-                            val now = System.currentTimeMillis()
-                            if (now - lastScrollMs.value >= 80L) {
-                                lastScrollMs.value = now
-                                scrollJob.value?.cancel()
-                                scrollJob.value = coroutineScope.launch {
-                                    gridState.scrollToItem(pendingTarget)
-                                }
-                            }
                         }
                     },
                 contentAlignment = Alignment.CenterEnd,
