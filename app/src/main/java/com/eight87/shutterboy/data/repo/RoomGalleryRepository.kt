@@ -450,6 +450,11 @@ class RoomGalleryRepository(
         }
     }
 
+    override suspend fun eagerlyRemoveFromCache(ids: List<PhotoId>) {
+        if (ids.isEmpty()) return
+        photoDao.deleteByIds(ids.map { it.value })
+    }
+
     // --- PhotoMover (H.4 — RELATIVE_PATH update with consent on API 30+) ---
 
     override suspend fun moveToFolder(

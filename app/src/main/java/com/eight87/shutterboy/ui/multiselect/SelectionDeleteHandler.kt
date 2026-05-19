@@ -58,6 +58,10 @@ fun rememberSelectionDeleteHandler(
 ): SelectionDeleteHandler {
     val coroutineScope = rememberCoroutineScope()
     var pending by remember { mutableStateOf<SelectionDeleteHandler.DialogState?>(null) }
+    // Remember the in-flight ids so the consent-launcher callback can
+    // eagerly drop them from the Room cache on success — Aves-style
+    // instant removal, no waiting for the MediaStore-observer rescan.
+    var inFlightIds by remember { mutableStateOf<List<PhotoId>>(emptyList()) }
 
     val consentLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
@@ -65,7 +69,14 @@ fun rememberSelectionDeleteHandler(
         // RESULT_OK == -1; on success exit selection. Otherwise leave selection
         // intact so the user can retry / cancel manually.
         if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val ids = inFlightIds
+            inFlightIds = emptyList()
+            coroutineScope.launch {
+                photoDeleter.eagerlyRemoveFromCache(ids)
+            }
             onComplete()
+        } else {
+            inFlightIds = emptyList()
         }
     }
 
@@ -81,9 +92,14 @@ fun rememberSelectionDeleteHandler(
                 val state = pending ?: return@SelectionDeleteHandler
                 pending = null
                 coroutineScope.launch {
-                    when (val req = photoDeleter.deletePhotos(state.ids.toList())) {
-                        is DeleteRequest.Immediate -> onComplete()
+                    val idList = state.ids.toList()
+                    when (val req = photoDeleter.deletePhotos(idList)) {
+                        is DeleteRequest.Immediate -> {
+                            photoDeleter.eagerlyRemoveFromCache(idList)
+                            onComplete()
+                        }
                         is DeleteRequest.Consent -> {
+                            inFlightIds = idList
                             val isr = IntentSenderRequest.Builder(req.intentSender.intentSender)
                                 .build()
                             consentLauncher.launch(isr)

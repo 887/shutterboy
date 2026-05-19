@@ -284,6 +284,16 @@ internal fun PhotoViewerContent(
         val pending = pendingDeleteId
         pendingDeleteId = null
         if (result.resultCode == Activity.RESULT_OK && pending != null) {
+            // Aves-style instant removal — drop the row from Room
+            // immediately. The MediaStore-observer rescan still fires
+            // in the background but the user sees the deletion land in
+            // one frame.
+            val deleter = photoDeleter
+            if (deleter != null) {
+                coroutineScope.launch {
+                    deleter.eagerlyRemoveFromCache(listOf(PhotoId(pending)))
+                }
+            }
             applyDeletion(pending)
         }
     }
@@ -627,7 +637,10 @@ internal fun PhotoViewerContent(
                                         deleteConsentLauncher.launch(isr)
                                     }
                                     is DeleteRequest.Immediate -> {
-                                        if (req.deletedCount > 0) applyDeletion(id)
+                                        if (req.deletedCount > 0) {
+                                            deleter.eagerlyRemoveFromCache(listOf(PhotoId(id)))
+                                            applyDeletion(id)
+                                        }
                                     }
                                     is DeleteRequest.Failure -> Unit
                                 }
