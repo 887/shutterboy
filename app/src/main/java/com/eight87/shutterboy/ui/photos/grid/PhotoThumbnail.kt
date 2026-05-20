@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -107,6 +108,21 @@ fun PhotoThumbnail(
                 .clip(RoundedCornerShape(2.dp))
                 .let { if (selected) it.alpha(0.55f) else it },
         )
+        // Video play-icon overlay. White circle with a black triangle —
+        // reads against any background colour. Sits in the bottom-right
+        // so it doesn't conflict with the selection check in the
+        // top-left.
+        if (photo.mimeType?.startsWith("video/") == true) {
+            Icon(
+                imageVector = Icons.Filled.PlayCircle,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(4.dp)
+                    .size(22.dp),
+            )
+        }
         if (selected) {
             Box(
                 modifier = Modifier
