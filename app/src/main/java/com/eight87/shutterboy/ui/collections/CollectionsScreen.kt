@@ -87,6 +87,15 @@ fun CollectionsScreen(
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
+        // Stable click callback shared by every FolderTile so all cells
+        // see the same lambda identity — no per-cell recompose when
+        // the parent recomposes for unrelated state (favoriteIds count,
+        // collectionsLevel toggle, etc).
+        val onFolderClick = remember(scope.backStack) {
+            { id: com.eight87.shutterboy.domain.FolderId ->
+                scope.backStack.push(FolderDetail(id.value))
+            }
+        }
         LazyVerticalGrid(
             columns = GridCells.Fixed(collectionsLevel.columns),
             modifier = Modifier
@@ -143,7 +152,7 @@ fun CollectionsScreen(
                     FolderTile(
                         folder = folder,
                         cover = folderCovers[folder.id],
-                        onClick = { scope.backStack.push(FolderDetail(folder.id.value)) },
+                        onClick = onFolderClick,
                     )
                 }
             }

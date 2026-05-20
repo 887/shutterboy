@@ -12,35 +12,66 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.size.Precision
+import coil3.size.Size
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Folder
+import com.eight87.shutterboy.domain.FolderId
 import com.eight87.shutterboy.domain.Photo
+import com.eight87.shutterboy.ui.photos.grid.LocalThumbnailQuality
+import com.eight87.shutterboy.ui.photos.grid.ThumbnailPrefetcher
 
 /**
  * Phase D.1 — folder tile in the Collections grid. Square cover image
- * (Coil `AsyncImage` against the cover photo's `contentUri`) sits above
- * the folder name + photo-count line. Tile cover comes from
- * `FolderSource.observeFolderCovers()`; folders without a cover render a
- * placeholder swatch so layout stays stable while a scan is mid-flight.
+ * (Coil [AsyncImage] against the cover photo's `contentUri`) sits above
+ * the folder name + photo-count line. Lean tile pattern matching
+ * [com.eight87.shutterboy.ui.photos.grid.PhotoThumbnail]:
+ * memoised [ImageRequest], thumb cache-key alignment so a cover that's
+ * already in the photos-grid memory cache hits instantly, and a stable
+ * `(FolderId) -> Unit` click callback so every tile shares one lambda
+ * identity (no per-cell recomposition on parent recompose).
  */
 @Composable
 internal fun FolderTile(
     folder: Folder,
     cover: Photo?,
-    onClick: () -> Unit,
+    onClick: (FolderId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val targetPx = LocalThumbnailQuality.current.targetPx
+    val coverId = cover?.id?.value
+    val request = remember(coverId, targetPx) {
+        if (coverId == null || cover == null) {
+            null
+        } else {
+            val cacheKey = "thumb-$coverId-$targetPx"
+            val tinyKey = "thumb-$coverId-${ThumbnailPrefetcher.TINY_PX}"
+            ImageRequest.Builder(context)
+                .data(cover.contentUri)
+                .size(Size(targetPx, targetPx))
+                .precision(Precision.INEXACT)
+                .memoryCacheKey(cacheKey)
+                .diskCacheKey(cacheKey)
+                .placeholderMemoryCacheKey(tinyKey)
+                .build()
+        }
+    }
+    val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .clickable { onClick(folder.id) }
             .padding(4.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -48,20 +79,15 @@ internal fun FolderTile(
             modifier = Modifier
                 .fillMaxSize()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp)),
+                .clip(RoundedCornerShape(8.dp))
+                .background(placeholderColor),
         ) {
-            if (cover != null) {
+            if (request != null) {
                 AsyncImage(
-                    model = cover.contentUri,
+                    model = request,
                     contentDescription = folder.displayName,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 )
             }
         }
