@@ -44,12 +44,19 @@ class MainActivity : ComponentActivity() {
             ) {
                 RequireMediaPermission(
                     onGranted = {
-                        // R.F.24 — `lifecycleScope` cancels on activity-destroy so a
-                        // rotation mid-scan doesn't leak the coroutine. The single-flight
-                        // mutex in `RoomGalleryRepository.executeScan` (R.F.25) is the
-                        // companion fix that prevents the rotation-then-resume case
-                        // from spawning a second concurrent scan.
-                        lifecycleScope.launch { graph.libraryScanner.forceRescan() }
+                        // `lifecycleScope` cancels on activity-destroy so a rotation
+                        // mid-scan doesn't leak the coroutine. The single-flight
+                        // mutex in `RoomGalleryRepository.executeScan` (R.F.25) is
+                        // the companion fix that prevents the rotation-then-resume
+                        // case from spawning a second concurrent scan.
+                        //
+                        // `scanIfChanged` (not `forceRescan`) — the MediaStore
+                        // generation token + SAF fingerprint gate short-circuits
+                        // in <10 ms when nothing changed since the last successful
+                        // scan, so cold-launch is free in the common case. The
+                        // explicit "Rescan" button in Settings is the only path
+                        // that should bypass the gate.
+                        lifecycleScope.launch { graph.libraryScanner.scanIfChanged() }
                     },
                 ) {
                     ShutterboyApp(graph = graph)
