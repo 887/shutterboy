@@ -40,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
@@ -160,7 +161,15 @@ class AppGraph(applicationContext: Context) {
         // selection toolbar gets the file off disk but our Room table
         // still has the row — the gallery keeps showing the deleted
         // photo until something else triggers a rescan.
+        // Debounce the observer pulse. MediaStore fires a separate
+        // change event for every inserted row (each screenshot a
+        // background app takes, every Camera shutter click), and a burst
+        // of N changes without coalescing kicks N sequential
+        // `scanIfChanged()` runs. 500 ms collapses a typical burst into
+        // a single rescan.
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
         mediaChangeSource.observeChanges()
+            .debounce(500L)
             .onEach { graphScope.launch { libraryScanner.scanIfChanged() } }
             .launchIn(graphScope)
     }

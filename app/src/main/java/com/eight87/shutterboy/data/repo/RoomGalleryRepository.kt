@@ -294,9 +294,6 @@ class RoomGalleryRepository(
         val combinedPhotos: List<ScannedPhoto> = device.photos + saf.photos
         val combinedFolders = device.folders + saf.folders
 
-        val total = combinedPhotos.size
-        _scanProgress.value = ScanProgress.Running(processed = 0, total = total, currentTitle = null)
-
         // 2. Upsert folders FIRST so streaming photo-batches satisfy the
         //    folder_id FK. Folder identity is fully known up-front from the
         //    MediaStore + SAF scan; no enrichment dependency.
@@ -317,29 +314,36 @@ class RoomGalleryRepository(
         val toDeleteFolders = cachedFolderIds - seenFolderIds
         folderDao.upsertAll(folderEntities)
 
-        // 3. Diff vs cache: only new photos need EXIF; existing rows keep cached EXIF.
+        // 3. Diff vs cache. Only photos whose MediaStore id is not already
+        //    in the cache get enriched + upserted. The common case after a
+        //    screenshot or a single new camera shot is a 1-photo delta
+        //    against a 30k-row library — re-upserting all 30k is pure
+        //    waste and is what makes a screenshot-triggered rescan feel
+        //    like a full library walk.
+        //
+        //    Caveat: this skips in-place edits (e.g. an external app
+        //    rewrites EXIF for an id we already have). DATE_MODIFIED is
+        //    not on PhotoEntity yet; the Settings → Rescan button stays
+        //    the escape hatch for that rare case.
         val cachedIds = photoDao.allIds().toSet()
-        val toEnrichIds = combinedPhotos.asSequence()
-            .filter { it.id !in cachedIds }
-            .map { it.id }
-            .toHashSet()
+        val seenIds = combinedPhotos.mapTo(HashSet(combinedPhotos.size)) { it.id }
+        val newPhotos = combinedPhotos.filter { it.id !in cachedIds }
 
-        // 4. Walk every combined photo, enriching new ones, and stream the
-        //    resulting entities into Room in batches of SCAN_UPSERT_BATCH.
-        //    `observePhotos` is a Room flow → each batch upsert causes the
-        //    UI to receive a fresh emission, so the gallery fills in while
-        //    the scan is still running instead of staying empty for minutes.
-        val allEntities = ArrayList<PhotoEntity>(total)
+        val total = newPhotos.size
+        _scanProgress.value = ScanProgress.Running(processed = 0, total = total, currentTitle = null)
+
+        // 4. Walk only the new photos, enriching + streaming into Room in
+        //    batches of SCAN_UPSERT_BATCH. `observePhotos` is a Room flow →
+        //    each batch upsert causes the UI to receive a fresh emission,
+        //    so the gallery fills in incrementally on a real cold start.
         val pending = ArrayList<PhotoEntity>(SCAN_UPSERT_BATCH)
         var processed = 0
         var lastEmitMs = 0L
         var lastEmittedProcessed = -1
         var lastEmittedTitle: String? = null
-        for (photo in combinedPhotos) {
-            val finalPhoto = if (photo.id in toEnrichIds) exifEnricher.enrich(photo) else photo
-            val entity = finalPhoto.toEntity()
-            allEntities.add(entity)
-            pending.add(entity)
+        for (photo in newPhotos) {
+            val enriched = exifEnricher.enrich(photo)
+            pending.add(enriched.toEntity())
             processed += 1
             val terminal = processed == total
             if (pending.size >= SCAN_UPSERT_BATCH || terminal) {
@@ -365,7 +369,6 @@ class RoomGalleryRepository(
 
         // 5. Apply deletes. Dangling photos first (so no row references a
         //    folder we're about to drop), then dangling folders.
-        val seenIds = allEntities.mapTo(HashSet(allEntities.size)) { it.id }
         val toDeletePhotos = (cachedIds - seenIds).toList()
         // Safety net: refuse to wipe the entire library when the scanner
         // returned zero photos but the cache wasn't empty. That state
@@ -391,9 +394,12 @@ class RoomGalleryRepository(
             )
         }
 
-        val deltaCount = allEntities.size - cachedIds.intersect(seenIds).size + toDeletePhotos.size
+        // UI reads photos from Room (observePhotos); the snapshot's photo
+        // list is only used by the deltaCount accounting + a couple of
+        // tests, so we no longer materialise the full library here.
+        val deltaCount = newPhotos.size + toDeletePhotos.size
         LibrarySnapshot(
-            photos = allEntities.map { it.toDomain() },
+            photos = emptyList(),
             folders = folderEntities.map { it.toDomain() },
             deltaCount = deltaCount,
         )
