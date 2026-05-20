@@ -47,6 +47,11 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 private const val LINGER_MS = 1200L
+// Aves uses 200 ms here; that felt sluggish on a fast grid. 80 ms is
+// still long enough to skip mid-drag scroll spam (the grid can't keep
+// up if we fire scrollToItem on every drag frame) but short enough to
+// feel like the peek tracks the finger live.
+private const val SCRUB_PEEK_DEBOUNCE_MS = 80L
 private val ScrubberStripWidth = 180.dp
 private val ThumbVisibleWidth = 22.dp
 private val ThumbTouchWidth = 32.dp
@@ -102,12 +107,13 @@ internal fun YearScrubber(
     val visible = scrolling || lingering || dragging
 
     // During drag the grid stays frozen — measure passes block the
-    // gesture pipeline. But when the finger holds still for 200 ms
-    // (the Aves pattern), we DO fire a scrollToItem so the user can
-    // see what's at that position. Debounced snapshotFlow handles
-    // the "no movement for 200 ms" detection automatically: each new
-    // pendingTarget resets the debounce timer; the collect block
-    // only fires after the target has been stable.
+    // gesture pipeline. But when the finger holds still for
+    // SCRUB_PEEK_DEBOUNCE_MS (Aves' pause-to-peek pattern), we DO fire
+    // a scrollToItem so the user can see what's at that position.
+    // Debounced snapshotFlow handles the "no movement for N ms"
+    // detection automatically: each new pendingTarget resets the
+    // debounce timer; the collect block only fires after the target
+    // has been stable.
     val scrollJob = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var pendingTarget by remember { mutableStateOf(-1) }
 
@@ -115,7 +121,7 @@ internal fun YearScrubber(
     LaunchedEffect(dragging) {
         if (!dragging) return@LaunchedEffect
         snapshotFlow { pendingTarget }
-            .debounce(200L)
+            .debounce(SCRUB_PEEK_DEBOUNCE_MS)
             .collect { target ->
                 if (target >= 0) {
                     gridState.scrollToItem(target)
