@@ -29,6 +29,7 @@ import com.eight87.shutterboy.ui.multiselect.rememberSelectionMoveHandler
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.Photos
 import com.eight87.shutterboy.ui.nav.RootTopBar
+import com.eight87.shutterboy.ui.nav.rootSwipe
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.Search
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
@@ -159,7 +160,11 @@ fun PhotosScreen(
             onLevelChange = { zoomLevel = it },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .rootSwipe(
+                    current = Photos,
+                    onSwitchTab = { scope.backStack.selectTab(it) },
+                ),
         )
     }
 }

@@ -39,6 +39,7 @@ import com.eight87.shutterboy.ui.nav.Collections
 import com.eight87.shutterboy.ui.nav.Favorites
 import com.eight87.shutterboy.ui.nav.FolderDetail
 import com.eight87.shutterboy.ui.nav.RootTopBar
+import com.eight87.shutterboy.ui.nav.rootSwipe
 import com.eight87.shutterboy.ui.nav.RouteScope
 /**
  * Collections root — folder tiles with user-pinned ordering. Top bar
@@ -100,7 +101,11 @@ fun CollectionsScreen(
             columns = GridCells.Fixed(collectionsLevel.columns),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .rootSwipe(
+                    current = com.eight87.shutterboy.ui.nav.Collections,
+                    onSwitchTab = { scope.backStack.selectTab(it) },
+                ),
             contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),

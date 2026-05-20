@@ -31,6 +31,7 @@ import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.ShutterboyBackStack
+import com.eight87.shutterboy.ui.nav.rootSwipe
 import com.eight87.shutterboy.ui.photos.grid.GalleryTimelineFrame
 import com.eight87.shutterboy.ui.photos.grid.PhotoStream
 
@@ -109,12 +110,22 @@ internal fun FavoritesScreenContent(
         },
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
+        val swipeModifier =
+            if (backStack != null) {
+                Modifier.rootSwipe(
+                    current = com.eight87.shutterboy.ui.nav.Favorites,
+                    onSwitchTab = { backStack.selectTab(it) },
+                )
+            } else {
+                Modifier
+            }
         GalleryTimelineFrame(
             stream = stream,
             onPhotoTap = onPhotoTap,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .then(swipeModifier),
             emptyState = { mod -> FavoritesEmptyState(modifier = mod) },
             level = zoomLevel,
             onLevelChange = { zoomLevel = it },
