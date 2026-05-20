@@ -1,26 +1,22 @@
 package com.eight87.shutterboy.ui.photos.grid
 
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 
 /**
- * Phase D.3.5 — engine wrapper that hosts the [PhotosZoomLevel] state +
- * the pinch-to-cycle gesture and routes both into [PhotosGrid]. The three
- * timeline surfaces (Photos / FolderDetail / SmartAlbumDetail) all
- * delegate to this; the per-screen file then is just the surface
- * scaffolding (TopAppBar / back arrow / title / sort overflow) plus the
- * [PhotoStream] that picks *which* photos. The sort choice is baked into
- * the [PhotoStream] closure (Phase E.2) — this engine doesn't know about
- * sort.
+ * Engine wrapper that routes a [PhotoStream] + density [level] into
+ * [PhotosGrid]. The three timeline surfaces (Photos / FolderDetail /
+ * Favorites) all delegate to this; the per-screen file is just the
+ * surface scaffolding (TopAppBar / sort / column-count button) plus
+ * the [PhotoStream] that picks *which* photos.
+ *
+ * Pinch-to-cycle-density was dropped — the [ColumnCountButton] in the
+ * top bar covers the same need, and the `Modifier.transformable` it
+ * installed was eating horizontal pointer events before the
+ * root-tab swipe modifier (applied by the caller) could see them.
  */
 @Composable
 fun GalleryTimelineFrame(
@@ -30,29 +26,15 @@ fun GalleryTimelineFrame(
     emptyState: (@Composable (Modifier) -> Unit)? = null,
     selectionState: SelectionState = SelectionState.Idle,
     onPhotoLongPress: (PhotoId) -> Unit = {},
-    initialZoomLevel: PhotosZoomLevel = PhotosZoomLevel.Items,
+    @Suppress("UNUSED_PARAMETER") initialZoomLevel: PhotosZoomLevel = PhotosZoomLevel.Items,
     level: PhotosZoomLevel? = null,
-    onLevelChange: (PhotosZoomLevel) -> Unit = {},
+    @Suppress("UNUSED_PARAMETER") onLevelChange: (PhotosZoomLevel) -> Unit = {},
 ) {
-    // Pinch state stays internal; if a parent supplies `level` directly
-    // (e.g. via the top-bar column-cycle button) the parent wins and the
-    // accumulator is reset on each external change.
-    var accumulator by remember(initialZoomLevel, level) {
-        mutableStateOf(ZoomAccumulator(level = level ?: initialZoomLevel))
-    }
-    val transformable = rememberTransformableState { zoomChange, _, _ ->
-        val next = accumulator.apply(zoomChange)
-        accumulator = next
-        if (next.level != accumulator.level) onLevelChange(next.level)
-    }
-    val currentLevel = level ?: accumulator.level
     PhotosGrid(
         stream = stream,
-        level = currentLevel,
+        level = level ?: PhotosZoomLevel.Items,
         onPhotoTap = onPhotoTap,
-        modifier = modifier
-            .fillMaxSize()
-            .transformable(state = transformable),
+        modifier = modifier.fillMaxSize(),
         emptyState = emptyState,
         selectionState = selectionState,
         onPhotoLongPress = onPhotoLongPress,
