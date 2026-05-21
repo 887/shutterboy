@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.CancellationSignal
+import android.os.OperationCanceledException
 import android.util.Size as AndroidSize
 import coil3.ImageLoader
 import coil3.asImage
@@ -13,6 +15,9 @@ import coil3.fetch.Fetcher
 import coil3.fetch.ImageFetchResult
 import coil3.request.Options
 import coil3.size.pxOrElse
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 
 /**
  * Coil [Fetcher] backed by [android.content.ContentResolver.loadThumbnail]
@@ -39,11 +44,31 @@ class MediaStoreThumbnailFetcher(
     override suspend fun fetch(): FetchResult {
         val width = options.size.width.pxOrElse { DEFAULT_SIZE }
         val height = options.size.height.pxOrElse { DEFAULT_SIZE }
-        val raw = context.contentResolver.loadThumbnail(
-            uri,
-            AndroidSize(width, height),
-            null,
-        )
+        // Bind a CancellationSignal to the current coroutine's Job so
+        // that when AsyncImage's request is cancelled (tile scrolls
+        // off-screen mid-decode during a direction reverse), the
+        // underlying `loadThumbnail` IPC aborts and the IO worker slot
+        // frees up for the newly-visible tile. Without this hook,
+        // `loadThumbnail` is a blocking call that ignores coroutine
+        // cancellation and holds the slot for the full 50-300 ms decode
+        // — which is exactly the "everything spinning after a reverse"
+        // signature: all 8 fetcher slots wedged on stale-direction
+        // tiles while the new visible cells queue behind them.
+        val signal = CancellationSignal()
+        val handle = currentCoroutineContext()[Job]?.invokeOnCompletion {
+            if (it != null) signal.cancel()
+        }
+        val raw = try {
+            context.contentResolver.loadThumbnail(
+                uri,
+                AndroidSize(width, height),
+                signal,
+            )
+        } catch (e: OperationCanceledException) {
+            throw CancellationException("loadThumbnail cancelled").apply { initCause(e) }
+        } finally {
+            handle?.dispose()
+        }
         // ContentResolver.loadThumbnail returns a thumbnail "of
         // approximately the given size" — for camera-sourced photos
         // the OS hands back its MediaStore MINI_KIND (typically
