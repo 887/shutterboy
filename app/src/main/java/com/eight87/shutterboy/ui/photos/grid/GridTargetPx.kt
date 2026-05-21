@@ -18,26 +18,38 @@ import androidx.compose.ui.unit.dp
 val LocalGridTargetPx = staticCompositionLocalOf { 256 }
 
 /**
- * Compute the decode target-px for a grid tile given its column count.
- * Auto-derives from device screen width, divided by columns, minus
- * `LazyVerticalGrid` padding + inter-cell gaps — then scaled by the
- * user's [com.eight87.shutterboy.data.settings.ThumbnailQuality]
- * multiplier (Low 0.5× / Medium 1.0× / High 1.5×).
+ * Always-0.5× variant used as the **first-pass** decode in the
+ * progressive-quality strategy: tiles paint the cheap low decode
+ * immediately so scroll is fast, then upgrade to [LocalGridTargetPx]
+ * after a short dwell on screen. When the user has picked
+ * `ThumbnailQuality.Low`, this equals [LocalGridTargetPx] and the
+ * cell skips the upgrade.
+ */
+val LocalGridLowPx = staticCompositionLocalOf { 128 }
+
+/**
+ * Compute the decode target-px for a grid tile given its column count
+ * and a [multiplier]. The base value auto-derives from device screen
+ * width / columns / gaps, so a 1080p phone with 4 columns lands at
+ * ~260 px, a tablet portrait at ~360 px, a tablet landscape at
+ * ~600 px — each device asks Coil for exactly what its cells
+ * actually render.
  *
- * Result is the same regardless of whether you're on a 1080p phone,
- * a 1440p phone, or a 2048-px tablet in landscape — each device asks
- * Coil for exactly the number of pixels its cells actually render.
+ * Default [multiplier] is the user's
+ * [com.eight87.shutterboy.data.settings.ThumbnailQuality] setting
+ * (Low 0.5× / Medium 1.0× / High 1.5×). Pass an explicit value for
+ * the progressive-decode low tier (always 0.5×).
  */
 @Composable
-fun rememberGridTargetPx(columns: Int): Int {
+fun rememberGridTargetPx(
+    columns: Int,
+    multiplier: Float = LocalThumbnailQuality.current.multiplier,
+): Int {
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
-    val multiplier = LocalThumbnailQuality.current.multiplier
     return remember(columns, configuration.screenWidthDp, multiplier) {
         val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
-        // 4 dp start + 4 dp end content padding on the LazyVerticalGrid.
         val sidePaddingPx = with(density) { 8.dp.toPx() }
-        // 2 dp horizontal arrangement gap between cells.
         val gapsPx = with(density) { ((columns - 1) * 2).dp.toPx() }
         val cellPx = ((screenWidthPx - sidePaddingPx - gapsPx) / columns)
             .coerceAtLeast(64f)

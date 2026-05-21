@@ -99,8 +99,14 @@ fun CollectionsScreen(
         }
         val collectionsTargetPx =
             com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(collectionsLevel.columns)
+        val collectionsLowPx =
+            com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(
+                collectionsLevel.columns,
+                multiplier = 0.5f,
+            )
         androidx.compose.runtime.CompositionLocalProvider(
             com.eight87.shutterboy.ui.photos.grid.LocalGridTargetPx provides collectionsTargetPx,
+            com.eight87.shutterboy.ui.photos.grid.LocalGridLowPx provides collectionsLowPx,
         ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(collectionsLevel.columns),

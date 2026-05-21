@@ -19,6 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -65,23 +68,53 @@ fun PhotoThumbnail(
 ) {
     val context = LocalContext.current
     val targetPx = LocalGridTargetPx.current
+    val lowPx = LocalGridLowPx.current
     val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val prefetcher = LocalPrefetcher.current
-    // Self-submit on first composition. This puts the actually-visible
-    // tile at the TOP of the prefetcher LIFO before the scheduler's
-    // next sample fires — direction reverses no longer wait ~40-100 ms
-    // for the scheduler to notice what's now on screen.
+    // Progressive-quality. On compose we render at `lowPx` (always
+    // 0.5× cell, cheap) so scroll is fast and tiles paint instantly.
+    // After 250 ms of dwell on screen we upgrade to `targetPx` (the
+    // user's quality setting). Tiles that scroll off before 250 ms
+    // never trigger the upgrade decode — no wasted work during fast
+    // scrolling.
+    //
+    // When the user has set quality to Low, `lowPx == targetPx` and
+    // the upgrade is a no-op; the cell just renders at low.
+    val needsUpgrade = lowPx != targetPx
+    var useTarget by remember(photo.id.value, targetPx, lowPx) {
+        // If the target tier is already in cache from a scheduler
+        // look-ahead, render it directly — skip the low intermediate.
+        val loader = coil3.SingletonImageLoader.get(context)
+        val targetCached = loader.memoryCache
+            ?.get(coil3.memory.MemoryCache.Key("thumb-${photo.id.value}-$targetPx")) != null
+        mutableStateOf(targetCached || !needsUpgrade)
+    }
     LaunchedEffect(photo.id.value, targetPx, prefetcher) {
         prefetcher?.submit(photo.id.value, photo.contentUri)
     }
-    val request = remember(photo.id.value, targetPx) {
-        val cacheKey = "thumb-${photo.id.value}-$targetPx"
+    LaunchedEffect(photo.id.value, useTarget, needsUpgrade) {
+        if (!useTarget && needsUpgrade) {
+            kotlinx.coroutines.delay(250L)
+            useTarget = true
+        }
+    }
+    val request = remember(photo.id.value, targetPx, lowPx, useTarget) {
+        val px = if (useTarget) targetPx else lowPx
+        val cacheKey = "thumb-${photo.id.value}-$px"
+        val lowKey = "thumb-${photo.id.value}-$lowPx"
         ImageRequest.Builder(context)
             .data(photo.contentUri)
-            .size(Size(targetPx, targetPx))
+            .size(Size(px, px))
             .precision(Precision.INEXACT)
             .memoryCacheKey(cacheKey)
             .diskCacheKey(cacheKey)
+            .apply {
+                // While the target decode is in flight, show the
+                // already-decoded low bitmap instead of the spinner.
+                if (useTarget && needsUpgrade) {
+                    placeholderMemoryCacheKey(lowKey)
+                }
+            }
             .build()
     }
     val transparentPainter = remember { ColorPainter(Color.Transparent) }

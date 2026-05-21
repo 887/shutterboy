@@ -122,6 +122,7 @@ internal fun PhotosGrid(
     // dedupe via memory-cache hit check inside the prefetcher.
     val context = LocalContext.current
     val targetPx = rememberGridTargetPx(level.columns)
+    val lowPx = rememberGridTargetPx(level.columns, multiplier = 0.5f)
     val prefetchScope = rememberCoroutineScope()
     val prefetcher = remember(targetPx) {
         ThumbnailPrefetcher(
@@ -272,6 +273,7 @@ internal fun PhotosGrid(
     CompositionLocalProvider(
         LocalPrefetcher provides prefetcher,
         LocalGridTargetPx provides targetPx,
+        LocalGridLowPx provides lowPx,
     ) {
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
