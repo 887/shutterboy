@@ -30,7 +30,9 @@ import com.eight87.shutterboy.domain.PhotoId
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.isSelected
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.withContext
 
 /**
@@ -131,6 +133,7 @@ internal fun PhotosGrid(
             scope = prefetchScope,
         )
     }
+    @OptIn(FlowPreview::class)
     LaunchedEffect(timeline, targetPx, prefetcher) {
         // Adaptive, direction-aware prefetch scheduler. The compose
         // snapshot read happens on whatever thread `collect` is
@@ -174,6 +177,16 @@ internal fun PhotosGrid(
             gridState.firstVisibleItemIndex to gridState.layoutInfo.visibleItemsInfo.size
         }
             .distinctUntilChanged()
+            // Coalesce mid-fling pulses. A hard fling fires ~30
+            // viewport changes per second; without sampling we'd
+            // schedule (build sets, retain, submit) 30 times in 1s
+            // and the prefetcher would spend most of its budget
+            // cancelling + re-submitting tiles it had already
+            // started decoding. 100 ms gives the workers a chance
+            // to actually finish what we asked for, while still
+            // updating frequently enough during drift that the
+            // window follows the user.
+            .sample(100L)
             .collect { (first, visibleCount) ->
                 if (visibleCount <= 0) return@collect
                 val now = System.nanoTime()
@@ -226,10 +239,21 @@ internal fun PhotosGrid(
                         else -> first + visibleCount / 2
                     }
 
-                    // Build the keep-set + cancel anything pending /
-                    // in-flight that fell out of the far window.
-                    val keepIds = HashSet<Long>(farTo - farFrom)
-                    for (i in farFrom until farTo) {
+                    // Keep-zone is intentionally larger and SYMMETRIC
+                    // around `first`, decoupled from the asymmetric
+                    // prefetch window above. Reason: if `retain` followed
+                    // the prefetch window, a hard fling down would
+                    // immediately cancel everything behind the viewport,
+                    // and a quick reverse-flick would land on tiles we
+                    // just threw away (spinner reappears). The keep-zone
+                    // forgives short direction reversals — only items
+                    // truly off-piste (more than ~30 viewports away
+                    // from the current position) get cancelled.
+                    val keepHalf = visibleCount * 30
+                    val keepFrom = (first - keepHalf).coerceAtLeast(0)
+                    val keepTo = (first + keepHalf).coerceAtMost(timelineSnapshot.size)
+                    val keepIds = HashSet<Long>(keepTo - keepFrom)
+                    for (i in keepFrom until keepTo) {
                         val cell = timelineSnapshot.getOrNull(i)
                             as? TimelineDisplayItem.PhotoCell ?: continue
                         keepIds += cell.photo.id.value
