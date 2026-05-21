@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -65,6 +66,14 @@ fun PhotoThumbnail(
     val context = LocalContext.current
     val targetPx = LocalThumbnailQuality.current.targetPx
     val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val prefetcher = LocalPrefetcher.current
+    // Self-submit on first composition. This puts the actually-visible
+    // tile at the TOP of the prefetcher LIFO before the scheduler's
+    // next sample fires — direction reverses no longer wait ~40-100 ms
+    // for the scheduler to notice what's now on screen.
+    LaunchedEffect(photo.id.value, targetPx, prefetcher) {
+        prefetcher?.submit(photo.id.value, photo.contentUri)
+    }
     val request = remember(photo.id.value, targetPx) {
         val cacheKey = "thumb-${photo.id.value}-$targetPx"
         ImageRequest.Builder(context)

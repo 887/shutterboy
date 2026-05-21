@@ -49,7 +49,13 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
                 add(MediaStoreThumbnailFetcher.Factory())
                 add(VideoFrameDecoder.Factory())
             }
-            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(8))
+            // Bumped from 8 → 16. With cancellation now wired into
+            // MediaStoreThumbnailFetcher, stale fetches abort on scroll
+            // direction reverse and the slots free immediately. The
+            // wider parallelism reduces Coil's queue depth so newly-
+            // visible cells start their decode without waiting behind
+            // cells that just scrolled off.
+            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism(16))
             .decoderCoroutineContext(Dispatchers.Default.limitedParallelism(8))
             // R.F.29 — Aves-class gallery libraries (10k–50k photos) blow
             // through Coil's default ~25% maxMemory budget during fast

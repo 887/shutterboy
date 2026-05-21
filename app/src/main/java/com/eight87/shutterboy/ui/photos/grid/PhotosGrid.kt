@@ -186,7 +186,11 @@ internal fun PhotosGrid(
             // to actually finish what we asked for, while still
             // updating frequently enough during drift that the
             // window follows the user.
-            .sample(100L)
+            // Aggressive sampling (40 ms) so direction reverses
+            // reprioritize within ~2 frames instead of ~6. Per-sample
+            // work is cheap (cancel + submit through cancellable
+            // workers) so we can afford the higher rate.
+            .sample(40L)
             .collect { (first, visibleCount) ->
                 if (visibleCount <= 0) return@collect
                 val now = System.nanoTime()
@@ -194,7 +198,10 @@ internal fun PhotosGrid(
                     val dt = (now - lastTimeNs) / 1_000_000_000f
                     if (dt > 0.0001f) (first - lastIndex) / dt else 0f
                 } else 0f
-                emaVelocity = emaVelocity * 0.6f + instant * 0.4f
+                // Light smoothing only — bias toward the instant
+                // reading so direction reverses are detected on the
+                // next sample, not several samples in.
+                emaVelocity = emaVelocity * 0.3f + instant * 0.7f
                 lastIndex = first
                 lastTimeNs = now
 
@@ -262,6 +269,7 @@ internal fun PhotosGrid(
             }
     }
 
+    CompositionLocalProvider(LocalPrefetcher provides prefetcher) {
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
             state = gridState,
@@ -352,6 +360,7 @@ internal fun PhotosGrid(
             modifier = Modifier.align(Alignment.CenterEnd),
             onScrubbingChange = { /* no-op; suppress-decode dropped in the lean pass */ },
         )
+    }
     }
 }
 
