@@ -61,6 +61,7 @@ import kotlinx.coroutines.withContext
 internal fun PhotosGrid(
     stream: PhotoStream,
     level: PhotosZoomLevel,
+    columns: Int,
     onPhotoTap: (PhotoId, List<Long>) -> Unit,
     modifier: Modifier = Modifier,
     emptyState: (@Composable (Modifier) -> Unit)? = null,
@@ -121,8 +122,8 @@ internal fun PhotosGrid(
     // bury fresh visible positions under stale earlier ones. Per-id
     // dedupe via memory-cache hit check inside the prefetcher.
     val context = LocalContext.current
-    val targetPx = rememberGridTargetPx(level.columns)
-    val lowPx = rememberGridTargetPx(level.columns, multiplier = 0.5f)
+    val targetPx = rememberGridTargetPx(columns)
+    val lowPx = rememberGridTargetPx(columns, multiplier = 0.5f)
     val prefetchScope = rememberCoroutineScope()
     val prefetcher = remember(targetPx) {
         ThumbnailPrefetcher(
@@ -278,7 +279,7 @@ internal fun PhotosGrid(
     Box(modifier = modifier.fillMaxSize()) {
         LazyVerticalGrid(
             state = gridState,
-            columns = GridCells.Fixed(level.columns),
+            columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),

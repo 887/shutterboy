@@ -1,26 +1,22 @@
 package com.eight87.shutterboy.ui.photos.grid
 
 /**
- * Phase C.3 — four-level density zoom for the Photos timeline. Pinch-out
- * (positive zoom) takes the grid toward [Items] (denser, 4 columns of
- * thumbnails); pinch-in (negative zoom) takes it toward [Years] (sparser,
- * one hero cover per year).
+ * **Grouping** mode for the Photos timeline — independent of column
+ * count. Pinch-in / pinch-out cycle through more aggregation:
+ * Items → Days → Months → Years.
  *
- * Pure enum + pure transitions so the gesture-handler can be unit-tested
- * without spinning up Compose.
+ *   - [Items]: one cell per photo, month-year section bands.
+ *   - [Days]: one cover-tile per day, year section bands.
+ *   - [Months]: one cover-tile per month, year section bands.
+ *   - [Years]: one hero cover per year, no section bands.
+ *
+ * Column count is a separate, independent preference — see
+ * [com.eight87.shutterboy.data.settings.DisplayPreferences.observeColumnCount].
+ * Grouping and columns compose: a user can pick "Months" grouping
+ * with 3 columns, or "Items" grouping with 5 columns, etc.
  */
-enum class PhotosZoomLevel(val columns: Int) {
-    /** Default. One cell per photo, 4 columns; month-year section bands. */
-    Items(columns = 4),
-
-    /** One cover-tile per day, 3 columns; year section bands. */
-    Days(columns = 3),
-
-    /** One cover-tile per month, 2 columns; year section bands. */
-    Months(columns = 2),
-
-    /** One hero cover per year, 1 column; no section bands. */
-    Years(columns = 1);
+enum class PhotosZoomLevel {
+    Items, Days, Months, Years;
 
     /** Step toward more density. Clamps at [Items]. */
     fun zoomIn(): PhotosZoomLevel = when (this) {
@@ -37,6 +33,19 @@ enum class PhotosZoomLevel(val columns: Int) {
         Months -> Years
         Years -> Years
     }
+}
+
+/**
+ * Suggested default column count for a given grouping — used when no
+ * persisted column-count preference is set. Items grouping is the
+ * densest, so it gets the most columns; Years grouping shows hero
+ * cards so it defaults to one full-width per row.
+ */
+fun PhotosZoomLevel.defaultColumns(): Int = when (this) {
+    PhotosZoomLevel.Items -> 4
+    PhotosZoomLevel.Days -> 3
+    PhotosZoomLevel.Months -> 2
+    PhotosZoomLevel.Years -> 1
 }
 
 /**

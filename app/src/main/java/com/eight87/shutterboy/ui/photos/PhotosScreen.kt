@@ -4,7 +4,12 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.automirrored.outlined.ViewList
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.ViewModule
 import androidx.compose.material.icons.outlined.ViewQuilt
 import androidx.compose.ui.unit.dp
@@ -26,7 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.sort.PhotoSort
 import com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel
-import com.eight87.shutterboy.ui.photos.grid.cycleNext
+import com.eight87.shutterboy.ui.photos.grid.defaultColumns
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.SelectionTopBar
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
@@ -78,6 +83,11 @@ fun PhotosScreen(
     var zoomLevel by remember(initialDensity) {
         mutableStateOf<com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel>(initialDensity)
     }
+    // Column count — INDEPENDENT of grouping. Seeded from the
+    // grouping's default columns (Items=4, Days=3, etc) on first
+    // launch, but persists separately once the user changes it.
+    var columnCount by remember { mutableStateOf(initialDensity.defaultColumns()) }
+    var groupingMenuOpen by remember { mutableStateOf(false) }
 
     val selectionHolder = rememberSelectionHolder()
     val deleteHandler = rememberSelectionDeleteHandler(scope.photoDeleter) {
@@ -124,8 +134,8 @@ fun PhotosScreen(
                         // results — Photos timeline doesn't need its own
                         // entry point until a real use case shows up.
                         com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
-                            level = zoomLevel,
-                            onLevelChange = { zoomLevel = it },
+                            count = columnCount,
+                            onCountChange = { columnCount = it },
                         )
                     }
                     com.eight87.shutterboy.ui.nav.ScanProgressStrip(
@@ -136,21 +146,57 @@ fun PhotosScreen(
         },
         floatingActionButton = {
             if (selectionHolder.state !is SelectionState.Active) {
-                // Two stacked FABs. Density cycle on top (quick access
-                // to gallery layout — Items / Days / Months / Years),
-                // Search on the bottom. Small density FAB so it reads
-                // as a secondary action against the primary Search.
+                // Two stacked FABs.
+                //  - Top: grouping picker — tapping it opens a
+                //    DropdownMenu listing Items / Days / Months / Years
+                //    with a checkmark next to the current grouping.
+                //    Grouping = how photos are aggregated, NOT how
+                //    many columns are shown. Columns live on the
+                //    top-bar IconButton, controlled independently.
+                //  - Bottom: Search (primary CTA).
                 androidx.compose.foundation.layout.Column(
                     horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
                     verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
                 ) {
-                    androidx.compose.material3.SmallFloatingActionButton(
-                        onClick = { zoomLevel = zoomLevel.cycleNext() },
-                    ) {
-                        Icon(
-                            imageVector = densityIcon(zoomLevel),
-                            contentDescription = null,
-                        )
+                    androidx.compose.foundation.layout.Box {
+                        androidx.compose.material3.SmallFloatingActionButton(
+                            onClick = { groupingMenuOpen = true },
+                        ) {
+                            Icon(
+                                imageVector = groupingIcon(zoomLevel),
+                                contentDescription = null,
+                            )
+                        }
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = groupingMenuOpen,
+                            onDismissRequest = { groupingMenuOpen = false },
+                        ) {
+                            PhotosZoomLevel.entries.forEach { option ->
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = {
+                                        androidx.compose.material3.Text(
+                                            text = stringResource(groupingLabelRes(option)),
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        if (option == zoomLevel) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Outlined.Check,
+                                                contentDescription = null,
+                                            )
+                                        } else {
+                                            androidx.compose.foundation.layout.Spacer(
+                                                modifier = Modifier.size(24.dp),
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        zoomLevel = option
+                                        groupingMenuOpen = false
+                                    },
+                                )
+                            }
+                        }
                     }
                     androidx.compose.material3.FloatingActionButton(
                         onClick = { scope.backStack.push(Search) },
@@ -181,6 +227,7 @@ fun PhotosScreen(
             initialZoomLevel = initialDensity,
             level = zoomLevel,
             onLevelChange = { zoomLevel = it },
+            columns = columnCount,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -192,9 +239,19 @@ fun PhotosScreen(
     }
 }
 
-private fun densityIcon(level: PhotosZoomLevel) = when (level) {
-    PhotosZoomLevel.Items -> Icons.Outlined.GridView
-    PhotosZoomLevel.Days -> Icons.Outlined.ViewModule
-    PhotosZoomLevel.Months -> Icons.Outlined.ViewQuilt
-    PhotosZoomLevel.Years -> Icons.AutoMirrored.Outlined.ViewList
+// Grouping icons (Items/Days/Months/Years) — distinct from the
+// column-count icons in ColumnCountButton.kt. Grouping describes
+// *what each cell represents*; columns describes how many fit per row.
+private fun groupingIcon(level: PhotosZoomLevel) = when (level) {
+    PhotosZoomLevel.Items -> Icons.Outlined.PhotoLibrary
+    PhotosZoomLevel.Days -> Icons.Outlined.CalendarToday
+    PhotosZoomLevel.Months -> Icons.Outlined.CalendarMonth
+    PhotosZoomLevel.Years -> Icons.Outlined.GridView
+}
+
+private fun groupingLabelRes(level: PhotosZoomLevel): Int = when (level) {
+    PhotosZoomLevel.Items -> R.string.settings_lookfeel_density_items
+    PhotosZoomLevel.Days -> R.string.settings_lookfeel_density_days
+    PhotosZoomLevel.Months -> R.string.settings_lookfeel_density_months
+    PhotosZoomLevel.Years -> R.string.settings_lookfeel_density_years
 }

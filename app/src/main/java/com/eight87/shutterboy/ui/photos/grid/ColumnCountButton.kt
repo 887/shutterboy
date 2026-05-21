@@ -10,32 +10,40 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 
 /**
- * Top-bar action button that cycles the gallery's column count.
- * Icon morphs with the current density: 4 columns shows a dense grid,
- * 1 column shows a single list row. Tap cycles
- * Items → Days → Months → Years → Items.
+ * Top-bar action that cycles the **column count** of the gallery grid
+ * (1 → 2 → 3 → 4 → 5 → 1). Independent of the grouping level (see
+ * [PhotosZoomLevel]) — grouping is picked via the FAB dropdown menu.
  *
- * Mirrors tonearmboy's same-shape button so both apps feel like
- * siblings.
+ * Icon morphs with the count so it reads as a density hint at a
+ * glance: fewer columns = list-like, more columns = dense grid.
  */
 @Composable
 fun ColumnCountButton(
-    level: PhotosZoomLevel,
-    onLevelChange: (PhotosZoomLevel) -> Unit,
+    count: Int,
+    onCountChange: (Int) -> Unit,
 ) {
-    IconButton(onClick = { onLevelChange(level.cycleNext()) }) {
+    IconButton(onClick = { onCountChange(cycleColumns(count)) }) {
         Icon(
-            imageVector = when (level) {
-                PhotosZoomLevel.Items -> Icons.Outlined.GridView
-                PhotosZoomLevel.Days -> Icons.Outlined.ViewModule
-                PhotosZoomLevel.Months -> Icons.Outlined.ViewQuilt
-                PhotosZoomLevel.Years -> Icons.AutoMirrored.Outlined.ViewList
+            imageVector = when (count) {
+                1 -> Icons.AutoMirrored.Outlined.ViewList
+                2 -> Icons.Outlined.ViewQuilt
+                3 -> Icons.Outlined.ViewModule
+                else -> Icons.Outlined.GridView
             },
             contentDescription = null,
         )
     }
 }
 
+private const val MIN_COLUMNS = 1
+private const val MAX_COLUMNS = 5
+
+private fun cycleColumns(count: Int): Int {
+    val next = count + 1
+    return if (next > MAX_COLUMNS) MIN_COLUMNS else next
+}
+
+/** Kept for backward compatibility with PhotosScreen's old FAB code. */
 fun PhotosZoomLevel.cycleNext(): PhotosZoomLevel = when (this) {
     PhotosZoomLevel.Items -> PhotosZoomLevel.Days
     PhotosZoomLevel.Days -> PhotosZoomLevel.Months

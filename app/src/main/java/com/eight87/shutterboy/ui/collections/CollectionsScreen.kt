@@ -63,11 +63,10 @@ fun CollectionsScreen(
     val orderedFolders = remember(folders, folderOrder) {
         applyCustomOrder(folders, folderOrder) { it.id }
     }
-    // Column count for the folder grid — cycled by the top-bar button.
-    // Maps onto a PhotosZoomLevel so the icon matches Photos exactly.
-    var collectionsLevel by remember {
-        mutableStateOf(com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel.Months)
-    }
+    // Column count for the folder grid — cycled by the top-bar
+    // button. Independent of any grouping (folders don't have
+    // grouping levels — they're a flat list).
+    var collectionsColumns by remember { mutableStateOf(2) }
 
     Scaffold(
         topBar = {
@@ -77,8 +76,8 @@ fun CollectionsScreen(
                     onSelect = { dest -> scope.backStack.selectTab(dest) },
                 ) {
                     com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
-                        level = collectionsLevel,
-                        onLevelChange = { collectionsLevel = it },
+                        count = collectionsColumns,
+                        onCountChange = { collectionsColumns = it },
                     )
                 }
                 com.eight87.shutterboy.ui.nav.ScanProgressStrip(
@@ -98,10 +97,10 @@ fun CollectionsScreen(
             }
         }
         val collectionsTargetPx =
-            com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(collectionsLevel.columns)
+            com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(collectionsColumns)
         val collectionsLowPx =
             com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(
-                collectionsLevel.columns,
+                collectionsColumns,
                 multiplier = 0.5f,
             )
         androidx.compose.runtime.CompositionLocalProvider(
@@ -109,7 +108,7 @@ fun CollectionsScreen(
             com.eight87.shutterboy.ui.photos.grid.LocalGridLowPx provides collectionsLowPx,
         ) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(collectionsLevel.columns),
+            columns = GridCells.Fixed(collectionsColumns),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

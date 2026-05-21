@@ -78,6 +78,7 @@ internal fun FavoritesScreenContent(
             com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel.Items,
         )
     }
+    var favoritesColumns by remember { mutableStateOf(4) }
     Scaffold(
         topBar = {
             if (backStack != null) {
@@ -86,8 +87,8 @@ internal fun FavoritesScreenContent(
                     onSelect = { dest -> backStack.selectTab(dest) },
                 ) {
                     com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
-                        level = zoomLevel,
-                        onLevelChange = { zoomLevel = it },
+                        count = favoritesColumns,
+                        onCountChange = { favoritesColumns = it },
                     )
                 }
             } else {
@@ -129,6 +130,7 @@ internal fun FavoritesScreenContent(
             emptyState = { mod -> FavoritesEmptyState(modifier = mod) },
             level = zoomLevel,
             onLevelChange = { zoomLevel = it },
+            columns = favoritesColumns,
         )
     }
 }

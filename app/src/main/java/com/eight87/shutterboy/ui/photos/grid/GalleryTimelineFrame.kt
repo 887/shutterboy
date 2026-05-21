@@ -29,10 +29,13 @@ fun GalleryTimelineFrame(
     @Suppress("UNUSED_PARAMETER") initialZoomLevel: PhotosZoomLevel = PhotosZoomLevel.Items,
     level: PhotosZoomLevel? = null,
     @Suppress("UNUSED_PARAMETER") onLevelChange: (PhotosZoomLevel) -> Unit = {},
+    columns: Int? = null,
 ) {
+    val activeLevel = level ?: PhotosZoomLevel.Items
     PhotosGrid(
         stream = stream,
-        level = level ?: PhotosZoomLevel.Items,
+        level = activeLevel,
+        columns = columns ?: activeLevel.defaultColumns(),
         onPhotoTap = onPhotoTap,
         modifier = modifier.fillMaxSize(),
         emptyState = emptyState,
