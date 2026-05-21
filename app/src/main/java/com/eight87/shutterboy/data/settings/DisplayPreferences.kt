@@ -26,13 +26,23 @@ interface DisplayPreferences {
  * `ImageRequest.Builder.size(...)` at the tile call-site; bigger →
  * crisper but slower + more memory.
  */
-enum class ThumbnailQuality(val targetPx: Int) {
-    // Cut from 192/384/768. A 4-column grid on 1080-1440 px phones
-    // gives cell widths of ~260-360 px, so anything past ~300 is
-    // pure decode + GPU-upload waste — the user can't see the
-    // extra resolution. Smaller decodes also free the OS thumbnail
-    // pipe faster, which is what makes Aves feel buttery.
-    Low(96),
-    Medium(192),
-    High(384),
+/**
+ * Quality is now a **multiplier on the actual cell px** computed at
+ * runtime, not a fixed pixel value. The grid measures its column
+ * width from the device + zoom level and asks Coil for
+ * `cellPx × multiplier`, so:
+ *
+ * - Medium (1.0×) is the auto-default — decode-at-display-size,
+ *   crisp without waste, scales correctly from a budget MediaTek
+ *   1080p phone (cells ~260 px) up to a tablet in landscape
+ *   (cells ~500-700 px).
+ * - Low (0.5×) — for slow devices where decode throughput beats
+ *   crispness. Tiles will look slightly soft at native res.
+ * - High (1.5×) — supersample for picky users on fast devices
+ *   (some upscale during pinch-zoom etc).
+ */
+enum class ThumbnailQuality(val multiplier: Float) {
+    Low(0.5f),
+    Medium(1.0f),
+    High(1.5f),
 }

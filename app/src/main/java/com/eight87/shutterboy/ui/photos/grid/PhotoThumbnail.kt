@@ -64,7 +64,7 @@ fun PhotoThumbnail(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val targetPx = LocalThumbnailQuality.current.targetPx
+    val targetPx = LocalGridTargetPx.current
     val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val prefetcher = LocalPrefetcher.current
     // Self-submit on first composition. This puts the actually-visible

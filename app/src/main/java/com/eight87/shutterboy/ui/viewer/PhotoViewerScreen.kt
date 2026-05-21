@@ -682,8 +682,11 @@ private fun PhotoPage(
     val isVideo = photo?.mimeType?.startsWith("video/") == true
     // Same px the grid uses for its thumb cache key — so the viewer
     // can use that bitmap as its placeholder via placeholderMemoryCacheKey.
+    // Match the same key the photos grid produces for the default
+    // Items level (4 columns), so the viewer hits the in-memory
+    // thumbnail when the user opened from there.
     val thumbPlaceholderPx =
-        com.eight87.shutterboy.ui.photos.grid.LocalThumbnailQuality.current.targetPx
+        com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(columns = 4)
 
     // G.2 — per-page vertical drag detector. Accumulates the vertical
     // delta; on release we classify it into swipe-up-info / swipe-down-

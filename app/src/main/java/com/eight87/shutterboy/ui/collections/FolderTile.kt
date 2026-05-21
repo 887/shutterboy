@@ -49,7 +49,7 @@ internal fun FolderTile(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val targetPx = LocalThumbnailQuality.current.targetPx
+    val targetPx = com.eight87.shutterboy.ui.photos.grid.LocalGridTargetPx.current
     val coverId = cover?.id?.value
     val request = remember(coverId, targetPx) {
         if (coverId == null || cover == null) {

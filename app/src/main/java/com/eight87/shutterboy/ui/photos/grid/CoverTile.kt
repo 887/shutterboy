@@ -46,7 +46,7 @@ internal fun CoverTile(
             .clickable(onClick = onClick),
     ) {
         val context = LocalContext.current
-        val targetPx = LocalThumbnailQuality.current.targetPx
+        val targetPx = LocalGridTargetPx.current
         val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
         val placeholderPainter = androidx.compose.runtime.remember(placeholderColor) {
             androidx.compose.ui.graphics.painter.ColorPainter(placeholderColor)

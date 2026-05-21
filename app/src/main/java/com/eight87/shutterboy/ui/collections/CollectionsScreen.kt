@@ -97,6 +97,11 @@ fun CollectionsScreen(
                 scope.backStack.push(FolderDetail(id.value))
             }
         }
+        val collectionsTargetPx =
+            com.eight87.shutterboy.ui.photos.grid.rememberGridTargetPx(collectionsLevel.columns)
+        androidx.compose.runtime.CompositionLocalProvider(
+            com.eight87.shutterboy.ui.photos.grid.LocalGridTargetPx provides collectionsTargetPx,
+        ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(collectionsLevel.columns),
             modifier = Modifier
@@ -161,6 +166,7 @@ fun CollectionsScreen(
                     )
                 }
             }
+        }
         }
     }
 
