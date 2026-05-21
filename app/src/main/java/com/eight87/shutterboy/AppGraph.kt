@@ -15,6 +15,7 @@ import com.eight87.shutterboy.data.repo.PhotoMover
 import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
 import com.eight87.shutterboy.data.repo.RoomGalleryRepository
+import com.eight87.shutterboy.data.coil.ThumbnailPrewarmer
 import com.eight87.shutterboy.data.saf.SafSourceManager
 import com.eight87.shutterboy.data.scan.ExifEnricher
 import com.eight87.shutterboy.data.scan.MediaStoreScanner
@@ -97,6 +98,25 @@ class AppGraph(applicationContext: Context) {
     val recentSearchesPreferences: RecentSearchesPreferences =
         DataStoreRecentSearchesPreferences(appCtx.shutterboyPrefs)
 
+    /**
+     * Long-lived background scope shared by the gallery feed +
+     * prewarmer. Started first so the prewarmer (constructed below)
+     * can register its workers on it.
+     */
+    private val graphScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    /**
+     * Force MediaStore to generate + persist the MINI_KIND on disk for
+     * every new photo we encounter at scan time. Without this, the
+     * first scroll past a never-seen tile pays the 200-500 ms regen
+     * cost mid-fling. With it, every scroll-time `loadThumbnail` hits
+     * the OS thumbnail cache in single-digit ms.
+     */
+    private val thumbnailPrewarmer = ThumbnailPrewarmer(
+        context = appCtx,
+        scope = graphScope,
+    )
+
     private val repository = RoomGalleryRepository(
         context = appCtx,
         photoDao = database.photos(),
@@ -109,6 +129,7 @@ class AppGraph(applicationContext: Context) {
         scanConfig = scanConfig,
         scanGate = scanGate,
         recentSearchesPrefs = recentSearchesPreferences,
+        thumbnailPrewarmer = thumbnailPrewarmer,
     )
 
     // Eight narrow facets — UI consumes whichever it needs, never the wholesale repo.
@@ -147,8 +168,6 @@ class AppGraph(applicationContext: Context) {
      * cached list instead of a black-screen gap while Room re-queries.
      * Replays the current value to any new subscriber (StateFlow).
      */
-    private val graphScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val photosFeed: StateFlow<List<Photo>?> =
         sortPreferences.observePhotosSort()

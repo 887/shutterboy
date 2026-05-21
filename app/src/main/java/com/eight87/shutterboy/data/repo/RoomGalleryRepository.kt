@@ -80,6 +80,7 @@ class RoomGalleryRepository(
     private val mediaStoreGeneration: MediaStoreGenerationSource =
         MediaStoreGenerationSource.Default(context),
     private val recentSearchesPrefs: RecentSearchesPreferences = NoOpRecentSearchesPreferences,
+    private val thumbnailPrewarmer: com.eight87.shutterboy.data.coil.ThumbnailPrewarmer? = null,
 ) : PhotoSource,
     FolderSource,
     PhotoSearch,
@@ -366,6 +367,23 @@ class RoomGalleryRepository(
                 )
             }
         }
+
+        // 4.5. Enqueue thumbnail prewarm for the new photos. Fire-and-
+        //      forget — the prewarmer's own scope owns the work. Costs
+        //      one `loadThumbnail` call per new photo against the OS
+        //      thumbnail cache; ~200-500 ms each on first generation
+        //      but only once per photo for the lifetime of the file.
+        //      Without this, the first scroll past a never-thumbnailed
+        //      tile pays that cost mid-fling and the user sees the
+        //      spinner.
+        thumbnailPrewarmer?.enqueue(
+            newPhotos.map {
+                com.eight87.shutterboy.data.coil.ThumbnailPrewarmer.Item(
+                    id = it.id,
+                    uri = it.contentUri,
+                )
+            },
+        )
 
         // 5. Apply deletes. Dangling photos first (so no row references a
         //    folder we're about to drop), then dangling folders.
