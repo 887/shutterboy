@@ -206,13 +206,32 @@ internal fun PhotosGrid(
                         velocity < -3f -> -1
                         else -> 0
                     }
-                    // Adaptive scale: 0 at rest, 3 at ~120 items/sec fling.
-                    val speedScale =
-                        (kotlin.math.abs(velocity) / 40f).coerceIn(0f, 3f)
-                    val nearAhead = (visibleCount * (4f + 6f * speedScale)).toInt()
+                    val absV = kotlin.math.abs(velocity)
+                    // FLING gate. Above this velocity the OS
+                    // ContentResolver thumbnail pipe is the
+                    // bottleneck — 80+ FAR submissions sent to our 8
+                    // prefetcher workers fight Coil's 8 fetcher
+                    // workers calling the same `loadThumbnail` IPC for
+                    // visible cells. Visible tiles queue behind
+                    // background prefetches → spinners.
+                    //
+                    // While flinging we collapse to NEAR-only with a
+                    // tight ahead-bias so the next tiles entering view
+                    // get the pipe. The wide FAR ring re-arms once we
+                    // drop below the threshold (settle / slow drift)
+                    // and the visible path isn't demanding bandwidth.
+                    val flinging = absV > 20f
+                    val speedScale = (absV / 40f).coerceIn(0f, 3f)
+                    val nearAhead = if (flinging) {
+                        (visibleCount * (3f + 2f * speedScale)).toInt()
+                    } else {
+                        (visibleCount * (4f + 6f * speedScale)).toInt()
+                    }
                     val nearBehind = visibleCount * 2
-                    val farAhead = (visibleCount * (16f + 24f * speedScale)).toInt()
-                    val farBehind = visibleCount * 6
+                    val farAhead = if (flinging) 0 else {
+                        (visibleCount * (16f + 24f * speedScale)).toInt()
+                    }
+                    val farBehind = if (flinging) 0 else visibleCount * 6
 
                     val (nearLo, nearHi) = when (dir) {
                         1 -> (first - nearBehind) to (first + nearAhead)
