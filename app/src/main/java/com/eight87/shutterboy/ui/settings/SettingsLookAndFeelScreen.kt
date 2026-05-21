@@ -55,13 +55,9 @@ fun SettingsLookAndFeelScreen(
     scope: RouteScope,
     modifier: Modifier = Modifier,
 ) {
-    val density by scope.displayPreferences.observeDefaultGridDensity()
-        .collectAsStateWithLifecycle(initialValue = PhotosZoomLevel.Items)
-    val quality by scope.displayPreferences.observeThumbnailQuality()
-        .collectAsStateWithLifecycle(initialValue = ThumbnailQuality.Medium)
-    val coroutineScope = rememberCoroutineScope()
-    var densityPickerOpen by remember { mutableStateOf(false) }
-    var qualityPickerOpen by remember { mutableStateOf(false) }
+    // Display knobs (grid density + thumbnail quality) moved to
+    // Settings → Photos, since they're about how photos render, not
+    // about look-and-feel. This sub-page now hosts only Appearance.
 
     Scaffold(
         topBar = {
@@ -93,53 +89,7 @@ fun SettingsLookAndFeelScreen(
             verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
         ) {
             AppearanceSection(themePreferences = scope.themePreferences)
-            SettingsCard(
-                title = stringResource(R.string.settings_section_display),
-            ) {
-                SettingsRow(
-                    id = "settings_lookfeel_density",
-                    icon = Icons.Outlined.GridView,
-                    label = stringResource(R.string.settings_lookfeel_density_label),
-                    subtitle = stringResource(densityLabelRes(density)),
-                    onClick = { densityPickerOpen = true },
-                )
-                SettingsRowDivider()
-                SettingsRow(
-                    id = "settings_lookfeel_quality",
-                    icon = Icons.Outlined.HighQuality,
-                    label = stringResource(R.string.settings_lookfeel_quality_label),
-                    subtitle = stringResource(qualityLabelRes(quality)),
-                    onClick = { qualityPickerOpen = true },
-                )
-            }
         }
-    }
-
-    if (densityPickerOpen) {
-        RadioPickerDialog(
-            title = stringResource(R.string.settings_lookfeel_density_label),
-            options = PhotosZoomLevel.entries,
-            current = density,
-            labelOf = { stringResource(densityLabelRes(it)) },
-            onPick = {
-                coroutineScope.launch { scope.displayPreferences.setDefaultGridDensity(it) }
-                densityPickerOpen = false
-            },
-            onDismiss = { densityPickerOpen = false },
-        )
-    }
-    if (qualityPickerOpen) {
-        RadioPickerDialog(
-            title = stringResource(R.string.settings_lookfeel_quality_label),
-            options = ThumbnailQuality.entries,
-            current = quality,
-            labelOf = { stringResource(qualityLabelRes(it)) },
-            onPick = {
-                coroutineScope.launch { scope.displayPreferences.setThumbnailQuality(it) }
-                qualityPickerOpen = false
-            },
-            onDismiss = { qualityPickerOpen = false },
-        )
     }
 }
 
