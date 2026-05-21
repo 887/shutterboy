@@ -3,6 +3,11 @@ package com.eight87.shutterboy.ui.photos
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.automirrored.outlined.ViewList
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.ViewModule
+import androidx.compose.material.icons.outlined.ViewQuilt
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.sort.PhotoSort
 import com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel
+import com.eight87.shutterboy.ui.photos.grid.cycleNext
 import com.eight87.shutterboy.ui.multiselect.SelectionState
 import com.eight87.shutterboy.ui.multiselect.SelectionTopBar
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
@@ -130,13 +136,30 @@ fun PhotosScreen(
         },
         floatingActionButton = {
             if (selectionHolder.state !is SelectionState.Active) {
-                androidx.compose.material3.FloatingActionButton(
-                    onClick = { scope.backStack.push(Search) },
+                // Two stacked FABs. Density cycle on top (quick access
+                // to gallery layout — Items / Days / Months / Years),
+                // Search on the bottom. Small density FAB so it reads
+                // as a secondary action against the primary Search.
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Search,
-                        contentDescription = stringResource(R.string.cd_search_open),
-                    )
+                    androidx.compose.material3.SmallFloatingActionButton(
+                        onClick = { zoomLevel = zoomLevel.cycleNext() },
+                    ) {
+                        Icon(
+                            imageVector = densityIcon(zoomLevel),
+                            contentDescription = null,
+                        )
+                    }
+                    androidx.compose.material3.FloatingActionButton(
+                        onClick = { scope.backStack.push(Search) },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = stringResource(R.string.cd_search_open),
+                        )
+                    }
                 }
             }
         },
@@ -167,4 +190,11 @@ fun PhotosScreen(
                 ),
         )
     }
+}
+
+private fun densityIcon(level: PhotosZoomLevel) = when (level) {
+    PhotosZoomLevel.Items -> Icons.Outlined.GridView
+    PhotosZoomLevel.Days -> Icons.Outlined.ViewModule
+    PhotosZoomLevel.Months -> Icons.Outlined.ViewQuilt
+    PhotosZoomLevel.Years -> Icons.AutoMirrored.Outlined.ViewList
 }

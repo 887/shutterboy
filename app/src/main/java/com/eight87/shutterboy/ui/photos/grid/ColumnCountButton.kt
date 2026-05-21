@@ -36,7 +36,7 @@ fun ColumnCountButton(
     }
 }
 
-private fun PhotosZoomLevel.cycleNext(): PhotosZoomLevel = when (this) {
+fun PhotosZoomLevel.cycleNext(): PhotosZoomLevel = when (this) {
     PhotosZoomLevel.Items -> PhotosZoomLevel.Days
     PhotosZoomLevel.Days -> PhotosZoomLevel.Months
     PhotosZoomLevel.Months -> PhotosZoomLevel.Years
