@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.CancellationSignal
 import android.util.Size as AndroidSize
 import coil3.ImageLoader
 import coil3.asImage
@@ -53,6 +54,11 @@ class ThumbnailPrefetcher(
     private val signal = Channel<Unit>(Channel.UNLIMITED)
     private val lock = Mutex()
 
+    private data class InFlightEntry(val id: Long, val signal: CancellationSignal)
+    // Keyed by cacheKey so the two tiers per id (tiny + target) each get
+    // their own cancellation handle.
+    private val inFlight = HashMap<String, InFlightEntry>()
+
     init {
         repeat(workerCount) {
             scope.launch(Dispatchers.IO) { worker() }
@@ -92,6 +98,24 @@ class ThumbnailPrefetcher(
         lock.withLock { deque.clear() }
     }
 
+    /**
+     * Keep only tasks (pending + in-flight) whose id is in [keepIds].
+     * Pending tasks outside the set are dropped; in-flight ones get
+     * their `CancellationSignal` fired so `loadThumbnail` aborts
+     * mid-flight. Called by the grid scheduler when the prefetch window
+     * shifts (typical trigger: scroll direction reverses, items that
+     * were "ahead" become "way behind" and aren't worth completing).
+     */
+    suspend fun retain(keepIds: Set<Long>) {
+        val toCancel: List<CancellationSignal> = lock.withLock {
+            deque.removeAll { it.id !in keepIds }
+            inFlight.values
+                .filter { it.id !in keepIds }
+                .map { it.signal }
+        }
+        toCancel.forEach { runCatching { it.cancel() } }
+    }
+
     private suspend fun worker() {
         while (true) {
             val task = lock.withLock { deque.removeLastOrNull() }
@@ -99,12 +123,14 @@ class ThumbnailPrefetcher(
                 signal.receive()
                 continue
             }
+            val cancelSignal = CancellationSignal()
+            lock.withLock { inFlight[task.cacheKey] = InFlightEntry(task.id, cancelSignal) }
             runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val raw = context.contentResolver.loadThumbnail(
                         task.uri,
                         AndroidSize(task.px, task.px),
-                        null,
+                        cancelSignal,
                     )
                     // OS may return larger than requested (MINI_KIND
                     // 512x384 for camera 4K sources). Resize on the IO
@@ -134,9 +160,11 @@ class ThumbnailPrefetcher(
                     )
                 }
             }
+            lock.withLock { inFlight.remove(task.cacheKey) }
             // Failures are swallowed — non-fatal per tile; we just
             // don't pre-warm that one and AsyncImage will retry via
-            // its normal path.
+            // its normal path. `OperationCanceledException` from a
+            // cancelled signal lands here too and is correctly ignored.
         }
     }
 }

@@ -132,52 +132,132 @@ internal fun PhotosGrid(
         )
     }
     LaunchedEffect(timeline, targetPx, prefetcher) {
-        // Continuously prefetch around the visible window — DURING
-        // scroll, not just after. Pausing prefetch during scroll was
-        // why you could "see the images flipping from grey to visible":
-        // the tiles entering view mid-scroll arrived before prefetch
-        // had warmed them. Now prefetch fires on every firstVisible
-        // change, so as you scroll down the tiles 15 viewports ahead
-        // are already cached by the time they enter view.
-        snapshotFlow { gridState.firstVisibleItemIndex }
-            .distinctUntilChanged()
-            .collect { first ->
-                val visibleCount = gridState.layoutInfo.visibleItemsInfo.size
-                if (visibleCount <= 0) return@collect
-                // Two concentric prefetch rings:
-                //   FAR (15 viewports each side): tiny tier only —
-                //   ~36 KB per tile, so even a huge window doesn't
-                //   thrash Coil's memory cache. Tinies render
-                //   upscaled as placeholder when scrolled to.
-                //   NEAR (3 viewports each side): both tiers, so the
-                //   about-to-be-visible tiles are decoded at full
-                //   target quality already.
-                val nearFrom = (first - visibleCount * 3).coerceAtLeast(0)
-                val nearTo = (first + visibleCount * 4).coerceAtMost(timeline.size)
-                val farFrom = (first - visibleCount * 15).coerceAtLeast(0)
-                val farTo = (first + visibleCount * 16).coerceAtMost(timeline.size)
-                val center = first + visibleCount / 2
+        // Adaptive, direction-aware prefetch scheduler. The compose
+        // snapshot read happens on whatever thread `collect` is
+        // running on (the LaunchedEffect's main-coroutine context),
+        // but all the math + set-building + queue submits hop to
+        // Dispatchers.Default below so the main thread is only on the
+        // hook for the cheap state read, not the scheduling itself.
+        //
+        // Tracking:
+        //   - `lastIndex` / `lastTimeNs`: previous viewport sample.
+        //   - `emaVelocity`: items-per-second, signed. Positive = user
+        //     is scrolling toward larger indices (down/right). EMA
+        //     smoothing damps the per-sample noise without lagging
+        //     direction reversals more than ~2 frames.
+        //
+        // Window shape:
+        //   - Asymmetric around the leading edge — the edge in the
+        //     direction we're moving — not around the center of the
+        //     viewport. When scrolling down, "ahead" means greater
+        //     indices; we extend the window further past the bottom
+        //     of the screen than above it, because that's where the
+        //     eye actually goes.
+        //   - Adaptive: the ahead-half of the window scales with
+        //     |velocity|. Slow scroll = tight window (don't pollute
+        //     the cache). Fast fling = wide window (look further
+        //     ahead so tiles are ready when they enter view).
+        //
+        // Cancellation:
+        //   - On every sample we build the keep-set (every id in the
+        //     current far window) and call `prefetcher.retain`. Tasks
+        //     pending or in-flight for ids outside the set are
+        //     dropped + their CancellationSignal fired. The bounce-
+        //     back case (reverse direction mid-fling) is the main
+        //     beneficiary — we stop loading way-behind tiles instead
+        //     of letting them complete into the cache.
+        var lastIndex = -1
+        var lastTimeNs = 0L
+        var emaVelocity = 0f
 
-                // FAR ring: submit FAR first so it sits at the bottom
-                // of the LIFO stack (workers process it last).
-                val farIndices = (farFrom until farTo).sortedByDescending {
-                    Math.abs(it - center)
-                }
-                for (i in farIndices) {
-                    if (i in nearFrom until nearTo) continue
-                    val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
-                        ?: continue
-                    prefetcher.submitTiny(cell.photo.id.value, cell.photo.contentUri)
-                }
-                // NEAR ring: edges first, center last, so near-center
-                // items end up on TOP of the LIFO.
-                val nearIndices = (nearFrom until nearTo).sortedByDescending {
-                    Math.abs(it - center)
-                }
-                for (i in nearIndices) {
-                    val cell = timeline.getOrNull(i) as? TimelineDisplayItem.PhotoCell
-                        ?: continue
-                    prefetcher.submitBoth(cell.photo.id.value, cell.photo.contentUri)
+        snapshotFlow {
+            gridState.firstVisibleItemIndex to gridState.layoutInfo.visibleItemsInfo.size
+        }
+            .distinctUntilChanged()
+            .collect { (first, visibleCount) ->
+                if (visibleCount <= 0) return@collect
+                val now = System.nanoTime()
+                val instant = if (lastIndex >= 0 && lastTimeNs > 0L) {
+                    val dt = (now - lastTimeNs) / 1_000_000_000f
+                    if (dt > 0.0001f) (first - lastIndex) / dt else 0f
+                } else 0f
+                emaVelocity = emaVelocity * 0.6f + instant * 0.4f
+                lastIndex = first
+                lastTimeNs = now
+
+                val velocity = emaVelocity
+                val timelineSnapshot = timeline
+                withContext(Dispatchers.Default) {
+                    val dir = when {
+                        velocity > 3f -> 1
+                        velocity < -3f -> -1
+                        else -> 0
+                    }
+                    // Adaptive scale: 0 at rest, 3 at ~120 items/sec fling.
+                    val speedScale =
+                        (kotlin.math.abs(velocity) / 40f).coerceIn(0f, 3f)
+                    val nearAhead = (visibleCount * (4f + 6f * speedScale)).toInt()
+                    val nearBehind = visibleCount * 2
+                    val farAhead = (visibleCount * (16f + 24f * speedScale)).toInt()
+                    val farBehind = visibleCount * 6
+
+                    val (nearLo, nearHi) = when (dir) {
+                        1 -> (first - nearBehind) to (first + nearAhead)
+                        -1 -> (first - nearAhead) to (first + nearBehind)
+                        else -> (first - visibleCount * 3) to (first + visibleCount * 4)
+                    }
+                    val (farLo, farHi) = when (dir) {
+                        1 -> (first - farBehind) to (first + farAhead)
+                        -1 -> (first - farAhead) to (first + farBehind)
+                        else -> (first - visibleCount * 12) to (first + visibleCount * 16)
+                    }
+                    val nearFrom = nearLo.coerceAtLeast(0)
+                    val nearTo = nearHi.coerceAtMost(timelineSnapshot.size)
+                    val farFrom = farLo.coerceAtLeast(0)
+                    val farTo = farHi.coerceAtMost(timelineSnapshot.size)
+
+                    // Sort key — distance to the leading edge, not the
+                    // center. Leading edge = where new tiles are about
+                    // to enter view. When scrolling down it's the
+                    // bottom of the screen; when scrolling up, the top.
+                    val leadingEdge = when (dir) {
+                        1 -> first + visibleCount
+                        -1 -> first
+                        else -> first + visibleCount / 2
+                    }
+
+                    // Build the keep-set + cancel anything pending /
+                    // in-flight that fell out of the far window.
+                    val keepIds = HashSet<Long>(farTo - farFrom)
+                    for (i in farFrom until farTo) {
+                        val cell = timelineSnapshot.getOrNull(i)
+                            as? TimelineDisplayItem.PhotoCell ?: continue
+                        keepIds += cell.photo.id.value
+                    }
+                    prefetcher.retain(keepIds)
+
+                    // FAR ring (skip near overlap) — farthest from
+                    // leading edge first so it bottoms the LIFO.
+                    val farIndices = (farFrom until farTo).sortedByDescending {
+                        kotlin.math.abs(it - leadingEdge)
+                    }
+                    for (i in farIndices) {
+                        if (i in nearFrom until nearTo) continue
+                        val cell = timelineSnapshot.getOrNull(i)
+                            as? TimelineDisplayItem.PhotoCell ?: continue
+                        prefetcher.submitTiny(cell.photo.id.value, cell.photo.contentUri)
+                    }
+                    // NEAR ring — farthest from leading edge first so
+                    // items just past the leading edge end up on TOP
+                    // of the LIFO and are decoded next.
+                    val nearIndices = (nearFrom until nearTo).sortedByDescending {
+                        kotlin.math.abs(it - leadingEdge)
+                    }
+                    for (i in nearIndices) {
+                        val cell = timelineSnapshot.getOrNull(i)
+                            as? TimelineDisplayItem.PhotoCell ?: continue
+                        prefetcher.submitBoth(cell.photo.id.value, cell.photo.contentUri)
+                    }
                 }
             }
     }
