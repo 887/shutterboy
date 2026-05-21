@@ -45,18 +45,10 @@ class ThumbnailPrefetcher(
 
     private val deque = ArrayDeque<Task>()
 
-    companion object {
-        // Tiny preview tier — 96 px decodes in ~1 ms via MediaStore
-        // loadThumbnail and uses only ~36 KB of memory cache per tile,
-        // so we can keep the whole library's tinies resident.
-        const val TINY_PX = 96
-    }
     private val signal = Channel<Unit>(Channel.UNLIMITED)
     private val lock = Mutex()
 
     private data class InFlightEntry(val id: Long, val signal: CancellationSignal)
-    // Keyed by cacheKey so the two tiers per id (tiny + target) each get
-    // their own cancellation handle.
     private val inFlight = HashMap<String, InFlightEntry>()
 
     init {
@@ -66,29 +58,15 @@ class ThumbnailPrefetcher(
     }
 
     /**
-     * Both tiers — for the NEAR window. Use this for items close to the
-     * viewport where we want sharp tiles ready to go.
+     * Submit a target-sized prefetch for [id]. Items already warm in
+     * Coil's memory cache short-circuit; otherwise the task is pushed
+     * to the LIFO front so the worker pool picks it up next.
      */
-    suspend fun submitBoth(id: Long, uri: Uri) {
-        submitTier(id, uri, "thumb-$id-$TINY_PX", TINY_PX)
-        submitTier(id, uri, "thumb-$id-$targetPx", targetPx)
-    }
-
-    /**
-     * Tiny tier only — for the FAR window. ~36 KB per tile so we can
-     * keep the whole library's tinies resident without thrashing the
-     * cache. When the user scrolls there, the tiny renders upscaled as
-     * a placeholder until the target decodes via AsyncImage's normal
-     * path.
-     */
-    suspend fun submitTiny(id: Long, uri: Uri) {
-        submitTier(id, uri, "thumb-$id-$TINY_PX", TINY_PX)
-    }
-
-    private suspend fun submitTier(id: Long, uri: Uri, key: String, px: Int) {
+    suspend fun submit(id: Long, uri: Uri) {
+        val key = "thumb-$id-$targetPx"
         if (loader.memoryCache?.get(MemoryCache.Key(key)) != null) return
         lock.withLock {
-            deque.addLast(Task(id, uri, key, px))
+            deque.addLast(Task(id, uri, key, targetPx))
             while (deque.size > maxPending) deque.removeFirst()
         }
         signal.trySend(Unit)

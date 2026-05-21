@@ -919,8 +919,6 @@ private fun FilmstripTile(
             // the neighbours are already warm.
             val context = androidx.compose.ui.platform.LocalContext.current
             val targetPx = with(LocalDensity.current) { tileSize.roundToPx() }
-            val tinyKey =
-                "thumb-$photoId-${com.eight87.shutterboy.ui.photos.grid.ThumbnailPrefetcher.TINY_PX}"
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(
@@ -931,7 +929,6 @@ private fun FilmstripTile(
                     )
                     .size(coil3.size.Size(targetPx, targetPx))
                     .precision(coil3.size.Precision.INEXACT)
-                    .placeholderMemoryCacheKey(tinyKey)
                     .memoryCacheKey("thumb-$photoId-$targetPx")
                     .build(),
                 contentDescription = null,

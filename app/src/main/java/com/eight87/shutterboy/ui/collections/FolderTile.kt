@@ -56,14 +56,12 @@ internal fun FolderTile(
             null
         } else {
             val cacheKey = "thumb-$coverId-$targetPx"
-            val tinyKey = "thumb-$coverId-${ThumbnailPrefetcher.TINY_PX}"
             ImageRequest.Builder(context)
                 .data(cover.contentUri)
                 .size(Size(targetPx, targetPx))
                 .precision(Precision.INEXACT)
                 .memoryCacheKey(cacheKey)
                 .diskCacheKey(cacheKey)
-                .placeholderMemoryCacheKey(tinyKey)
                 .build()
         }
     }

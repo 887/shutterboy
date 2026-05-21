@@ -67,14 +67,12 @@ fun PhotoThumbnail(
     val placeholderColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val request = remember(photo.id.value, targetPx) {
         val cacheKey = "thumb-${photo.id.value}-$targetPx"
-        val tinyKey = "thumb-${photo.id.value}-${ThumbnailPrefetcher.TINY_PX}"
         ImageRequest.Builder(context)
             .data(photo.contentUri)
             .size(Size(targetPx, targetPx))
             .precision(Precision.INEXACT)
             .memoryCacheKey(cacheKey)
             .diskCacheKey(cacheKey)
-            .placeholderMemoryCacheKey(tinyKey)
             .build()
     }
     val transparentPainter = remember { ColorPainter(Color.Transparent) }
