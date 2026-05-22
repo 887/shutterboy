@@ -190,7 +190,7 @@ internal fun PhotosGrid(
             // to actually finish what we asked for, while still
             // updating frequently enough during drift that the
             // window follows the user.
-            .sample(50L)
+            .sample(100L)
             .collect { (first, visibleCount) ->
                 if (visibleCount <= 0) return@collect
                 val now = System.nanoTime()
