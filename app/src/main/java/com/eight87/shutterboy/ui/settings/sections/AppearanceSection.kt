@@ -160,6 +160,10 @@ fun AppearanceSection(
                 colorPickerOpen = false
             },
             onDismiss = { colorPickerOpen = false },
+            onReset = {
+                scope.launch { themePreferences.setTintColor(null) }
+                colorPickerOpen = false
+            },
         )
     }
 }

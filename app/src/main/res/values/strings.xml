@@ -240,6 +240,7 @@
     <!-- Shared dialog affordances. -->
     <string name="dialog_confirm">Confirm</string>
     <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_reset">Reset</string>
 
     <!-- Phase H.3 — bulk delete typed-confirm dialog. -->
     <string name="multiselect_delete_dialog_title">Delete %1$d photos?</string>

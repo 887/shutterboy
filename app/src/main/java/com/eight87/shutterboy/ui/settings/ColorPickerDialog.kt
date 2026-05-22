@@ -64,6 +64,7 @@ fun ColorPickerDialog(
     initialRgb: Long,
     onConfirm: (Long) -> Unit,
     onDismiss: () -> Unit,
+    onReset: (() -> Unit)? = null,
 ) {
     val initialHsv = remember { rgbToHsv(initialRgb) }
     var hue by remember { mutableFloatStateOf(initialHsv[0]) }
@@ -134,10 +135,18 @@ fun ColorPickerDialog(
             ) { Text(stringResource(R.string.dialog_confirm)) }
         },
         dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.semantics { testTag = "color_picker_cancel" },
-            ) { Text(stringResource(R.string.dialog_cancel)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onReset != null) {
+                    TextButton(
+                        onClick = onReset,
+                        modifier = Modifier.semantics { testTag = "color_picker_reset" },
+                    ) { Text(stringResource(R.string.dialog_reset)) }
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.semantics { testTag = "color_picker_cancel" },
+                ) { Text(stringResource(R.string.dialog_cancel)) }
+            }
         },
     )
 }
