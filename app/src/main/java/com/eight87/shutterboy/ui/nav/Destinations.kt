@@ -135,5 +135,15 @@ data class FolderDetail(val folderIdValue: Long) : Destination
 @Serializable
 data class Slideshow(val backingKey: String) : Destination
 
+/**
+ * External-open destination. Pushed when Android routes a VIEW intent
+ * with an image or video MIME to us — picked from the "Complete
+ * action using" chooser, or directly from a camera app's "review last
+ * shot" affordance. Renders a minimal full-screen viewer over the
+ * passed URI without requiring the photo to be in our Room cache.
+ */
+@Serializable
+data class ExternalPhoto(val uri: String, val mime: String?) : Destination
+
 /** The top-level destinations a top-bar tab can route to. */
 internal val rootDestinations: List<Destination> = listOf(Photos, Favorites, Collections)

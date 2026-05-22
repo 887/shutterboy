@@ -49,6 +49,15 @@ fun ShutterboyApp(graph: AppGraph) {
         graph.libraryScanner.scanIfChanged()
     }
 
+    // External VIEW intents (camera-app "review last shot", file
+    // manager "open with") emit into AppGraph.externalOpenIntent;
+    // push the minimal ExternalPhoto viewer onto the back stack.
+    LaunchedEffect(graph) {
+        graph.externalOpenIntent.collect { (uri, mime) ->
+            backStack.push(ExternalPhoto(uri = uri, mime = mime))
+        }
+    }
+
     val thumbnailQuality by graph.displayPreferences.observeThumbnailQuality()
         .collectAsStateWithLifecycle(initialValue = ThumbnailQuality.Medium)
 
@@ -100,6 +109,7 @@ fun ShutterboyApp(graph: AppGraph) {
                             entry<FolderDetail> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<Favorites> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<Slideshow> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<ExternalPhoto> { WithNavAnimatedContentScope { it.Register(scope) } }
                         },
                     )
                 }

@@ -215,4 +215,15 @@ class AppGraph(applicationContext: Context) {
     }
 
     fun takeBackingIds(key: String): List<Long>? = backingIdsStash[key]
+
+    /**
+     * External-open intent bus. MainActivity emits here when Android
+     * routes a VIEW intent (image or video MIME) to us — the root
+     * composable collects and pushes an [com.eight87.shutterboy.ui.nav.ExternalPhoto]
+     * onto the back stack. Replay 0 (events, not state) but high
+     * buffer so an onCreate emission isn't lost if the collector
+     * subscribes a frame late.
+     */
+    val externalOpenIntent: kotlinx.coroutines.flow.MutableSharedFlow<Pair<String, String?>> =
+        kotlinx.coroutines.flow.MutableSharedFlow(replay = 1, extraBufferCapacity = 4)
 }

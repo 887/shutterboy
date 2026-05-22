@@ -1,5 +1,6 @@
 package com.eight87.shutterboy
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,12 +18,32 @@ import com.eight87.shutterboy.ui.permission.RequireMediaPermission
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val graph = (application as ShutterboyApplication).graph
+        routeExternalOpen(intent, graph)
+    }
+
+    private fun routeExternalOpen(intent: Intent?, graph: AppGraph) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        val mime = intent.type ?: contentResolver.getType(uri)
+        lifecycleScope.launch {
+            graph.externalOpenIntent.emit(uri.toString() to mime)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val graph = (application as ShutterboyApplication).graph
+
+        // External VIEW intent on cold-start. onNewIntent handles the
+        // warm-instance case.
+        routeExternalOpen(intent, graph)
 
         setContent {
             val baseTheme by graph.themePreferences.observeBaseTheme()
