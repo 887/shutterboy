@@ -188,11 +188,13 @@ internal fun PhotosGrid(
             // to actually finish what we asked for, while still
             // updating frequently enough during drift that the
             // window follows the user.
-            // Aggressive sampling (40 ms) so direction reverses
-            // reprioritize within ~2 frames instead of ~6. Per-sample
-            // work is cheap (cancel + submit through cancellable
-            // workers) so we can afford the higher rate.
-            .sample(40L)
+            // Sample at 80 ms. Earlier 40 ms was too aggressive —
+            // workers spent cycles cancelling + resubmitting decodes
+            // that were mid-flight, so visible cells lost their slot
+            // and the user saw spinners. 80 ms gives workers more
+            // budget per cycle to actually complete a decode before
+            // the next reprioritization round.
+            .sample(80L)
             .collect { (first, visibleCount) ->
                 if (visibleCount <= 0) return@collect
                 val now = System.nanoTime()
