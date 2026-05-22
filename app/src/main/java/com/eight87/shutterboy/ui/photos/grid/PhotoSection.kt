@@ -130,12 +130,15 @@ internal fun buildTimeline(
     zone: ZoneId = ZoneId.systemDefault(),
 ): List<TimelineDisplayItem> {
     if (photos.isEmpty()) return emptyList()
-    // Flat grid at every density. The column-cycle button only changes
-    // the column count (4 / 3 / 2 / 1) — no date headers, no aggregate
-    // cover tiles, every photo is directly tappable. `zone` is kept in
-    // the signature for binary compatibility with callers / tests.
-    @Suppress("UNUSED_PARAMETER") val unusedZone = zone
-    return photos.map { TimelineDisplayItem.PhotoCell(it) }
+    // Grouping (Items / Days / Months / Years) drives what each cell
+    // represents and which section bands appear. Column count is a
+    // separate independent control — see PhotosScreen.columnCount.
+    return when (level) {
+        PhotosZoomLevel.Items -> buildItemsTimeline(photos, zone)
+        PhotosZoomLevel.Days -> buildDaysTimeline(photos, zone)
+        PhotosZoomLevel.Months -> buildMonthsTimeline(photos, zone)
+        PhotosZoomLevel.Years -> buildYearsTimeline(photos, zone)
+    }
 }
 
 private fun buildItemsTimeline(photos: List<Photo>, zone: ZoneId): List<TimelineDisplayItem> {

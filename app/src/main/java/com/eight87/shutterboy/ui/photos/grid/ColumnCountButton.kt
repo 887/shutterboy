@@ -2,6 +2,7 @@ package com.eight87.shutterboy.ui.photos.grid
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ViewList
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.ViewModule
 import androidx.compose.material.icons.outlined.ViewQuilt
@@ -28,7 +29,8 @@ fun ColumnCountButton(
                 1 -> Icons.AutoMirrored.Outlined.ViewList
                 2 -> Icons.Outlined.ViewQuilt
                 3 -> Icons.Outlined.ViewModule
-                else -> Icons.Outlined.GridView
+                4 -> Icons.Outlined.GridView
+                else -> Icons.Outlined.Apps
             },
             contentDescription = null,
         )
