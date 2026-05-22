@@ -188,13 +188,7 @@ internal fun PhotosGrid(
             // to actually finish what we asked for, while still
             // updating frequently enough during drift that the
             // window follows the user.
-            // Sample at 80 ms. Earlier 40 ms was too aggressive —
-            // workers spent cycles cancelling + resubmitting decodes
-            // that were mid-flight, so visible cells lost their slot
-            // and the user saw spinners. 80 ms gives workers more
-            // budget per cycle to actually complete a decode before
-            // the next reprioritization round.
-            .sample(80L)
+            .sample(20L)
             .collect { (first, visibleCount) ->
                 if (visibleCount <= 0) return@collect
                 val now = System.nanoTime()
@@ -218,20 +212,23 @@ internal fun PhotosGrid(
                         else -> 0
                     }
                     val absV = kotlin.math.abs(velocity)
-                    // Single-tier target prefetch. Window is small,
-                    // asymmetric around the leading edge, and scales
-                    // modestly with velocity so a fling decelerates
-                    // onto warmed tiles without us hammering the OS
-                    // thumbnail pipe with deep look-ahead that the
-                    // visible path is going to need first.
                     val speedScale = (absV / 40f).coerceIn(0f, 2f)
-                    val ahead = (visibleCount * (3f + 3f * speedScale)).toInt()
-                    val behind = visibleCount * 2
+                    // SAFE ZONE — symmetric warmed window that gets
+                    // submitted regardless of direction. The point is
+                    // that a short direction reverse always lands on
+                    // already-warmed tiles instead of spinners; the
+                    // tiles immediately behind the viewport are NOT
+                    // wasted decode even when scrolling forward,
+                    // they're insurance against the bounce-back.
+                    val safeZone = visibleCount * 5
+                    // Directional bias — extra reach in the direction
+                    // of travel, on top of the symmetric safe zone.
+                    val aheadBias = (visibleCount * (3f + 6f * speedScale)).toInt()
 
                     val (lo, hi) = when (dir) {
-                        1 -> (first - behind) to (first + ahead)
-                        -1 -> (first - ahead) to (first + behind)
-                        else -> (first - visibleCount * 3) to (first + visibleCount * 3)
+                        1 -> (first - safeZone) to (first + safeZone + aheadBias)
+                        -1 -> (first - safeZone - aheadBias) to (first + safeZone)
+                        else -> (first - safeZone) to (first + safeZone)
                     }
                     val from = lo.coerceAtLeast(0)
                     val to = hi.coerceAtMost(timelineSnapshot.size)
