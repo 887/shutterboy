@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Image
@@ -54,6 +53,7 @@ import com.eight87.shutterboy.R
 fun RootTopBar(
     current: Destination,
     onSelect: (Destination) -> Unit,
+    onOpenSettings: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     Surface(
@@ -95,6 +95,21 @@ fun RootTopBar(
                     onClick = { onSelect(dest) },
                 )
             }
+            // Settings opens as a full-screen modal pushed on top of the
+            // active tab — matching the tonearmboy / whisperboy
+            // affordance the user is used to. NOT a tab.
+            val settingsCd = stringResource(R.string.cd_nav_settings)
+            IconButton(
+                onClick = onOpenSettings,
+                modifier = Modifier.semantics { contentDescription = settingsCd },
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
         }
     }
 }
@@ -127,7 +142,6 @@ private fun rootLabelRes(dest: Destination): Int = when (dest) {
     Photos -> R.string.nav_photos
     Favorites -> R.string.favorites_title
     Collections -> R.string.nav_collections
-    Settings -> R.string.nav_settings
     else -> error("$dest is not a root destination")
 }
 
@@ -139,7 +153,5 @@ private fun rootIconAndCd(dest: Destination, selected: Boolean): Pair<ImageVecto
         stringResource(R.string.favorites_title)
     Collections -> (if (selected) Icons.Filled.Collections else Icons.Outlined.Collections) to
         stringResource(R.string.cd_nav_collections)
-    Settings -> (if (selected) Icons.Filled.Settings else Icons.Outlined.Settings) to
-        stringResource(R.string.cd_nav_settings)
     else -> error("$dest is not a root destination")
 }

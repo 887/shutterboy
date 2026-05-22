@@ -87,6 +87,7 @@ internal fun FavoritesScreenContent(
                 RootTopBar(
                     current = Favorites,
                     onSelect = { dest -> backStack.selectTab(dest) },
+                    onOpenSettings = { backStack.push(com.eight87.shutterboy.ui.nav.Settings) },
                 ) {
                     com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
                         count = favoritesColumns,

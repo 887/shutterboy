@@ -76,6 +76,7 @@ fun CollectionsScreen(
                 RootTopBar(
                     current = Collections,
                     onSelect = { dest -> scope.backStack.selectTab(dest) },
+                    onOpenSettings = { scope.backStack.push(com.eight87.shutterboy.ui.nav.Settings) },
                 ) {
                     com.eight87.shutterboy.ui.photos.grid.ColumnCountButton(
                         count = collectionsColumns,

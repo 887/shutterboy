@@ -136,4 +136,4 @@ data class FolderDetail(val folderIdValue: Long) : Destination
 data class Slideshow(val backingKey: String) : Destination
 
 /** The top-level destinations a top-bar tab can route to. */
-internal val rootDestinations: List<Destination> = listOf(Photos, Favorites, Collections, Settings)
+internal val rootDestinations: List<Destination> = listOf(Photos, Favorites, Collections)

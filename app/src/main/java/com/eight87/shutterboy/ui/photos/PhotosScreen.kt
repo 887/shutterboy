@@ -129,6 +129,7 @@ fun PhotosScreen(
                     RootTopBar(
                         current = Photos,
                         onSelect = { dest -> scope.backStack.selectTab(dest) },
+                        onOpenSettings = { scope.backStack.push(com.eight87.shutterboy.ui.nav.Settings) },
                     ) {
                         // Search sits directly left of the Photos tab.
                         // Sort lives on Settings → Photos → Default sort

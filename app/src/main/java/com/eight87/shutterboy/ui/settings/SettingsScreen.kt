@@ -7,21 +7,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.eight87.shutterboy.R
-import com.eight87.shutterboy.ui.nav.RootTopBar
 import com.eight87.shutterboy.ui.nav.RouteScope
 import com.eight87.shutterboy.ui.nav.ScanProgressStrip
-import com.eight87.shutterboy.ui.nav.Settings
 import com.eight87.shutterboy.ui.nav.SettingsAbout
 import com.eight87.shutterboy.ui.nav.SettingsLibrary
 import com.eight87.shutterboy.ui.nav.SettingsLookAndFeel
@@ -49,9 +52,16 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             Column {
-                RootTopBar(
-                    current = Settings,
-                    onSelect = { dest -> scope.backStack.selectTab(dest) },
+                TopAppBar(
+                    title = { Text(stringResource(R.string.nav_settings)) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.backStack.pop() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_settings_back),
+                            )
+                        }
+                    },
                 )
                 ScanProgressStrip(scanner = scope.libraryScanner)
             }
