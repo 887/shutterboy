@@ -48,8 +48,8 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Flip
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Restore
-import androidx.compose.material.icons.outlined.RotateLeft
-import androidx.compose.material.icons.outlined.RotateRight
+import androidx.compose.material.icons.automirrored.outlined.RotateLeft
+import androidx.compose.material.icons.automirrored.outlined.RotateRight
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -455,7 +455,7 @@ internal fun PhotoViewerContent(
                             enabled = currentPhoto != null,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.RotateLeft,
+                                imageVector = Icons.AutoMirrored.Outlined.RotateLeft,
                                 contentDescription = stringResource(R.string.cd_viewer_rotate_left),
                             )
                         }
@@ -479,7 +479,7 @@ internal fun PhotoViewerContent(
                             enabled = currentPhoto != null,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.RotateRight,
+                                imageVector = Icons.AutoMirrored.Outlined.RotateRight,
                                 contentDescription = stringResource(R.string.cd_viewer_rotate_right),
                             )
                         }
@@ -700,7 +700,7 @@ private fun PhotoPage(
     // be reset on page change. transformable claims pointer events as
     // soon as 2+ fingers are down, so single-finger drag still routes
     // to the vertical-drag detector below.
-    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+    val transformableState = rememberTransformableState { panChange, zoomChange, _, _ ->
         onPinch(zoomChange, panChange)
     }
     val zoomed = ViewerZoomMath.isZoomed(scale)

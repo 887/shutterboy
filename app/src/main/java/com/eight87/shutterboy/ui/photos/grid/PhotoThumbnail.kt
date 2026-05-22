@@ -152,7 +152,7 @@ fun PhotoThumbnail(
         // reads against any background colour. Sits in the bottom-right
         // so it doesn't conflict with the selection check in the
         // top-left.
-        if (photo.mimeType?.startsWith("video/") == true) {
+        if (photo.mimeType.startsWith("video/")) {
             Icon(
                 imageVector = Icons.Filled.PlayCircle,
                 contentDescription = null,

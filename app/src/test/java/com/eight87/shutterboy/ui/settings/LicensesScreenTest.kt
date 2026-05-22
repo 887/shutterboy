@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.eight87.shutterboy.ui.settings
 
 import androidx.compose.ui.test.assertIsDisplayed

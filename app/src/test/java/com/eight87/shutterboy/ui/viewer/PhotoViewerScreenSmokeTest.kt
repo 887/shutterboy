@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.eight87.shutterboy.ui.viewer
 
 import android.net.Uri

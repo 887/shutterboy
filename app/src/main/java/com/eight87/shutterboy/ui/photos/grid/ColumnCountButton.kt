@@ -5,7 +5,7 @@ import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.ViewModule
-import androidx.compose.material.icons.outlined.ViewQuilt
+import androidx.compose.material.icons.automirrored.outlined.ViewQuilt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -27,7 +27,7 @@ fun ColumnCountButton(
         Icon(
             imageVector = when (count) {
                 1 -> Icons.AutoMirrored.Outlined.ViewList
-                2 -> Icons.Outlined.ViewQuilt
+                2 -> Icons.AutoMirrored.Outlined.ViewQuilt
                 3 -> Icons.Outlined.ViewModule
                 4 -> Icons.Outlined.GridView
                 else -> Icons.Outlined.Apps

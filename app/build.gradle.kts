@@ -145,6 +145,15 @@ afterEvaluate {
 
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        // Opt in to Kotlin 2.2's future-default annotation use-site
+        // targets (param + property + field for properties). Silences
+        // the "annotation currently applied to value parameter only,
+        // but in the future will also be applied to field" warnings
+        // that pepper @StringRes, @Stable, @SerialName, etc. on
+        // primary-constructor properties.
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
 }
 
 dependencies {

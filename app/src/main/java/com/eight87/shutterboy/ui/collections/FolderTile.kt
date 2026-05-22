@@ -51,13 +51,14 @@ internal fun FolderTile(
     val context = LocalContext.current
     val targetPx = com.eight87.shutterboy.ui.photos.grid.LocalGridTargetPx.current
     val coverId = cover?.id?.value
+    val coverUri = cover?.contentUri
     val request = remember(coverId, targetPx) {
-        if (coverId == null || cover == null) {
+        if (coverId == null || coverUri == null) {
             null
         } else {
             val cacheKey = "thumb-$coverId-$targetPx"
             ImageRequest.Builder(context)
-                .data(cover.contentUri)
+                .data(coverUri)
                 .size(Size(targetPx, targetPx))
                 .precision(Precision.INEXACT)
                 .memoryCacheKey(cacheKey)
