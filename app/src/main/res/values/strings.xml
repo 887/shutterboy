@@ -298,6 +298,17 @@
     <string name="settings_photos_ken_burns_label">Ken Burns effect</string>
     <string name="settings_photos_ken_burns_subtitle">Slow zoom and pan during each slide</string>
 
+    <!-- Prefetch scheduler sample rate (Photos sub-page). -->
+    <string name="settings_photos_prefetch_rate_label">Prefetch scheduler rate</string>
+    <string name="settings_photos_prefetch_rate_subtitle">%1$d ms — how often the grid recomputes which thumbnails to warm</string>
+    <string name="settings_photos_prefetch_rate_dialog_title">Prefetch scheduler rate</string>
+    <string name="settings_photos_prefetch_rate_help">Lower values react to scroll changes faster but cancel and re-submit work the workers had already started, causing spinners during fast scroll. Higher values let workers finish what they began, at the cost of the prefetch window updating less often. Default is 100 ms (10 updates/sec). Range 10–1000 ms.</string>
+    <string name="settings_photos_prefetch_rate_value">%1$d ms</string>
+    <string name="settings_photos_prefetch_rate_saver_label">Prefetch scheduler rate (battery saver)</string>
+    <string name="settings_photos_prefetch_rate_saver_subtitle">%1$d ms — used while the OS battery saver is on</string>
+    <string name="settings_photos_prefetch_rate_saver_dialog_title">Prefetch scheduler rate (battery saver)</string>
+    <string name="settings_photos_prefetch_rate_saver_help">Active when Android reports battery saver enabled. Slowing the scheduler down here trades responsiveness for less CPU + cache thrash while the device is conserving. Default is 200 ms (5 updates/sec).</string>
+
     <!-- Phase I.7 — Settings search overlay (catalog-driven). -->
     <string name="settings_search_placeholder">Search settings</string>
     <string name="settings_search_open_cd">Search settings</string>

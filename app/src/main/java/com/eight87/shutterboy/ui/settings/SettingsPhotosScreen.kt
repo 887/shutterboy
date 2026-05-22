@@ -12,6 +12,8 @@ import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.Slideshow
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material3.Slider
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
+import com.eight87.shutterboy.data.settings.DisplayPreferences
 import com.eight87.shutterboy.data.settings.ThumbnailQuality
 import com.eight87.shutterboy.domain.sort.Direction
 import com.eight87.shutterboy.domain.sort.PhotoSort
@@ -68,10 +71,16 @@ fun SettingsPhotosScreen(
         .collectAsStateWithLifecycle(initialValue = PhotosZoomLevel.Items)
     val quality by scope.displayPreferences.observeThumbnailQuality()
         .collectAsStateWithLifecycle(initialValue = ThumbnailQuality.Medium)
+    val prefetchRate by scope.displayPreferences.observePrefetchSampleRateMs()
+        .collectAsStateWithLifecycle(initialValue = DisplayPreferences.PREFETCH_SAMPLE_DEFAULT_MS)
+    val prefetchRateSaver by scope.displayPreferences.observePrefetchSampleRateBatterySaverMs()
+        .collectAsStateWithLifecycle(initialValue = DisplayPreferences.PREFETCH_SAMPLE_BATTERY_SAVER_DEFAULT_MS)
     val coroutineScope = rememberCoroutineScope()
     var showSortSheet by remember { mutableStateOf(false) }
     var densityPickerOpen by remember { mutableStateOf(false) }
     var qualityPickerOpen by remember { mutableStateOf(false) }
+    var prefetchPickerOpen by remember { mutableStateOf(false) }
+    var prefetchSaverPickerOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -128,6 +137,28 @@ fun SettingsPhotosScreen(
                 )
                 SettingsRowDivider()
                 SettingsRow(
+                    id = "settings_photos_prefetch_rate",
+                    icon = Icons.Outlined.Speed,
+                    label = stringResource(R.string.settings_photos_prefetch_rate_label),
+                    subtitle = stringResource(
+                        R.string.settings_photos_prefetch_rate_subtitle,
+                        prefetchRate,
+                    ),
+                    onClick = { prefetchPickerOpen = true },
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    id = "settings_photos_prefetch_rate_saver",
+                    icon = Icons.Outlined.Speed,
+                    label = stringResource(R.string.settings_photos_prefetch_rate_saver_label),
+                    subtitle = stringResource(
+                        R.string.settings_photos_prefetch_rate_saver_subtitle,
+                        prefetchRateSaver,
+                    ),
+                    onClick = { prefetchSaverPickerOpen = true },
+                )
+                SettingsRowDivider()
+                SettingsRow(
                     id = "settings_photos_ken_burns",
                     icon = Icons.Outlined.Slideshow,
                     label = stringResource(R.string.settings_photos_ken_burns_label),
@@ -163,6 +194,30 @@ fun SettingsPhotosScreen(
                 densityPickerOpen = false
             },
             onDismiss = { densityPickerOpen = false },
+        )
+    }
+    if (prefetchPickerOpen) {
+        PrefetchRateSliderDialog(
+            title = stringResource(R.string.settings_photos_prefetch_rate_dialog_title),
+            help = stringResource(R.string.settings_photos_prefetch_rate_help),
+            current = prefetchRate,
+            onApply = { value ->
+                coroutineScope.launch { scope.displayPreferences.setPrefetchSampleRateMs(value) }
+                prefetchPickerOpen = false
+            },
+            onDismiss = { prefetchPickerOpen = false },
+        )
+    }
+    if (prefetchSaverPickerOpen) {
+        PrefetchRateSliderDialog(
+            title = stringResource(R.string.settings_photos_prefetch_rate_saver_dialog_title),
+            help = stringResource(R.string.settings_photos_prefetch_rate_saver_help),
+            current = prefetchRateSaver,
+            onApply = { value ->
+                coroutineScope.launch { scope.displayPreferences.setPrefetchSampleRateBatterySaverMs(value) }
+                prefetchSaverPickerOpen = false
+            },
+            onDismiss = { prefetchSaverPickerOpen = false },
         )
     }
     if (qualityPickerOpen) {
@@ -202,6 +257,52 @@ private fun qualityLabelRes(quality: ThumbnailQuality): Int = when (quality) {
     ThumbnailQuality.Low -> R.string.settings_lookfeel_quality_low
     ThumbnailQuality.Medium -> R.string.settings_lookfeel_quality_medium
     ThumbnailQuality.High -> R.string.settings_lookfeel_quality_high
+}
+
+@Composable
+private fun PrefetchRateSliderDialog(
+    title: String,
+    help: String,
+    current: Int,
+    onApply: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var draft by remember(current) { mutableStateOf(current.toFloat()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(
+                        R.string.settings_photos_prefetch_rate_value,
+                        draft.toInt(),
+                    ),
+                )
+                Slider(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    valueRange = DisplayPreferences.PREFETCH_SAMPLE_MIN_MS.toFloat()..
+                        DisplayPreferences.PREFETCH_SAMPLE_MAX_MS.toFloat(),
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+                Text(
+                    text = help,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(draft.toInt()) }) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable

@@ -16,9 +16,32 @@ import kotlinx.coroutines.flow.Flow
 interface DisplayPreferences {
     fun observeDefaultGridDensity(): Flow<PhotosZoomLevel>
     fun observeThumbnailQuality(): Flow<ThumbnailQuality>
+    /**
+     * Sample rate (ms) for the grid's prefetch scheduler. Lower =
+     * faster reaction to scroll changes but more thrash; higher =
+     * workers get more drain time but slower window updates.
+     * Clamped to [PREFETCH_SAMPLE_MIN_MS]..[PREFETCH_SAMPLE_MAX_MS].
+     */
+    fun observePrefetchSampleRateMs(): Flow<Int>
+    /**
+     * Sample rate used when the OS reports power-save mode active.
+     * Slower default (200 ms) so the scheduler does less work — fewer
+     * keep-set rebuilds, fewer cancel-resubmit cycles — when the
+     * device is trying to conserve.
+     */
+    fun observePrefetchSampleRateBatterySaverMs(): Flow<Int>
 
     suspend fun setDefaultGridDensity(level: PhotosZoomLevel)
     suspend fun setThumbnailQuality(quality: ThumbnailQuality)
+    suspend fun setPrefetchSampleRateMs(ms: Int)
+    suspend fun setPrefetchSampleRateBatterySaverMs(ms: Int)
+
+    companion object {
+        const val PREFETCH_SAMPLE_DEFAULT_MS: Int = 100
+        const val PREFETCH_SAMPLE_BATTERY_SAVER_DEFAULT_MS: Int = 200
+        const val PREFETCH_SAMPLE_MIN_MS: Int = 10
+        const val PREFETCH_SAMPLE_MAX_MS: Int = 1000
+    }
 }
 
 /**

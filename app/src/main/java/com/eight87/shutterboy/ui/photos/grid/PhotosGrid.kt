@@ -132,8 +132,44 @@ internal fun PhotosGrid(
         (context.applicationContext as com.eight87.shutterboy.ShutterboyApplication)
             .graph.thumbnailPrefetcher
     }
+    val displayPrefs = remember(context) {
+        (context.applicationContext as com.eight87.shutterboy.ShutterboyApplication)
+            .graph.displayPreferences
+    }
+    val normalRateMs by displayPrefs.observePrefetchSampleRateMs()
+        .collectAsStateWithLifecycle(
+            initialValue = com.eight87.shutterboy.data.settings.DisplayPreferences.PREFETCH_SAMPLE_DEFAULT_MS,
+        )
+    val saverRateMs by displayPrefs.observePrefetchSampleRateBatterySaverMs()
+        .collectAsStateWithLifecycle(
+            initialValue = com.eight87.shutterboy.data.settings.DisplayPreferences.PREFETCH_SAMPLE_BATTERY_SAVER_DEFAULT_MS,
+        )
+    // Power-save mode is reported by PowerManager; the OS broadcasts
+    // ACTION_POWER_SAVE_MODE_CHANGED when the user toggles battery
+    // saver. We listen so the scheduler rate flips live without
+    // requiring a relaunch.
+    val powerManager = remember(context) {
+        context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+    }
+    var isPowerSave by remember { mutableStateOf(powerManager.isPowerSaveMode) }
+    androidx.compose.runtime.DisposableEffect(context, powerManager) {
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: android.content.Context?, i: android.content.Intent?) {
+                isPowerSave = powerManager.isPowerSaveMode
+            }
+        }
+        val filter = android.content.IntentFilter(android.os.PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiver, filter)
+        }
+        onDispose { runCatching { context.unregisterReceiver(receiver) } }
+    }
+    val sampleRateMs = if (isPowerSave) saverRateMs else normalRateMs
     @OptIn(FlowPreview::class)
-    LaunchedEffect(timeline, targetPx, prefetcher) {
+    LaunchedEffect(timeline, targetPx, prefetcher, sampleRateMs) {
         // Adaptive, direction-aware prefetch scheduler. The compose
         // snapshot read happens on whatever thread `collect` is
         // running on (the LaunchedEffect's main-coroutine context),
@@ -190,7 +226,7 @@ internal fun PhotosGrid(
             // to actually finish what we asked for, while still
             // updating frequently enough during drift that the
             // window follows the user.
-            .sample(100L)
+            .sample(sampleRateMs.toLong())
             .collect { (first, visibleCount) ->
                 if (visibleCount <= 0) return@collect
                 val now = System.nanoTime()

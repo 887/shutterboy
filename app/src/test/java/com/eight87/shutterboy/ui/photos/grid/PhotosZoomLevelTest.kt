@@ -37,11 +37,11 @@ class PhotosZoomLevelTest {
     }
 
     @Test
-    fun `column count matches design doc`() {
-        assertEquals(4, PhotosZoomLevel.Items.columns)
-        assertEquals(3, PhotosZoomLevel.Days.columns)
-        assertEquals(2, PhotosZoomLevel.Months.columns)
-        assertEquals(1, PhotosZoomLevel.Years.columns)
+    fun `default column count matches design doc`() {
+        assertEquals(4, PhotosZoomLevel.Items.defaultColumns())
+        assertEquals(3, PhotosZoomLevel.Days.defaultColumns())
+        assertEquals(2, PhotosZoomLevel.Months.defaultColumns())
+        assertEquals(1, PhotosZoomLevel.Years.defaultColumns())
     }
 
     // ---- ZoomAccumulator ----
