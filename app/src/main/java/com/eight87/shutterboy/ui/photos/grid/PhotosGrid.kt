@@ -174,6 +174,11 @@ internal fun PhotosGrid(
         var lastIndex = -1
         var lastTimeNs = 0L
         var emaVelocity = 0f
+        // Remembers the last non-zero scroll direction. At rest the
+        // window biases toward whichever direction the user just
+        // scrolled from — they're more likely to continue that way
+        // than reverse, so the deeper look-ahead should sit there.
+        var lastDirection = 1
 
         snapshotFlow {
             gridState.firstVisibleItemIndex to gridState.layoutInfo.visibleItemsInfo.size
@@ -213,32 +218,42 @@ internal fun PhotosGrid(
                     }
                     val absV = kotlin.math.abs(velocity)
                     val speedScale = (absV / 40f).coerceIn(0f, 2f)
-                    // SAFE ZONE — symmetric warmed window that gets
-                    // submitted regardless of direction. The point is
-                    // that a short direction reverse always lands on
-                    // already-warmed tiles instead of spinners; the
-                    // tiles immediately behind the viewport are NOT
-                    // wasted decode even when scrolling forward,
-                    // they're insurance against the bounce-back.
-                    val safeZone = visibleCount * 5
-                    // Directional bias — extra reach in the direction
-                    // of travel, on top of the symmetric safe zone.
-                    val aheadBias = (visibleCount * (3f + 6f * speedScale)).toInt()
+                    if (dir != 0) lastDirection = dir
+                    // Use last-known direction at rest so the bias
+                    // still leans the way the user just came from.
+                    val biasDir = if (dir != 0) dir else lastDirection
 
-                    val (lo, hi) = when (dir) {
-                        1 -> (first - safeZone) to (first + safeZone + aheadBias)
-                        -1 -> (first - safeZone - aheadBias) to (first + safeZone)
-                        else -> (first - safeZone) to (first + safeZone)
+                    // SAFE ZONE — symmetric warmed window that gets
+                    // submitted regardless of direction. Insurance
+                    // against bounce-back: a short reverse always
+                    // lands on already-warmed tiles.
+                    val safeZone = visibleCount * 5
+                    // Ahead bias = baseline + velocity-scaled extra.
+                    // At rest baseline still applies, so we always
+                    // look ~5 viewports past the safe zone in the
+                    // likely-next direction.
+                    val baselineAhead = visibleCount * 5
+                    val velocityAhead = (visibleCount * 8 * speedScale).toInt()
+                    val ahead = baselineAhead + velocityAhead
+
+                    val (lo, hi) = when (biasDir) {
+                        1 -> (first - safeZone) to (first + safeZone + ahead)
+                        -1 -> (first - safeZone - ahead) to (first + safeZone)
+                        // first-launch fallback before any direction
+                        else -> (first - safeZone) to (first + safeZone + ahead)
                     }
                     val from = lo.coerceAtLeast(0)
                     val to = hi.coerceAtMost(timelineSnapshot.size)
 
-                    // Leading edge = where new tiles enter view.
-                    val leadingEdge = when (dir) {
-                        1 -> first + visibleCount
-                        -1 -> first
-                        else -> first + visibleCount / 2
-                    }
+                    // Sort key = distance from VIEWPORT CENTER, not
+                    // from a leading edge. The previous leading-edge
+                    // sort put safe-zone tiles BEHIND the viewport
+                    // far from the leading edge — so they got
+                    // submitted EARLY (bottom of LIFO) and workers
+                    // served them LAST. Viewport-center sort puts the
+                    // tiles closest to what's actually visible on TOP
+                    // of the LIFO regardless of direction.
+                    val viewportCenter = first + visibleCount / 2
 
                     // Symmetric keep-zone, larger than the prefetch
                     // window so short direction reversals don't kill
@@ -259,7 +274,7 @@ internal fun PhotosGrid(
                     // just past the leading edge end up on TOP of the
                     // LIFO and are decoded next.
                     val indices = (from until to).sortedByDescending {
-                        kotlin.math.abs(it - leadingEdge)
+                        kotlin.math.abs(it - viewportCenter)
                     }
                     for (i in indices) {
                         val cell = timelineSnapshot.getOrNull(i)
