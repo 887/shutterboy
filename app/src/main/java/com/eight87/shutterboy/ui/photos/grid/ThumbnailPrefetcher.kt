@@ -35,9 +35,8 @@ import kotlinx.coroutines.sync.withLock
 class ThumbnailPrefetcher(
     private val context: Context,
     private val loader: ImageLoader,
-    private val targetPx: Int,
     private val maxPending: Int,
-    workerCount: Int = 4,
+    workerCount: Int = 8,
     scope: CoroutineScope,
 ) {
 
@@ -58,15 +57,15 @@ class ThumbnailPrefetcher(
     }
 
     /**
-     * Submit a target-sized prefetch for [id]. Items already warm in
+     * Submit a prefetch for [id] at [px]. Items already warm in
      * Coil's memory cache short-circuit; otherwise the task is pushed
      * to the LIFO front so the worker pool picks it up next.
      */
-    suspend fun submit(id: Long, uri: Uri) {
-        val key = "thumb-$id-$targetPx"
+    suspend fun submit(id: Long, uri: Uri, px: Int) {
+        val key = "thumb-$id-$px"
         if (loader.memoryCache?.get(MemoryCache.Key(key)) != null) return
         lock.withLock {
-            deque.addLast(Task(id, uri, key, targetPx))
+            deque.addLast(Task(id, uri, key, px))
             while (deque.size > maxPending) deque.removeFirst()
         }
         signal.trySend(Unit)

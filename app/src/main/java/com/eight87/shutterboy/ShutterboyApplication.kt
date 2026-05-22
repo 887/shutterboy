@@ -61,10 +61,12 @@ class ShutterboyApplication : Application(), SingletonImageLoader.Factory {
             // through Coil's default ~25% maxMemory budget during fast
             // scrolling; tiles fall out of cache and re-decode the
             // moment they re-enter the viewport, which is the dominant
-            // scroll-jank cause. Bump to 50% of maxMemory.
+            // scroll-jank cause. 75 % keeps a much larger working set
+            // resident, so back-from-viewer transitions land on
+            // already-cached tiles instead of spinners.
             .memoryCache {
                 MemoryCache.Builder()
-                    .maxSizePercent(context, 0.50)
+                    .maxSizePercent(context, 0.75)
                     .build()
             }
             // Disk cache covers viewer / re-open cases; bump from

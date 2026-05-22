@@ -81,6 +81,25 @@ class AppGraph(applicationContext: Context) {
     private val safSourceManager = SafSourceManager(appCtx)
 
     /**
+     * Process-scoped thumbnail prefetcher. Tied to a long-lived
+     * supervisor scope (created below) so in-flight decodes complete
+     * even when the user navigates into the viewer — that's the
+     * difference between "back from viewer = warm tiles" and "back
+     * from viewer = spinners on every tile that was mid-decode when
+     * we left". 8 IO workers, 1500-task LIFO, target-px supplied
+     * per submission.
+     */
+    val thumbnailPrefetcher: com.eight87.shutterboy.ui.photos.grid.ThumbnailPrefetcher by lazy {
+        com.eight87.shutterboy.ui.photos.grid.ThumbnailPrefetcher(
+            context = appCtx,
+            loader = coil3.SingletonImageLoader.get(appCtx),
+            maxPending = 1500,
+            workerCount = 8,
+            scope = graphScope,
+        )
+    }
+
+    /**
      * Phase I.3.b — DataStore-backed SAF tree URI set. Exposed through the
      * narrow [SafSourcesPreferences] facet for the Manage-sources UI, and
      * through `ScanConfigSource.safSourceUris` for the data-layer scanner.

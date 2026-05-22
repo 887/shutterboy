@@ -124,16 +124,13 @@ internal fun PhotosGrid(
     val context = LocalContext.current
     val targetPx = rememberGridTargetPx(columns)
     val lowPx = rememberGridTargetPx(columns, multiplier = 0.5f)
-    val prefetchScope = rememberCoroutineScope()
-    val prefetcher = remember(targetPx) {
-        ThumbnailPrefetcher(
-            context = context,
-            loader = SingletonImageLoader.get(context),
-            targetPx = targetPx,
-            maxPending = 1500,
-            workerCount = 8,
-            scope = prefetchScope,
-        )
+    // App-scoped prefetcher pulled from ShutterboyApplication.
+    // Outliving PhotosScreen's composition lets in-flight decodes
+    // complete while the user is in the viewer — so they back out
+    // onto warm tiles instead of spinners.
+    val prefetcher = remember(context) {
+        (context.applicationContext as com.eight87.shutterboy.ShutterboyApplication)
+            .graph.thumbnailPrefetcher
     }
     @OptIn(FlowPreview::class)
     LaunchedEffect(timeline, targetPx, prefetcher) {
@@ -279,7 +276,7 @@ internal fun PhotosGrid(
                     for (i in indices) {
                         val cell = timelineSnapshot.getOrNull(i)
                             as? TimelineDisplayItem.PhotoCell ?: continue
-                        prefetcher.submit(cell.photo.id.value, cell.photo.contentUri)
+                        prefetcher.submit(cell.photo.id.value, cell.photo.contentUri, targetPx)
                     }
                 }
             }

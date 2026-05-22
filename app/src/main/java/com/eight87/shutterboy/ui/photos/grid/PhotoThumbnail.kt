@@ -90,7 +90,7 @@ fun PhotoThumbnail(
         mutableStateOf(targetCached || !needsUpgrade)
     }
     LaunchedEffect(photo.id.value, targetPx, prefetcher) {
-        prefetcher?.submit(photo.id.value, photo.contentUri)
+        prefetcher?.submit(photo.id.value, photo.contentUri, targetPx)
     }
     LaunchedEffect(photo.id.value, useTarget, needsUpgrade) {
         if (!useTarget && needsUpgrade) {
