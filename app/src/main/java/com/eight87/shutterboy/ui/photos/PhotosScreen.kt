@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -80,13 +81,16 @@ fun PhotosScreen(
     // the top bar can drive it. Seeded from the user's persisted
     // default density; pinch gestures inside GalleryTimelineFrame also
     // route back into this state via onLevelChange.
-    var zoomLevel by remember(initialDensity) {
+    // rememberSaveable, not remember — navigating into PhotoViewer
+    // takes PhotosScreen out of composition; with plain `remember` the
+    // grouping + column-count picks would reset to defaults on back.
+    // Saveable survives the nav round-trip + process death.
+    var zoomLevel by rememberSaveable(initialDensity) {
         mutableStateOf<com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel>(initialDensity)
     }
-    // Column count — INDEPENDENT of grouping. Seeded from the
-    // grouping's default columns (Items=4, Days=3, etc) on first
-    // launch, but persists separately once the user changes it.
-    var columnCount by remember { mutableStateOf(initialDensity.defaultColumns()) }
+    var columnCount by rememberSaveable {
+        mutableStateOf(initialDensity.defaultColumns())
+    }
     var groupingMenuOpen by remember { mutableStateOf(false) }
 
     val selectionHolder = rememberSelectionHolder()

@@ -64,9 +64,11 @@ fun CollectionsScreen(
         applyCustomOrder(folders, folderOrder) { it.id }
     }
     // Column count for the folder grid — cycled by the top-bar
-    // button. Independent of any grouping (folders don't have
-    // grouping levels — they're a flat list).
-    var collectionsColumns by remember { mutableStateOf(2) }
+    // button. rememberSaveable so the user's pick survives navigating
+    // into FolderDetail and back.
+    var collectionsColumns by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(2)
+    }
 
     Scaffold(
         topBar = {

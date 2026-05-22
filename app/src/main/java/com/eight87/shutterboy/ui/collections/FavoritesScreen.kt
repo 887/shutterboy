@@ -73,12 +73,14 @@ internal fun FavoritesScreenContent(
     val stream = remember(favoriteCommands) {
         PhotoStream { favoriteCommands.observeFavoritePhotos() }
     }
-    var zoomLevel by remember {
+    var zoomLevel by androidx.compose.runtime.saveable.rememberSaveable {
         mutableStateOf<com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel>(
             com.eight87.shutterboy.ui.photos.grid.PhotosZoomLevel.Items,
         )
     }
-    var favoritesColumns by remember { mutableStateOf(4) }
+    var favoritesColumns by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(4)
+    }
     Scaffold(
         topBar = {
             if (backStack != null) {
