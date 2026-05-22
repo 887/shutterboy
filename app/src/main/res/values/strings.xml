@@ -282,6 +282,15 @@
     <string name="about_oss_row_subtitle">Lands with Phase L release polish</string>
     <string name="cd_easter_egg_tiger">Tiger easter egg</string>
 
+    <!-- Credits card — mirrors tonearmboy / whisperboy / strictlykeptboy About-page. -->
+    <string name="about_credits_card_title">Credits</string>
+    <string name="about_credits_cleanroom_label">Clean-room implementation</string>
+    <string name="about_credits_cleanroom_subtitle">Every line is original. Inspiration from screenshots only; no code copied from any other gallery app. MIT-licensed throughout.</string>
+    <string name="about_credits_siblings_label">Sibling apps</string>
+    <string name="about_credits_siblings_subtitle">Same toolchain + AVD-loop + release pipeline as tonearmboy (music), whisperboy (audiobooks), strictlykeptboy (calendar).</string>
+    <string name="about_credits_stack_label">Compose · Coil 3 · Room · MediaStore</string>
+    <string name="about_credits_stack_subtitle">Jetpack Compose UI, Coil 3 image loading, Room cache, MediaStore + SAF for photo discovery, androidx.exifinterface for metadata.</string>
+
     <!-- oss-licenses Phase B — Open-source licenses sub-page. -->
     <string name="licenses_screen_title">Open-source licenses</string>
     <string name="licenses_row_label">Open-source licenses</string>

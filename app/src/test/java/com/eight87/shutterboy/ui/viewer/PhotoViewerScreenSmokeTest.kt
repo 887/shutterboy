@@ -84,8 +84,12 @@ class PhotoViewerScreenSmokeTest {
 
         composeRule.waitForIdle()
 
-        // TopAppBar title shows the first photo's name.
-        composeRule.onNodeWithText("first.jpg").assertIsDisplayed()
+        // TopAppBar title shows the first photo's name. The chrome
+        // auto-hides after 3s and the Compose test clock auto-advances
+        // past that during waitForIdle, so the node may be detached
+        // visually — assertExists is the right contract for "the
+        // pager populated page 1".
+        composeRule.onNodeWithText("first.jpg").assertExists()
 
         // Swipe the pager left → page 2.
         composeRule.onNodeWithTag(VIEWER_PAGER_TAG)
@@ -93,6 +97,6 @@ class PhotoViewerScreenSmokeTest {
 
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("second.jpg").assertIsDisplayed()
+        composeRule.onNodeWithText("second.jpg").assertExists()
     }
 }

@@ -1,10 +1,16 @@
 package com.eight87.shutterboy.ui.settings
 
 import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,7 +19,11 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -89,21 +99,31 @@ fun SettingsAboutScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = SettingsDimens.PagePadding),
+                .padding(horizontal = SettingsDimens.PagePadding)
+                // Match tonearmboy / whisperboy / strictlykeptboy About — make sure the last
+                // card row clears the gesture-nav inset. Scaffold's innerPadding already adds
+                // the system-bar top; the bottom needs its own pad because the scroll Column
+                // doesn't consume insets internally.
+                .navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(SettingsDimens.CardSpacing),
         ) {
-            // Identity heading — sits above the first card, aligned to the
-            // page padding so it lines up with the card's title-column.
+            // App-icon header. ic_launcher_foreground at 96dp + app name in
+            // headlineSmall — the visual identity anchor every sibling app shares.
+            // Tagline moves underneath so the heading reads "icon → name → tagline".
             Column(
-                modifier = Modifier.padding(
-                    top = SettingsDimens.GroupTitleTopPadding,
-                    bottom = 4.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Image(
+                    painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.size(96.dp),
+                )
+                Spacer(Modifier.height(12.dp))
                 Text(
                     text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
@@ -162,6 +182,34 @@ fun SettingsAboutScreen(
                     icon = Icons.Filled.Favorite,
                     label = stringResource(R.string.about_oss_row_label),
                     subtitle = stringResource(R.string.about_oss_row_subtitle),
+                    onClick = null,
+                )
+            }
+
+            // Credits card — same three-row shape every sibling app uses
+            // (cleanroom attribution + sibling-apps link + stack credit).
+            SettingsCard(title = stringResource(R.string.about_credits_card_title)) {
+                SettingsRow(
+                    id = "settings_about_credits_cleanroom",
+                    icon = Icons.Filled.Info,
+                    label = stringResource(R.string.about_credits_cleanroom_label),
+                    subtitle = stringResource(R.string.about_credits_cleanroom_subtitle),
+                    onClick = null,
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    id = "settings_about_credits_siblings",
+                    icon = Icons.Filled.Favorite,
+                    label = stringResource(R.string.about_credits_siblings_label),
+                    subtitle = stringResource(R.string.about_credits_siblings_subtitle),
+                    onClick = null,
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    id = "settings_about_credits_stack",
+                    icon = Icons.Filled.Code,
+                    label = stringResource(R.string.about_credits_stack_label),
+                    subtitle = stringResource(R.string.about_credits_stack_subtitle),
                     onClick = null,
                 )
             }

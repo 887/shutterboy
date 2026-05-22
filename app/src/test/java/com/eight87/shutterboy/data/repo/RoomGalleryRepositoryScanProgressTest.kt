@@ -183,8 +183,12 @@ class RoomGalleryRepositoryScanProgressTest {
         )
         val repo = makeRepo(FakeScanner(ctx, photos), IdentityEnricher(ctx))
         val snap = repo.runScan()
-        assertEquals(4, snap.photos.size)
-        // Two video rows should be present in the resulting snapshot.
-        assertEquals(2, snap.photos.count { it.mimeType.startsWith("video/") })
+        // R.F.* — LibrarySnapshot.photos no longer materialises the full
+        // library (UI reads from Room via observePhotos); deltaCount and
+        // the photo DAO are the contract now.
+        assertEquals(4, snap.deltaCount)
+        val stored = db.photos().byIds(listOf(1L, 2L, 3L, 4L))
+        assertEquals(4, stored.size)
+        assertEquals(2, stored.count { it.mimeType.startsWith("video/") })
     }
 }
