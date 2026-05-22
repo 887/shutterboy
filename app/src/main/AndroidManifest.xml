@@ -27,17 +27,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Show up in the "Complete action using" chooser for
-                 image + video URIs (camera apps, file managers, share
-                 sheets opening media in-place). -->
+            <!-- "Open with" chooser for image URIs. Same shape Aves +
+                 Gallery use — MIME-type only filter, no scheme
+                 constraint, so a camera app sending just the data
+                 URI without a type still resolves to us. Two filters
+                 (one image, one video) rather than one with both
+                 MIMEs — Android's filter matching treats sibling
+                 <data> elements as a union, but splitting keeps
+                 the chooser categorisation clean. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="video/*" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
             </intent-filter>
         </activity>
     </application>
