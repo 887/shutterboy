@@ -103,6 +103,7 @@
     <string name="cd_viewer_favorite">Remove from favorites</string>
     <string name="cd_viewer_unfavorite">Add to favorites</string>
     <string name="viewer_delete_dialog_title">Delete this photo?</string>
+    <string name="viewer_delete_dialog_title_video">Delete this video?</string>
     <string name="viewer_delete_dialog_body">It will be moved to the system trash. You can restore it from Files for 30 days.</string>
     <string name="viewer_delete_confirm">Delete</string>
     <string name="viewer_delete_cancel">Cancel</string>

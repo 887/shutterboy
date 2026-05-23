@@ -434,8 +434,16 @@ class RoomGalleryRepository(
     override suspend fun deletePhotos(ids: List<PhotoId>): DeleteRequest {
         if (ids.isEmpty()) return DeleteRequest.Immediate(deletedCount = 0)
         val resolver = context.contentResolver
-        val uris = ids.map {
-            ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, it.value)
+        // Look up stored contentUri per id so video items route through
+        // MediaStore.Video.EXTERNAL_CONTENT_URI (the scanner already wrote
+        // the right table-specific URI). Building a blanket Images URI from
+        // the id makes the system consent dialog's video-thumbnail preview
+        // render grey because the id doesn't resolve in the Images table.
+        val rows = photoDao.byIds(ids.map { it.value })
+        val byId = rows.associateBy { it.id }
+        val uris = ids.map { id ->
+            byId[id.value]?.contentUri?.let(android.net.Uri::parse)
+                ?: ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id.value)
         }
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {

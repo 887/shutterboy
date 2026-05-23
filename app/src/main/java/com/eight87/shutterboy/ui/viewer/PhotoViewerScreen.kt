@@ -618,7 +618,14 @@ internal fun PhotoViewerContent(
         val targetId = currentId
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(stringResource(R.string.viewer_delete_dialog_title)) },
+            title = {
+                Text(
+                    stringResource(
+                        if (isCurrentVideo) R.string.viewer_delete_dialog_title_video
+                        else R.string.viewer_delete_dialog_title
+                    )
+                )
+            },
             text = { Text(stringResource(R.string.viewer_delete_dialog_body)) },
             confirmButton = {
                 TextButton(
