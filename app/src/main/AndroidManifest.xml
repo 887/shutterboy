@@ -27,22 +27,40 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- "Open with" chooser for image URIs. Same shape Aves +
-                 Gallery use — MIME-type only filter, no scheme
-                 constraint, so a camera app sending just the data
-                 URI without a type still resolves to us. Two filters
-                 (one image, one video) rather than one with both
-                 MIMEs — Android's filter matching treats sibling
-                 <data> elements as a union, but splitting keeps
-                 the chooser categorisation clean. -->
-            <intent-filter>
+            <!-- "Open with" chooser for image + video URIs. Mirrors
+                 the Aves manifest shape exactly because some OEMs
+                 (Samsung One UI, MIUI) only show apps in the chooser
+                 when their filter declares BROWSABLE alongside
+                 DEFAULT, and several camera apps issue intents
+                 already tagged BROWSABLE for the gallery hand-off.
+                 Spelling out schemes (content / file / http / https)
+                 is belt-and-braces: per the docs a MIME-only filter
+                 implies content+file, but the working pattern across
+                 every gallery app that shows up in the user's
+                 "Complete action using" sheet lists them
+                 explicitly — we follow suit instead of arguing with
+                 reality. -->
+            <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+
+            <!-- ACTION_EDIT — camera apps and gallery apps fire this
+                 when the user taps "edit" on a photo. We don't ship
+                 a real editor yet; we open the viewer so the user
+                 can at least see, zoom, share. Better than not
+                 appearing in the chooser at all. -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="video/*" />
             </intent-filter>
         </activity>

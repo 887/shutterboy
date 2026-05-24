@@ -26,7 +26,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun routeExternalOpen(intent: Intent?, graph: AppGraph) {
-        if (intent?.action != Intent.ACTION_VIEW) return
+        val action = intent?.action ?: return
+        if (action != Intent.ACTION_VIEW && action != Intent.ACTION_EDIT) return
         val uri = intent.data ?: return
         val mime = intent.type ?: contentResolver.getType(uri)
         lifecycleScope.launch {
