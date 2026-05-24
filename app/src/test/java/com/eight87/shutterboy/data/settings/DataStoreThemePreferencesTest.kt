@@ -71,6 +71,12 @@ class DataStoreThemePreferencesTest {
     }
 
     @Test
+    fun `Custom seed round-trips through DataStore`() = runTest(testScope.testScheduler) {
+        prefs.setBaseTheme(BaseTheme.Custom(0xB94A1AL))
+        assertEquals(BaseTheme.Custom(0xB94A1AL), prefs.observeBaseTheme().first())
+    }
+
+    @Test
     fun `setting a new base theme overwrites the previous one`() =
         runTest(testScope.testScheduler) {
             prefs.setBaseTheme(BaseTheme.PureBlack)

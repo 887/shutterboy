@@ -71,6 +71,7 @@ fun AppearanceSection(
         .collectAsStateWithLifecycle(initialValue = null)
     val scope = rememberCoroutineScope()
     var basePickerOpen by remember { mutableStateOf(false) }
+    var baseColorPickerOpen by remember { mutableStateOf(false) }
     var colorPickerOpen by remember { mutableStateOf(false) }
     var modePickerOpen by remember { mutableStateOf(false) }
 
@@ -142,10 +143,27 @@ fun AppearanceSection(
         BaseThemePickerDialog(
             current = baseTheme,
             onPick = { picked ->
-                scope.launch { themePreferences.setBaseTheme(picked) }
-                basePickerOpen = false
+                if (picked is BaseTheme.Custom) {
+                    basePickerOpen = false
+                    baseColorPickerOpen = true
+                } else {
+                    scope.launch { themePreferences.setBaseTheme(picked) }
+                    basePickerOpen = false
+                }
             },
             onDismiss = { basePickerOpen = false },
+        )
+    }
+
+    if (baseColorPickerOpen) {
+        val initialSeed = (baseTheme as? BaseTheme.Custom)?.seedRgb ?: DEFAULT_SEED_RGB
+        ColorPickerDialog(
+            initialRgb = initialSeed,
+            onConfirm = { rgb ->
+                scope.launch { themePreferences.setBaseTheme(BaseTheme.Custom(rgb)) }
+                baseColorPickerOpen = false
+            },
+            onDismiss = { baseColorPickerOpen = false },
         )
     }
 
@@ -171,6 +189,7 @@ fun AppearanceSection(
 @Composable
 private fun swatchFor(theme: BaseTheme): Color = when (theme) {
     is BaseTheme.PureBlack -> Color.Black
+    is BaseTheme.Custom -> Color(0xFF000000L or theme.seedRgb)
     else -> MaterialTheme.colorScheme.surfaceVariant
 }
 
@@ -178,6 +197,7 @@ private fun swatchFor(theme: BaseTheme): Color = when (theme) {
 private fun themeLabel(theme: BaseTheme): String = when (theme) {
     is BaseTheme.DefaultAndroid -> stringResource(R.string.settings_appearance_default_android)
     is BaseTheme.PureBlack -> stringResource(R.string.settings_appearance_pure_black)
+    is BaseTheme.Custom -> stringResource(R.string.settings_appearance_custom)
 }
 
 @Composable
@@ -235,6 +255,11 @@ private fun BaseThemePickerDialog(
                     label = stringResource(R.string.settings_appearance_pure_black),
                     selected = current is BaseTheme.PureBlack,
                     onClick = { onPick(BaseTheme.PureBlack) },
+                )
+                PickerRow(
+                    label = stringResource(R.string.settings_appearance_custom),
+                    selected = current is BaseTheme.Custom,
+                    onClick = { onPick(BaseTheme.Custom(DEFAULT_SEED_RGB)) },
                 )
             }
         },

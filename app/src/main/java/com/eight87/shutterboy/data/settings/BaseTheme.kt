@@ -20,20 +20,31 @@ package com.eight87.shutterboy.data.settings
 sealed class BaseTheme {
     data object DefaultAndroid : BaseTheme()
     data object PureBlack : BaseTheme()
+    data class Custom(val seedRgb: Long) : BaseTheme()
 
     /** Storage form. Inverse of [fromStored]. */
     fun toStored(): String = when (this) {
         is DefaultAndroid -> "DefaultAndroid"
         is PureBlack -> "PureBlack"
+        is Custom -> "Custom:0x%06X".format(seedRgb)
     }
 
     companion object {
         val Default: BaseTheme = DefaultAndroid
 
-        fun fromStored(raw: String?): BaseTheme = when (raw) {
-            "DefaultAndroid" -> DefaultAndroid
-            "PureBlack" -> PureBlack
+        fun fromStored(raw: String?): BaseTheme = when {
+            raw == "DefaultAndroid" -> DefaultAndroid
+            raw == "PureBlack" -> PureBlack
+            raw != null && raw.startsWith("Custom:") -> {
+                val seed = extractSeed(raw)
+                if (seed != null) Custom(seed) else Default
+            }
             else -> Default
+        }
+
+        private fun extractSeed(raw: String): Long? {
+            val hex = raw.removePrefix("Custom:").removePrefix("0x").removePrefix("0X")
+            return runCatching { hex.toLong(16) }.getOrNull()?.and(0xFFFFFFL)
         }
 
         /**
@@ -43,8 +54,7 @@ sealed class BaseTheme {
          */
         fun extractLegacyCustomSeed(raw: String?): Long? {
             if (raw == null || !raw.startsWith("Custom:")) return null
-            val hex = raw.removePrefix("Custom:").removePrefix("0x").removePrefix("0X")
-            return runCatching { hex.toLong(16) }.getOrNull()?.and(0xFFFFFFL)
+            return extractSeed(raw)
         }
     }
 }

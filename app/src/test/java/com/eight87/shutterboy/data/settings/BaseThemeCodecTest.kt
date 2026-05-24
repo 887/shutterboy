@@ -32,31 +32,33 @@ class BaseThemeCodecTest {
     }
 
     @Test
-    fun `legacy Custom stored values extract their seed`() {
-        // The old combined-base-and-tint format. The seed moves to
-        // the new tint-colour pref on migration; base falls back to
-        // Default. This test asserts the parser still extracts the
-        // seed cleanly.
+    fun `Custom round-trips`() {
+        val v: BaseTheme = BaseTheme.Custom(0x6750A4L)
+        assertEquals(v, BaseTheme.fromStored(v.toStored()))
+    }
+
+    @Test
+    fun `Custom stored values parse their seed`() {
         val seeds = listOf(0x000000L, 0xFFFFFFL, 0x6750A4L, 0xB94A1AL, 0xABCDEFL)
         for (seed in seeds) {
             val raw = "Custom:0x${seed.toString(16).padStart(6, '0').uppercase()}"
             assertEquals("seed parse failed for $seed", seed, BaseTheme.extractLegacyCustomSeed(raw))
-            assertEquals(BaseTheme.Default, BaseTheme.fromStored(raw))
+            assertEquals(BaseTheme.Custom(seed), BaseTheme.fromStored(raw))
         }
     }
 
     @Test
-    fun `legacy Custom fromStored accepts bare hex without 0x prefix`() {
-        assertEquals(0x6750A4L, BaseTheme.extractLegacyCustomSeed("Custom:6750A4"))
+    fun `Custom fromStored accepts bare hex without 0x prefix`() {
+        assertEquals(BaseTheme.Custom(0x6750A4L), BaseTheme.fromStored("Custom:6750A4"))
     }
 
     @Test
-    fun `legacy Custom fromStored accepts lower-case prefix`() {
-        assertEquals(0xABCDEFL, BaseTheme.extractLegacyCustomSeed("Custom:0xabcdef"))
+    fun `Custom fromStored accepts lower-case prefix`() {
+        assertEquals(BaseTheme.Custom(0xABCDEFL), BaseTheme.fromStored("Custom:0xabcdef"))
     }
 
     @Test
-    fun `legacy extractLegacyCustomSeed masks high bits to 24 bits`() {
+    fun `extractLegacyCustomSeed masks high bits to 24 bits`() {
         assertEquals(0x123456L, BaseTheme.extractLegacyCustomSeed("Custom:0xFF123456"))
     }
 

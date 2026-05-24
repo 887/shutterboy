@@ -106,6 +106,7 @@ internal fun resolveBaseScheme(darkTheme: Boolean, baseTheme: BaseTheme): ColorS
             }
             foundation.copy(background = Color.Black, surface = Color.Black)
         }
+        is BaseTheme.Custom -> deriveCustomScheme(baseTheme.seedRgb, darkTheme)
     }
 }
 
