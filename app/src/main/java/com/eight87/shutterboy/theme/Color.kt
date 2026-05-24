@@ -48,7 +48,7 @@ internal fun deriveCustomScheme(seedRgb: Long, darkTheme: Boolean): ColorScheme 
     val tertiary = hslColor(((h + 60f) % 360f), (s * 0.6f).coerceIn(0f, 1f), if (darkTheme) 0.7f else 0.5f)
     val primaryDark = hslColor(h, s, if (darkTheme) 0.7f else 0.4f)
     val onPrimary = if (luminance(primaryDark) > 0.5f) Color.Black else Color.White
-    return if (darkTheme) {
+    val base = if (darkTheme) {
         darkColorScheme(
             primary = primaryDark,
             secondary = secondary,
@@ -63,6 +63,27 @@ internal fun deriveCustomScheme(seedRgb: Long, darkTheme: Boolean): ColorScheme 
             onPrimary = onPrimary,
         )
     }
+    val tint = hslColor(h, s.coerceAtMost(0.3f), if (darkTheme) 0.15f else 0.92f)
+    return base.copy(
+        surface = blendSurface(base.surface, tint),
+        surfaceVariant = blendSurface(base.surfaceVariant, tint),
+        background = blendSurface(base.background, tint),
+        surfaceContainerLowest = blendSurface(base.surfaceContainerLowest, tint),
+        surfaceContainerLow = blendSurface(base.surfaceContainerLow, tint),
+        surfaceContainer = blendSurface(base.surfaceContainer, tint),
+        surfaceContainerHigh = blendSurface(base.surfaceContainerHigh, tint),
+        surfaceContainerHighest = blendSurface(base.surfaceContainerHighest, tint),
+    )
+}
+
+internal fun blendSurface(base: Color, tint: Color, fraction: Float = 0.4f): Color {
+    val f = fraction.coerceIn(0f, 1f)
+    return Color(
+        red = base.red * (1f - f) + tint.red * f,
+        green = base.green * (1f - f) + tint.green * f,
+        blue = base.blue * (1f - f) + tint.blue * f,
+        alpha = base.alpha,
+    )
 }
 
 internal fun colorFromRgbLong(rgb: Long): Color {
