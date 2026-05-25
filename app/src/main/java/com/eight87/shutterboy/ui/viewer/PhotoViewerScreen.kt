@@ -83,6 +83,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -196,6 +197,8 @@ internal fun PhotoViewerContent(
     // scale + pan when the user swipes to a different photo.
     val scaleState = remember { androidx.compose.runtime.mutableFloatStateOf(ViewerZoomMath.MIN_SCALE) }
     val panState = remember { mutableStateOf(Offset.Zero) }
+    var viewportWidth by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var viewportHeight by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     // Per-photo orientation: rotation in degrees + horizontal mirror.
     // Reset on page change (alongside scale + pan).
     val rotationState = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
@@ -540,6 +543,10 @@ internal fun PhotoViewerContent(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color.Black)
+                .onSizeChanged { size ->
+                    viewportWidth = size.width.toFloat()
+                    viewportHeight = size.height.toFloat()
+                }
                 .nestedScroll(dismissConnection)
                 .testTag(VIEWER_PAGER_TAG),
         ) {
@@ -583,7 +590,12 @@ internal fun PhotoViewerContent(
                             )
                             scaleState.floatValue = newScale
                             panState.value = if (ViewerZoomMath.isZoomed(newScale)) {
-                                panState.value + panChange
+                                val raw = panState.value + panChange
+                                val (cx, cy) = ViewerZoomMath.clampPan(
+                                    raw.x, raw.y, newScale,
+                                    viewportWidth, viewportHeight,
+                                )
+                                Offset(cx, cy)
                             } else {
                                 Offset.Zero
                             }

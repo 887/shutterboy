@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import coil3.compose.AsyncImage
@@ -117,11 +118,18 @@ private fun ZoomableImage(uri: Uri, modifier: Modifier = Modifier) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
+    var boxWidth by remember { mutableFloatStateOf(0f) }
+    var boxHeight by remember { mutableFloatStateOf(0f) }
     val state = rememberTransformableState { panChange, zoomChange, _, _ ->
         scale = (scale * zoomChange).coerceIn(1f, 6f)
         if (scale > 1f) {
-            offsetX += panChange.x
-            offsetY += panChange.y
+            val (cx, cy) = ViewerZoomMath.clampPan(
+                offsetX + panChange.x,
+                offsetY + panChange.y,
+                scale, boxWidth, boxHeight,
+            )
+            offsetX = cx
+            offsetY = cy
         } else {
             offsetX = 0f
             offsetY = 0f
@@ -131,6 +139,10 @@ private fun ZoomableImage(uri: Uri, modifier: Modifier = Modifier) {
         modifier = modifier
             .background(Color.Black)
             .clipToBounds()
+            .onSizeChanged { size ->
+                boxWidth = size.width.toFloat()
+                boxHeight = size.height.toFloat()
+            }
             .transformable(state = state),
     ) {
         AsyncImage(

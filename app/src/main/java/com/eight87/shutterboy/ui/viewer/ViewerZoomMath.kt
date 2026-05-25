@@ -40,4 +40,21 @@ internal object ViewerZoomMath {
 
     /** True iff the image is zoomed in past rest — gates pan + pager-swipe behaviour. */
     fun isZoomed(scale: Float): Boolean = scale > MIN_SCALE
+
+    /**
+     * Clamp pan offsets so the scaled image can't fly off-screen.
+     * At scale S the image extends `(S - 1) * viewport / 2` beyond
+     * each edge; that's the maximum useful translation.
+     */
+    fun clampPan(
+        panX: Float,
+        panY: Float,
+        scale: Float,
+        viewportWidth: Float,
+        viewportHeight: Float,
+    ): Pair<Float, Float> {
+        val maxX = (scale - 1f) * viewportWidth / 2f
+        val maxY = (scale - 1f) * viewportHeight / 2f
+        return panX.coerceIn(-maxX, maxX) to panY.coerceIn(-maxY, maxY)
+    }
 }
