@@ -48,15 +48,15 @@ class LicensesCatalogParseTest {
             if (spdx == "Apache-2.0") "FAKE-APACHE-BODY" else null
         }
 
-        assertEquals(3, entries.size)
-        // Sorted by groupId:artifactId — activity comes before exifinterface
-        // which comes before com.example (lexicographic on the joined key).
+        // The `com.example:weird` fixture entry has no SPDX license, so it's
+        // a proprietary artifact and gets filtered out of the open-source
+        // acknowledgements list (see `parseLicensesCatalog`). Two remain.
+        assertEquals(2, entries.size)
+        // Sorted by groupId:artifactId — activity comes before exifinterface.
         assertEquals("androidx.activity:activity-compose",
             "${entries[0].groupId}:${entries[0].artifactId}")
         assertEquals("androidx.exifinterface:exifinterface",
             "${entries[1].groupId}:${entries[1].artifactId}")
-        assertEquals("com.example:weird",
-            "${entries[2].groupId}:${entries[2].artifactId}")
 
         // Field projection — version + spdx + licenseText.
         val activity = entries[0]
@@ -64,10 +64,8 @@ class LicensesCatalogParseTest {
         assertEquals("Apache-2.0", activity.spdxId)
         assertEquals("FAKE-APACHE-BODY", activity.licenseText)
 
-        // Entry with no spdxLicenses falls back to UNKNOWN + null body.
-        val weird = entries[2]
-        assertEquals("UNKNOWN", weird.spdxId)
-        assertNull(weird.licenseText)
+        // The no-SPDX (proprietary) artifact is absent entirely.
+        assertNull(entries.firstOrNull { it.artifactId == "weird" })
     }
 
     @Test

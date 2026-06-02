@@ -14,7 +14,9 @@ import com.eight87.shutterboy.data.settings.DisplayPreferences
 import com.eight87.shutterboy.data.settings.SafSourcesPreferences
 import com.eight87.shutterboy.data.settings.SlideshowPreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
+import com.eight87.shutterboy.data.settings.TaggingPreferences
 import com.eight87.shutterboy.data.settings.ThemePreferences
+import com.eight87.shutterboy.data.tagging.AiTaggingService
 
 /**
  * R.E.1 — bundle of dependencies handed to every per-destination
@@ -46,4 +48,6 @@ interface RouteScope {
     val displayPreferences: DisplayPreferences
     val safSourcesPreferences: SafSourcesPreferences
     val slideshowPreferences: SlideshowPreferences
+    val taggingPreferences: TaggingPreferences
+    val aiTagging: AiTaggingService
 }

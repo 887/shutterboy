@@ -47,6 +47,14 @@ data object SettingsLibrary : Destination
 data object SettingsLookAndFeel : Destination
 
 /**
+ * Settings → Smart Tags sub-page. On-device AI photo tagging: master
+ * toggle, GenAI captions toggle, tagged-count + approximate storage size,
+ * re-tag-all, and clear-tag-data.
+ */
+@Serializable
+data object SettingsSmartTags : Destination
+
+/**
  * Phase I.3.b — Settings → Library → Manage sources sub-page. Lists the
  * persisted SAF tree URIs with per-source photo counts and exposes the
  * `ACTION_OPEN_DOCUMENT_TREE` add affordance + per-row remove.

@@ -203,8 +203,15 @@ internal fun parseLicensesCatalog(
 ): List<LicenseEntry> {
     val raw = LicensesJson.json.decodeFromString<List<LicenseeArtifact>>(json)
     return raw
-        .map { artifact ->
-            val spdx = artifact.spdxLicenses.firstOrNull()?.identifier ?: "UNKNOWN"
+        .mapNotNull { artifact ->
+            // This screen is an OPEN-SOURCE acknowledgements list. Artifacts
+            // with no SPDX license are proprietary (e.g. Google's Play
+            // Services / ML Kit on-device SDKs under the Android SDK Terms /
+            // ML Kit Terms). Licensee lets them through via allowUrl(...), but
+            // they're excluded here because they aren't open source — listing
+            // them under "open-source licenses" would be inaccurate.
+            val spdx = artifact.spdxLicenses.firstOrNull()?.identifier
+                ?: return@mapNotNull null
             LicenseEntry(
                 groupId = artifact.groupId,
                 artifactId = artifact.artifactId,

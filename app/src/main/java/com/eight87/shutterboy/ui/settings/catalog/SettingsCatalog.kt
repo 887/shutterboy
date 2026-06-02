@@ -7,6 +7,7 @@ import com.eight87.shutterboy.ui.settings.sections.AboutSectionCatalog
 import com.eight87.shutterboy.ui.settings.sections.AppearanceSectionCatalog
 import com.eight87.shutterboy.ui.settings.sections.LibrarySectionCatalog
 import com.eight87.shutterboy.ui.settings.sections.PhotosSectionCatalog
+import com.eight87.shutterboy.ui.settings.sections.SmartTagsSectionCatalog
 
 /**
  * I.7 — One settings entry. The catalog is the single source of truth for
@@ -55,6 +56,8 @@ object SettingsCatalog {
     const val ID_LIBRARY_RESCAN = LibrarySectionCatalog.ID_LIBRARY_RESCAN
     const val ID_LIBRARY_CLEAR_CACHE = LibrarySectionCatalog.ID_LIBRARY_CLEAR_CACHE
     const val ID_PHOTOS_DEFAULT_SORT = PhotosSectionCatalog.ID_PHOTOS_DEFAULT_SORT
+    const val ID_SMARTTAGS_ENABLE = SmartTagsSectionCatalog.ID_SMARTTAGS_ENABLE
+    const val ID_SMARTTAGS_CAPTIONS = SmartTagsSectionCatalog.ID_SMARTTAGS_CAPTIONS
     const val ID_ABOUT_VERSION = AboutSectionCatalog.ID_ABOUT_VERSION
     const val ID_ABOUT_LICENSE = AboutSectionCatalog.ID_ABOUT_LICENSE
     const val ID_ABOUT_GITHUB = AboutSectionCatalog.ID_ABOUT_GITHUB
@@ -64,6 +67,7 @@ object SettingsCatalog {
         AppearanceSectionCatalog.entries() +
             LibrarySectionCatalog.entries() +
             PhotosSectionCatalog.entries() +
+            SmartTagsSectionCatalog.entries() +
             AboutSectionCatalog.entries()
 
     /**

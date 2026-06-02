@@ -78,6 +78,8 @@ class SettingsCatalogTest {
             SettingsCatalog.ID_LIBRARY_RESCAN,
             SettingsCatalog.ID_LIBRARY_CLEAR_CACHE,
             SettingsCatalog.ID_PHOTOS_DEFAULT_SORT,
+            SettingsCatalog.ID_SMARTTAGS_ENABLE,
+            SettingsCatalog.ID_SMARTTAGS_CAPTIONS,
             SettingsCatalog.ID_ABOUT_VERSION,
             SettingsCatalog.ID_ABOUT_LICENSE,
             SettingsCatalog.ID_ABOUT_GITHUB,

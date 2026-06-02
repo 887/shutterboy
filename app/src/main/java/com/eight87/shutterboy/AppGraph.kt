@@ -33,8 +33,15 @@ import com.eight87.shutterboy.data.settings.SlideshowPreferences
 import com.eight87.shutterboy.data.settings.SafSourcesPreferences
 import com.eight87.shutterboy.data.settings.ScanGatePreferences
 import com.eight87.shutterboy.data.settings.SortPreferences
+import com.eight87.shutterboy.data.settings.TaggingPreferences
+import com.eight87.shutterboy.data.settings.DataStoreTaggingPreferences
 import com.eight87.shutterboy.data.settings.ThemePreferences
+import com.eight87.shutterboy.data.tagging.AiTaggingService
+import com.eight87.shutterboy.data.tagging.ContentResolverBitmapSource
+import com.eight87.shutterboy.data.tagging.ImageTagger
+import com.eight87.shutterboy.data.tagging.MlKitImageTagger
 import com.eight87.shutterboy.domain.Photo
+import com.eight87.shutterboy.domain.ScanProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -73,7 +80,10 @@ class AppGraph(applicationContext: Context) {
         ShutterboyDatabase::class.java,
         "shutterboy.db",
     )
-        .addMigrations(com.eight87.shutterboy.data.db.MIGRATION_1_2)
+        .addMigrations(
+            com.eight87.shutterboy.data.db.MIGRATION_1_2,
+            com.eight87.shutterboy.data.db.MIGRATION_2_3,
+        )
         .build()
 
     private val mediaStoreScanner = MediaStoreScanner(appCtx)
@@ -159,6 +169,10 @@ class AppGraph(applicationContext: Context) {
     val slideshowPreferences: SlideshowPreferences =
         DataStoreSlideshowPreferences(appCtx.shutterboyPrefs)
 
+    /** Smart Tags — labeling/caption toggles. Labels default ON. */
+    val taggingPreferences: TaggingPreferences =
+        DataStoreTaggingPreferences(appCtx.shutterboyPrefs)
+
     /**
      * App-scoped photo feed. Stays hot for the process lifetime so the
      * gallery survives navigation away & back instantly — re-mounting
@@ -167,6 +181,24 @@ class AppGraph(applicationContext: Context) {
      * Replays the current value to any new subscriber (StateFlow).
      */
     private val graphScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    /**
+     * Smart Tags — on-device image tagging engine + orchestration. The
+     * service runs as a downstream background pass (triggered on scan
+     * completion in [init]) so scanning is never slowed by tagging.
+     * `MlKitImageTagger` self-reports unavailable off Play Services /
+     * AICore, so this is inert on non-Google devices.
+     */
+    private val imageTagger: ImageTagger = MlKitImageTagger(appCtx)
+
+    val aiTagging: AiTaggingService = AiTaggingService(
+        tagger = imageTagger,
+        bitmapSource = ContentResolverBitmapSource(appCtx),
+        photoDao = database.photos(),
+        tagDao = database.photoTags(),
+        preferences = taggingPreferences,
+        scope = graphScope,
+    )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val photosFeed: StateFlow<List<Photo>?> =
@@ -190,6 +222,16 @@ class AppGraph(applicationContext: Context) {
         mediaChangeSource.observeChanges()
             .debounce(500L)
             .onEach { graphScope.launch { libraryScanner.scanIfChanged() } }
+            .launchIn(graphScope)
+
+        // Smart Tags — kick a background tagging pass whenever a scan
+        // completes. Decoupled from the scan loop (which keeps filling the
+        // gallery at full speed); the pass only walks photos that have no
+        // tag-status row yet, so it's cheap once the library is caught up.
+        // The service's own enabled-toggle collector covers the cold-start
+        // case where the library was already scanned on a previous launch.
+        libraryScanner.scanProgress()
+            .onEach { if (it is ScanProgress.Done) aiTagging.start() }
             .launchIn(graphScope)
     }
 

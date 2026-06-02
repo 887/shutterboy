@@ -112,6 +112,14 @@ licensee {
     allowDependency("junit", "junit", "4.13.2") {
         because("EPL-1.0; test-scope only, not shipped")
     }
+    // Smart Tags pulls Google's on-device ML SDKs (Play Services ML Kit
+    // image labeling + GenAI image description). These ship under Google's
+    // PROPRIETARY terms, not an OSS license, so they have no SPDX id.
+    // Allowed here by license URL so the build passes; `parseLicensesCatalog`
+    // deliberately filters them OUT of the in-app *open-source*
+    // acknowledgements list (no SPDX ⇒ not open source).
+    allowUrl("https://developer.android.com/studio/terms.html")
+    allowUrl("https://developers.google.com/ml-kit/terms")
 }
 
 // Copy the Licensee-generated `artifacts.json` into the app's assets so the
@@ -193,6 +201,14 @@ dependencies {
   // viewer when a MediaStore row's mimeType starts with "video/".
   implementation(libs.androidx.media3.exoplayer)
   implementation(libs.androidx.media3.ui)
+
+  // Smart Tags — on-device AI image tagging. Image labeling is
+  // GMS-backed (model lives in Play Services, downloaded on demand,
+  // not bundled in the APK). GenAI image description runs on AICore /
+  // Gemini Nano. Both degrade gracefully to "unavailable" off-GMS /
+  // off-AICore — the app keeps working without the feature.
+  implementation(libs.mlkit.image.labeling)
+  implementation(libs.mlkit.genai.image.description)
 
   // EXIF metadata
   implementation(libs.androidx.exifinterface)

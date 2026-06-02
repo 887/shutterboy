@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Storage
@@ -30,6 +31,7 @@ import com.eight87.shutterboy.ui.nav.SettingsLibrary
 import com.eight87.shutterboy.ui.nav.SettingsLookAndFeel
 import com.eight87.shutterboy.ui.nav.SettingsPhotos
 import com.eight87.shutterboy.ui.nav.SettingsSearch
+import com.eight87.shutterboy.ui.nav.SettingsSmartTags
 import com.eight87.shutterboy.ui.settings.catalog.SettingsCard
 import com.eight87.shutterboy.ui.settings.catalog.SettingsDimens
 import com.eight87.shutterboy.ui.settings.catalog.SettingsRow
@@ -116,6 +118,19 @@ fun SettingsScreen(
                     label = stringResource(R.string.settings_root_photos_row_label),
                     subtitle = stringResource(R.string.settings_root_photos_row_subtitle),
                     onClick = { scope.backStack.push(SettingsPhotos) },
+                )
+            }
+
+            SettingsCard(
+                title = stringResource(R.string.settings_section_smarttags),
+                modifier = Modifier.padding(horizontal = SettingsDimens.PagePadding),
+            ) {
+                SubPageRow(
+                    id = "settings_smarttags_root",
+                    icon = Icons.Outlined.AutoAwesome,
+                    label = stringResource(R.string.settings_root_smarttags_row_label),
+                    subtitle = stringResource(R.string.settings_root_smarttags_row_subtitle),
+                    onClick = { scope.backStack.push(SettingsSmartTags) },
                 )
             }
 

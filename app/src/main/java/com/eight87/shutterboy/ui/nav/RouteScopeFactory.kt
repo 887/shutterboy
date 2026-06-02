@@ -33,6 +33,8 @@ fun rememberRouteScope(
             override val displayPreferences = graph.displayPreferences
             override val safSourcesPreferences = graph.safSourcesPreferences
             override val slideshowPreferences = graph.slideshowPreferences
+            override val taggingPreferences = graph.taggingPreferences
+            override val aiTagging = graph.aiTagging
         }
     }
 }

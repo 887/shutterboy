@@ -18,6 +18,16 @@
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
         android:theme="@style/Theme.Shutterboy">
+
+        <!-- Smart Tags — tell Play Services to download the ML Kit image
+             labeling model ("ica") when the app installs, so the first
+             tagging pass doesn't stall on a cold model fetch. Absent
+             Play Services this is simply ignored and the feature reports
+             itself unavailable. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ica" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -101,6 +101,7 @@ fun ShutterboyApp(graph: AppGraph) {
                             entry<SettingsLibrary> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsLookAndFeel> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsManageSources> { WithNavAnimatedContentScope { it.Register(scope) } }
+                            entry<SettingsSmartTags> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsSearch> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<Search> { WithNavAnimatedContentScope { it.Register(scope) } }
                             entry<SettingsAbout> { WithNavAnimatedContentScope { it.Register(scope) } }
