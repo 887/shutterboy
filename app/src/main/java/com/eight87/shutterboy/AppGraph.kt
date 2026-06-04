@@ -151,6 +151,9 @@ class AppGraph(applicationContext: Context) {
     val photoMover: PhotoMover = repository
     val mediaChangeSource: MediaChangeSource = repository
 
+    /** Smart Tags — per-photo tag reads for the viewer info panel. */
+    val photoTagSource: com.eight87.shutterboy.data.repo.PhotoTagSource = repository
+
     /** Phase E.2 — DataStore-backed sort persistence. */
     val sortPreferences: SortPreferences = DataStoreSortPreferences(appCtx.shutterboyPrefs)
 

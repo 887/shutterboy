@@ -35,6 +35,7 @@ fun rememberRouteScope(
             override val slideshowPreferences = graph.slideshowPreferences
             override val taggingPreferences = graph.taggingPreferences
             override val aiTagging = graph.aiTagging
+            override val photoTagSource = graph.photoTagSource
         }
     }
 }

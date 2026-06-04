@@ -97,9 +97,11 @@ import com.eight87.shutterboy.R
 import com.eight87.shutterboy.data.repo.FavoriteCommands
 import com.eight87.shutterboy.data.repo.PhotoDeleter
 import com.eight87.shutterboy.data.repo.PhotoSource
+import com.eight87.shutterboy.data.repo.PhotoTagSource
 import com.eight87.shutterboy.domain.DeleteRequest
 import com.eight87.shutterboy.domain.Photo
 import com.eight87.shutterboy.domain.PhotoId
+import com.eight87.shutterboy.domain.PhotoTag
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.RouteScope
 import kotlinx.coroutines.flow.flowOf
@@ -146,6 +148,7 @@ fun PhotoViewerScreen(
         photoSource = scope.photoSource,
         photoDeleter = scope.photoDeleter,
         favoriteCommands = scope.favoriteCommands,
+        tagSource = scope.photoTagSource,
         onBack = { scope.backStack.pop() },
         modifier = modifier,
     )
@@ -163,6 +166,7 @@ internal fun PhotoViewerContent(
     photoSource: PhotoSource,
     photoDeleter: PhotoDeleter? = null,
     favoriteCommands: FavoriteCommands? = null,
+    tagSource: PhotoTagSource? = null,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -615,8 +619,13 @@ internal fun PhotoViewerContent(
 
     if (infoVisible) {
         currentPhoto?.let { photo ->
+            val tagsFlow = remember(photo.id.value, tagSource) {
+                tagSource?.observeTagsForPhoto(photo.id.value) ?: flowOf(emptyList())
+            }
+            val tags: List<PhotoTag> by tagsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
             ExifInfoPanel(
                 photo = photo,
+                tags = tags,
                 onDismiss = { infoVisible = false },
             )
         }

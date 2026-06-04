@@ -60,6 +60,14 @@ interface PhotoTagDao {
     suspend fun tagsForPhoto(photoId: Long): List<PhotoTagEntity>
 
     /**
+     * Reactive tags for one photo, highest-confidence first — backs the tag
+     * chips in the viewer's info panel. Live so a chip appears the moment the
+     * background pass tags the photo the user is looking at.
+     */
+    @Query("SELECT * FROM photo_tags WHERE photo_id = :photoId ORDER BY confidence DESC")
+    fun observeTagsForPhoto(photoId: Long): kotlinx.coroutines.flow.Flow<List<PhotoTagEntity>>
+
+    /**
      * Photos that carry a tag (label or caption) matching [pattern] — a
      * SQL LIKE pattern such as `%dog%`. Powers search-by-content: typing
      * "dog" finds photos the tagger labelled "Dog" or captioned with a

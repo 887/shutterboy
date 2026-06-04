@@ -134,4 +134,23 @@ class TagSearchTest {
         val ids = repo.searchPhotos("%").first().map { it.id.value }
         assertTrue("'%' should match nothing, got $ids", ids.isEmpty())
     }
+
+    @Test
+    fun `observeTagsForPhoto returns labels and caption flag, confidence-ordered`() = runTest {
+        photo(5, "x.jpg")
+        db.photoTags().upsertTags(
+            listOf(
+                PhotoTagEntity(photoId = 5, label = "Wildlife", confidence = 0.9f, source = "label"),
+                PhotoTagEntity(photoId = 5, label = "Dog", confidence = 0.99f, source = "label"),
+                PhotoTagEntity(photoId = 5, label = "a dog on grass", confidence = 1f, source = "caption"),
+            ),
+        )
+
+        val tags = repo.observeTagsForPhoto(5).first()
+        assertEquals(3, tags.size)
+        assertTrue(tags.any { it.label == "Dog" && !it.isCaption })
+        assertTrue(tags.any { it.label == "a dog on grass" && it.isCaption })
+        // Highest confidence first: caption (1.0) leads, then "Dog" (0.99), then "Wildlife" (0.9).
+        assertEquals("a dog on grass", tags.first().label)
+    }
 }

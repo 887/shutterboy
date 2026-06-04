@@ -2,6 +2,8 @@ package com.eight87.shutterboy.ui.viewer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -21,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.domain.Photo
+import com.eight87.shutterboy.domain.PhotoTag
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -31,12 +35,13 @@ import java.time.format.FormatStyle
  * [Photo] domain row (already enriched at scan time, B.3); no fresh file
  * I/O on the viewer hot path.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ExifInfoPanel(
     photo: Photo,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    tags: List<PhotoTag> = emptyList(),
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
@@ -82,6 +87,32 @@ fun ExifInfoPanel(
             }
             ExifPanelFormatters.formatShutterSpeed(photo.exifShutterSpeedSec)?.let {
                 InfoRow(stringResource(R.string.viewer_info_shutter_speed), it)
+            }
+
+            // Smart Tags — GenAI caption (if any) as a sentence, keyword
+            // labels as chips below it.
+            val caption = tags.firstOrNull { it.isCaption }?.label?.takeIf { it.isNotBlank() }
+            val labels = tags.filter { !it.isCaption && it.label.isNotBlank() }
+            if (caption != null) {
+                InfoRow(stringResource(R.string.viewer_info_description), caption)
+            }
+            if (labels.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.viewer_info_tags),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    labels.forEach { tag ->
+                        SuggestionChip(
+                            onClick = {},
+                            label = { Text(tag.label) },
+                        )
+                    }
+                }
             }
         }
     }

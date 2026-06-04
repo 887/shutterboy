@@ -9,6 +9,7 @@ import com.eight87.shutterboy.data.repo.PhotoDeleter
 import com.eight87.shutterboy.data.repo.PhotoMover
 import com.eight87.shutterboy.data.repo.PhotoSearch
 import com.eight87.shutterboy.data.repo.PhotoSource
+import com.eight87.shutterboy.data.repo.PhotoTagSource
 import com.eight87.shutterboy.data.settings.CustomOrderPreferences
 import com.eight87.shutterboy.data.settings.DisplayPreferences
 import com.eight87.shutterboy.data.settings.SafSourcesPreferences
@@ -50,4 +51,5 @@ interface RouteScope {
     val slideshowPreferences: SlideshowPreferences
     val taggingPreferences: TaggingPreferences
     val aiTagging: AiTaggingService
+    val photoTagSource: PhotoTagSource
 }

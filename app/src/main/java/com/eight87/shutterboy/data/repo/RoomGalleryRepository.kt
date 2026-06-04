@@ -90,7 +90,8 @@ class RoomGalleryRepository(
     FavoriteCommands,
     PhotoDeleter,
     PhotoMover,
-    MediaChangeSource {
+    MediaChangeSource,
+    PhotoTagSource {
 
     private val _scanProgress = MutableStateFlow<ScanProgress>(ScanProgress.Idle)
 
@@ -190,6 +191,19 @@ class RoomGalleryRepository(
             merged.values.toList()
         }
     }
+
+    // --- PhotoTagSource ---
+
+    override fun observeTagsForPhoto(photoId: Long): Flow<List<com.eight87.shutterboy.domain.PhotoTag>> =
+        photoTagDao.observeTagsForPhoto(photoId).map { rows ->
+            rows.map { row ->
+                com.eight87.shutterboy.domain.PhotoTag(
+                    label = row.label,
+                    confidence = row.confidence,
+                    isCaption = row.source == "caption",
+                )
+            }
+        }
 
     override fun recentSearches(): Flow<List<String>> = recentSearchesPrefs.observe()
     override suspend fun recordSearch(query: String) {
