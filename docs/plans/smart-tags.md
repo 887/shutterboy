@@ -63,9 +63,16 @@ tagged-count + approximate storage size, re-tag-all, and clear-tag-data.
 - [x] **F.4** `SmartTagsSectionCatalog` + register in `SettingsCatalog` + update `SettingsCatalogTest`
 - [x] **F.5** All strings in `values/strings.xml` (plain/factual per editorial brief)
 
-## Phase G — Verify & ship
+## Phase G — Verify & ship ✅
 - [x] **G.1** `:app:testDebugUnitTest` + `:app:assembleDebug` green (migration, service-with-fakes, prefs codec, catalog pin-down, license-parse all pass)
-- [ ] **G.2** AVD smoke — SKIPPED this run: emulator-5554 shell wedged (device lists but `adb shell` hangs); not a code issue. Phone-via-Obtainium is the real test loop.
-- [ ] **G.3** Commit + `scripts/build-release-apk.sh --gh-release`
+- [x] **G.2** AVD smoke (after restarting a 14-day-stale wedged emulator): Smart Tags page renders, toggle on, captions correctly "not supported", labeling ran on-device (pushed sky image → labelled "Sky" @0.95), storage size shown.
+- [x] **G.3** Commit + `scripts/build-release-apk.sh --gh-release` → v0.1-95ec600
 
-## Status: shipping — labeling baseline + GenAI captions, on-device only, decoupled from scan loop
+## Phase H — Wire tags into search ✅ (shipped v0.1-9a9ff58)
+- [x] **H.1** `PhotoTagDao.observePhotosWithTagLike` (LIKE + ESCAPE, case-insensitive, observes photos+photo_tags)
+- [x] **H.2** `searchPhotos` merges filename FTS + tag hits, de-duped (FTS first), via `combine`; LIKE wildcards in query escaped
+- [x] **H.3** `PhotoTagDao` injected into repo (+ AppGraph + 4 existing repo-test constructors)
+- [x] **H.4** `TagSearchTest` (match-by-label, match-in-caption, FTS+tag merge/dedup, literal-wildcard)
+- [x] **H.5** AVD smoke: search "sky" surfaces a photo named `IMG_9999.jpg` (tag-only match — filename has no "sky"); untagged photo excluded
+
+## Status: ✅ DONE — on-device tagging (labels + GenAI captions) + tag-search, both shipped
