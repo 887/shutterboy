@@ -98,6 +98,7 @@ class PhotoDeleterBranchingTest {
             folderDao = db.folders(),
             favoriteDao = db.favorites(),
             searchDao = db.search(),
+            photoTagDao = db.photoTags(),
             mediaStoreScanner = MediaStoreScanner(ctx),
             exifEnricher = ExifEnricher(ctx),
             safSourceManager = SafSourceManager(ctx),

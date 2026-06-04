@@ -59,6 +59,25 @@ interface PhotoTagDao {
     @Query("SELECT * FROM photo_tags WHERE photo_id = :photoId ORDER BY confidence DESC")
     suspend fun tagsForPhoto(photoId: Long): List<PhotoTagEntity>
 
+    /**
+     * Photos that carry a tag (label or caption) matching [pattern] — a
+     * SQL LIKE pattern such as `%dog%`. Powers search-by-content: typing
+     * "dog" finds photos the tagger labelled "Dog" or captioned with a
+     * sentence containing "dog". Date-desc; the repo merges this with the
+     * filename FTS results. Observes both tables so new tags refresh live.
+     */
+    @Query(
+        """
+        SELECT photos.* FROM photos
+        WHERE photos.id IN (
+            SELECT photo_id FROM photo_tags
+            WHERE LOWER(label) LIKE LOWER(:pattern) ESCAPE '\'
+        )
+        ORDER BY photos.date_taken_ms DESC
+        """,
+    )
+    fun observePhotosWithTagLike(pattern: String): kotlinx.coroutines.flow.Flow<List<PhotoEntity>>
+
     @Query("DELETE FROM photo_tags")
     suspend fun wipeTags()
 

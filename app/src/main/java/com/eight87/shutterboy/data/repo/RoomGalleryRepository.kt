@@ -19,6 +19,7 @@ import com.eight87.shutterboy.data.db.PhotoEntity
 import com.eight87.shutterboy.data.db.PhotoFavoriteDao
 import com.eight87.shutterboy.data.db.PhotoFavoriteEntity
 import com.eight87.shutterboy.data.db.PhotoSearchDao
+import com.eight87.shutterboy.data.db.PhotoTagDao
 import com.eight87.shutterboy.data.db.toDomain
 import com.eight87.shutterboy.data.db.toEntity
 import com.eight87.shutterboy.data.saf.SafSourceManager
@@ -49,6 +50,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -72,6 +74,7 @@ class RoomGalleryRepository(
     private val folderDao: FolderDao,
     private val favoriteDao: PhotoFavoriteDao,
     private val searchDao: PhotoSearchDao,
+    private val photoTagDao: PhotoTagDao,
     private val mediaStoreScanner: MediaStoreScanner,
     private val exifEnricher: ExifEnricher,
     private val safSourceManager: SafSourceManager,
@@ -165,8 +168,27 @@ class RoomGalleryRepository(
                 if (safe.isBlank()) "" else "$safe*"
             }
             .trim()
-        return if (ftsExpr.isBlank()) flowOf(emptyList())
-        else searchDao.observeMatching(ftsExpr).map { rows -> rows.map { it.toDomain() } }
+
+        // Filename / lens FTS match.
+        val ftsFlow: Flow<List<PhotoEntity>> =
+            if (ftsExpr.isBlank()) flowOf(emptyList()) else searchDao.observeMatching(ftsExpr)
+
+        // Smart Tags content match — photos labelled/captioned with the query.
+        // LIKE wildcards in the query are escaped so a user typing "%" doesn't
+        // turn into a match-everything pattern.
+        val likePattern = "%" + sanitized.replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_") + "%"
+        val tagFlow: Flow<List<PhotoEntity>> = photoTagDao.observePhotosWithTagLike(likePattern)
+
+        // Merge: FTS hits first (filename is the strongest signal), then
+        // tag-only hits, de-duplicated by id. Both arrive date-desc.
+        return combine(ftsFlow, tagFlow) { ftsRows, tagRows ->
+            val merged = LinkedHashMap<Long, Photo>(ftsRows.size + tagRows.size)
+            for (e in ftsRows) merged[e.id] = e.toDomain()
+            for (e in tagRows) merged.putIfAbsent(e.id, e.toDomain())
+            merged.values.toList()
+        }
     }
 
     override fun recentSearches(): Flow<List<String>> = recentSearchesPrefs.observe()

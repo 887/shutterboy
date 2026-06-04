@@ -132,6 +132,7 @@ class AppGraph(applicationContext: Context) {
         folderDao = database.folders(),
         favoriteDao = database.favorites(),
         searchDao = database.search(),
+        photoTagDao = database.photoTags(),
         mediaStoreScanner = mediaStoreScanner,
         exifEnricher = exifEnricher,
         safSourceManager = safSourceManager,

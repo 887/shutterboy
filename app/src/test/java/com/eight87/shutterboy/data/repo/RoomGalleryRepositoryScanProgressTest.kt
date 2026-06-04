@@ -88,6 +88,7 @@ class RoomGalleryRepositoryScanProgressTest {
             folderDao = db.folders(),
             favoriteDao = db.favorites(),
             searchDao = db.search(),
+            photoTagDao = db.photoTags(),
             mediaStoreScanner = scanner,
             exifEnricher = enricher,
             safSourceManager = SafSourceManager(ctx),
