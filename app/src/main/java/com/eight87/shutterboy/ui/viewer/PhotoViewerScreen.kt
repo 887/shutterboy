@@ -394,17 +394,7 @@ internal fun PhotoViewerContent(
                         IconButton(
                             onClick = {
                                 currentPhoto?.let { photo ->
-                                    val edit = Intent(Intent.ACTION_EDIT).apply {
-                                        setDataAndType(photo.contentUri, photo.mimeType)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                                    }
-                                    context.startActivity(
-                                        Intent.createChooser(
-                                            edit,
-                                            context.getString(R.string.viewer_edit_chooser_title),
-                                        ),
-                                    )
+                                    launchEditChooser(context, photo.contentUri, photo.mimeType)
                                 }
                             },
                             enabled = currentPhoto != null,

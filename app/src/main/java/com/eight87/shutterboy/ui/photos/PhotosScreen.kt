@@ -38,6 +38,7 @@ import com.eight87.shutterboy.ui.multiselect.SelectionTopBar
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionDeleteHandler
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionHolder
 import com.eight87.shutterboy.ui.multiselect.rememberSelectionMoveHandler
+import com.eight87.shutterboy.ui.multiselect.rememberSelectionShareHandler
 import com.eight87.shutterboy.ui.nav.PhotoViewer
 import com.eight87.shutterboy.ui.nav.Photos
 import com.eight87.shutterboy.ui.nav.RootTopBar
@@ -103,6 +104,9 @@ fun PhotosScreen(
         snackbar = scope.snackbar,
         sourceFolderId = null,
     ) { selectionHolder.exit() }
+    val shareHandler = rememberSelectionShareHandler(scope.photoSource) {
+        selectionHolder.exit()
+    }
 
     BackHandler(enabled = selectionHolder.state is SelectionState.Active) {
         selectionHolder.exit()
@@ -121,6 +125,7 @@ fun PhotosScreen(
                     onSelectAll = {
                         selectionHolder.selectAll(allPhotos.orEmpty().map { it.id })
                     },
+                    onShare = { shareHandler.request(active.selectedIds) },
                     onMove = { moveHandler.request(active.selectedIds) },
                     onDelete = { deleteHandler.request(active.selectedIds) },
                 )

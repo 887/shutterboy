@@ -113,6 +113,7 @@ class SelectionIntegrationTest {
                         onSelectAll = {
                             holder.selectAll(allPhotos.orEmpty().map { it.id })
                         },
+                        onShare = { },
                         onMove = { },
                         onDelete = { },
                     )

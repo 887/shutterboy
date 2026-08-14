@@ -99,6 +99,7 @@
     <string name="viewer_share_chooser_title">Share via</string>
     <string name="cd_viewer_edit">Edit photo</string>
     <string name="viewer_edit_chooser_title">Edit with</string>
+    <string name="viewer_edit_no_app">No app on this device can edit this photo</string>
     <string name="cd_viewer_delete">Delete photo</string>
     <string name="cd_viewer_favorite">Remove from favorites</string>
     <string name="cd_viewer_unfavorite">Add to favorites</string>
@@ -292,6 +293,7 @@
 
     <!-- Phase H.4 — bulk move-to-album. -->
     <string name="multiselect_move">Move to album</string>
+    <string name="cd_multiselect_share">Share selected photos</string>
     <string name="cd_multiselect_move">Move selected photos to an album</string>
     <string name="multiselect_move_picker_title">Move to album</string>
     <string name="multiselect_move_picker_cancel">Cancel</string>

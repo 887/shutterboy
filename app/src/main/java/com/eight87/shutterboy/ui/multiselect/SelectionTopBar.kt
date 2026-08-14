@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +33,7 @@ object SelectionTopBarTags {
     const val ROOT = "multiselect_top_bar_root"
     const val CLOSE = "multiselect_top_bar_close"
     const val SELECT_ALL = "multiselect_top_bar_select_all"
+    const val SHARE = "multiselect_top_bar_share"
     const val MOVE = "multiselect_top_bar_move"
     const val DELETE = "multiselect_top_bar_delete"
     const val COUNT = "multiselect_top_bar_count"
@@ -43,6 +45,7 @@ fun SelectionTopBar(
     count: Int,
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
+    onShare: () -> Unit,
     onMove: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -74,6 +77,16 @@ fun SelectionTopBar(
                 Icon(
                     imageVector = Icons.Filled.DoneAll,
                     contentDescription = stringResource(R.string.multiselect_select_all),
+                )
+            }
+            IconButton(
+                modifier = Modifier.testTag(SelectionTopBarTags.SHARE),
+                onClick = onShare,
+                enabled = count > 0,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Share,
+                    contentDescription = stringResource(R.string.cd_multiselect_share),
                 )
             }
             IconButton(

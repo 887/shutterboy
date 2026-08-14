@@ -9,6 +9,21 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+<!-- Package visibility (API 30+). Without this, `queryIntentActivities`
+         for ACTION_EDIT returns only our own activity no matter what the
+         user has installed, and the viewer's Edit button would report "no
+         app can edit this photo" on a device that has three of them. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.EDIT" />
+            <data android:mimeType="image/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.EDIT" />
+            <data android:mimeType="video/*" />
+        </intent>
+    </queries>
+
     <application
         android:name=".ShutterboyApplication"
         android:allowBackup="true"
