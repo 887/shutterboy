@@ -177,22 +177,6 @@ script switches to `assembleRelease`.
 The `release/` directory is gitignored. Each build also writes a
 `release/latest.apk` symlink for convenience.
 
-## GitHub Actions fallback
-
-`.github/workflows/release.yml` is a **fallback** for when the local build
-isn't available — for example, if you're shipping from a phone via the GitHub
-web UI. It triggers **only** on `push: tags: [v*]`; it never runs on regular
-pushes, PRs, or schedule, so the default cost is zero CI minutes.
-
-The workflow is **self-disabling**: at the start of the job it queries the
-matching release; if any asset already matches `shutterboy-*.apk` (which is what
-`scripts/build-release-apk.sh --gh-release` uploaded), it exits 0 without
-rebuilding. So for the normal local-build flow, even though the tag push
-triggers the workflow, no work happens.
-
-If you've configured a release-signing keystore, set repo secrets
-`RELEASE_KEYSTORE_BASE64`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`, and the
-fallback build will use `assembleRelease` instead of `assembleDebug`.
 
 ## Populate test photos + smoke-test
 
