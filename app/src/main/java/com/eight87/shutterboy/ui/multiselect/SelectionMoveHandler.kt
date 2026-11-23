@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eight87.shutterboy.R
 import com.eight87.shutterboy.data.repo.FolderSource
@@ -69,15 +69,15 @@ fun rememberSelectionMoveHandler(
     onComplete: () -> Unit,
 ): SelectionMoveHandler {
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val resources = LocalResources.current
     var pendingIds by remember { mutableStateOf<Set<PhotoId>?>(null) }
     var inFlightTarget by remember { mutableStateOf<Folder?>(null) }
 
     fun successMsg(count: Int, folder: String) =
-        context.getString(R.string.multiselect_move_success, count, folder)
-    val cancelledMsg = context.getString(R.string.multiselect_move_cancelled)
+        resources.getString(R.string.multiselect_move_success, count, folder)
+    val cancelledMsg = resources.getString(R.string.multiselect_move_cancelled)
     fun failedMsg(reason: String) =
-        context.getString(R.string.multiselect_move_failed, reason)
+        resources.getString(R.string.multiselect_move_failed, reason)
 
     val allFolders by folderSource.observeFolders()
         .collectAsStateWithLifecycle(initialValue = emptyList<Folder>())

@@ -366,6 +366,8 @@ internal fun PhotoViewerContent(
                         }
                     },
                     actions = {
+                        val shareChooserTitle =
+                            stringResource(R.string.viewer_share_chooser_title)
                         // F.5 — Share via Intent.ACTION_SEND + chooser.
                         IconButton(
                             onClick = {
@@ -378,7 +380,7 @@ internal fun PhotoViewerContent(
                                     context.startActivity(
                                         Intent.createChooser(
                                             share,
-                                            context.getString(R.string.viewer_share_chooser_title),
+                                            shareChooserTitle,
                                         ),
                                     )
                                 }

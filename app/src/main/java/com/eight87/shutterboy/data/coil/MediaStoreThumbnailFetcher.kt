@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.CancellationSignal
 import android.os.OperationCanceledException
+import androidx.annotation.RequiresApi
 import android.util.Size as AndroidSize
 import coil3.ImageLoader
 import coil3.asImage
@@ -41,6 +42,8 @@ class MediaStoreThumbnailFetcher(
     private val uri: Uri,
     private val options: Options,
 ) : Fetcher {
+    // Only constructed by [Factory] behind its API-29 gate.
+    @RequiresApi(Build.VERSION_CODES.Q)
     override suspend fun fetch(): FetchResult {
         val width = options.size.width.pxOrElse { DEFAULT_SIZE }
         val height = options.size.height.pxOrElse { DEFAULT_SIZE }
@@ -86,12 +89,8 @@ class MediaStoreThumbnailFetcher(
         // micro-stutter while scrolling a tile grid is the GPU
         // re-uploading software bitmaps every frame; HARDWARE bitmaps
         // upload once and are bound directly.
-        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            runCatching { resized.copy(Bitmap.Config.HARDWARE, false) }
-                .getOrNull() ?: resized
-        } else {
-            resized
-        }
+        val bitmap = runCatching { resized.copy(Bitmap.Config.HARDWARE, false) }
+            .getOrNull() ?: resized
         return ImageFetchResult(
             image = bitmap.asImage(),
             isSampled = true,

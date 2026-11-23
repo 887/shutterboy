@@ -17,7 +17,8 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +52,7 @@ internal fun SortSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
     var pendingAxis by remember(current) { mutableStateOf(SortAxis.fromSort(current)) }
     var pendingDirection by remember(current) { mutableStateOf(current.direction) }
 

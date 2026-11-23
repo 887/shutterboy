@@ -49,7 +49,7 @@ class Migration2to3Test {
                 db.execSQL(foldersV2)
                 db.execSQL(photosV2)
             }
-            override fun onUpgrade(db: SupportSQLiteDatabase, oldV: Int, newV: Int) = Unit
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
         }
         val helper = FrameworkSQLiteOpenHelperFactory().create(
             SupportSQLiteOpenHelper.Configuration.builder(context)

@@ -41,10 +41,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 private const val LINGER_MS = 1200L
 // Aves uses 200 ms here; that felt sluggish on a fast grid. 80 ms is
@@ -137,7 +137,7 @@ internal fun YearScrubber(
         }
     }
 
-    val locale = LocalConfiguration.current.locales.get(0) ?: Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     val currentLabel by remember(timeline, level, locale) {
         derivedStateOf {
             // During drag, label tracks the DESTINATION (where the
@@ -308,16 +308,21 @@ internal fun YearScrubber(
                     emphasized = true,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(
-                            x = -PillRightInset,
+                        .offset {
                             // During drag, the pill follows the
                             // finger via thumbFraction (the grid is
                             // intentionally frozen). On release, it
                             // tracks the grid's actual scroll
-                            // position.
-                            y = trackHeightDp *
-                                if (dragging) thumbFraction else scrollFraction,
-                        ),
+                            // position. Lambda overload so the
+                            // per-frame fraction reads skip composition.
+                            IntOffset(
+                                x = (-PillRightInset).roundToPx(),
+                                y = (
+                                    trackHeightDp *
+                                        if (dragging) thumbFraction else scrollFraction
+                                    ).roundToPx(),
+                            )
+                        },
                 )
             }
         }

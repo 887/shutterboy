@@ -151,6 +151,14 @@ class SelectionIntegrationTest {
         composeRule.onNodeWithTag(IDLE_TITLE_TAG).assertIsDisplayed()
         composeRule.onAllNodesWithTag(SelectionTopBarTags.ROOT).assertCountEquals(0)
 
+        // PhotosGrid builds its timeline on Dispatchers.Default, which the
+        // compose idling resource doesn't track — wait for the first tile
+        // to land instead of racing it.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag(photoThumbnailTag(1L))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
         // Long-press tile 1 → selection bar appears with "1 selected".
         composeRule.onNodeWithTag(photoThumbnailTag(1L))
             .performTouchInput { longClick() }

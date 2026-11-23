@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.Slideshow
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -267,7 +268,14 @@ private fun PrefetchRateSliderDialog(
     onApply: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var draft by remember(current) { mutableStateOf(current.toFloat()) }
+    val sliderState = remember(current) {
+        SliderState(
+            value = current.toFloat(),
+            trackRange = DisplayPreferences.PREFETCH_SAMPLE_MIN_MS.toFloat()..
+                DisplayPreferences.PREFETCH_SAMPLE_MAX_MS.toFloat(),
+        )
+    }
+    val draft = sliderState.value
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -280,10 +288,8 @@ private fun PrefetchRateSliderDialog(
                     ),
                 )
                 Slider(
-                    value = draft,
-                    onValueChange = { draft = it },
-                    valueRange = DisplayPreferences.PREFETCH_SAMPLE_MIN_MS.toFloat()..
-                        DisplayPreferences.PREFETCH_SAMPLE_MAX_MS.toFloat(),
+                    state = sliderState,
+                    onValueChange = { sliderState.value = it },
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
                 Text(

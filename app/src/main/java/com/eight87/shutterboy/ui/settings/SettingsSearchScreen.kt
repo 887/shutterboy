@@ -38,7 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -70,7 +70,7 @@ fun SettingsSearchScreen(
     scope: RouteScope,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     var query by remember { mutableStateOf("") }
@@ -80,11 +80,11 @@ fun SettingsSearchScreen(
         keyboard?.show()
     }
 
-    val results by remember(query) {
+    val results by remember(query, resources) {
         derivedStateOf {
             SettingsCatalog.filter(
                 query = query,
-                resolve = { resId -> context.getString(resId) },
+                resolve = { resId -> resources.getString(resId) },
             )
         }
     }

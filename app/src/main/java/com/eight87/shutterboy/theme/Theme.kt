@@ -1,5 +1,3 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
-
 package com.eight87.shutterboy.theme
 
 import android.os.Build

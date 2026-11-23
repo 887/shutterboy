@@ -32,11 +32,11 @@ chmod +x ~/.local/bin/android
 android --version  # self-bootstraps the runtime on first call
 ```
 
-The CLI bundles its own JDK 21 at `~/.android/cli/bundles/<hash>/jre/`. **Caveat:** the bundled JRE is *minimized* — it's missing modules including `java.rmi`, which Gradle 9.1's Kotlin DSL classpath fingerprinter loads. Direct `./gradlew` invocations against the bundled JRE will fail at configuration time with `java.lang.NoClassDefFoundError: java/rmi/Remote`. For direct Gradle calls, export `JAVA_HOME` to a full system JDK 17+ instead — for example `/usr/lib/jvm/java-26-openjdk` on this user's machine. Going through `android run` / other `android` subcommands is fine and uses the bundled toolchain internally.
+The CLI bundles its own JDK 21 at `~/.android/cli/bundles/<hash>/jre/`. **Caveat:** the bundled JRE is *minimized* — it's missing modules including `java.rmi`, which Gradle 9.1's Kotlin DSL classpath fingerprinter loads. Direct `./gradlew` invocations against the bundled JRE will fail at configuration time with `java.lang.NoClassDefFoundError: java/rmi/Remote`. For direct Gradle calls, export `JAVA_HOME` to a full system JDK 17+ instead — for example `/usr/lib/jvm/java-27-openjdk` on this user's machine. Going through `android run` / other `android` subcommands is fine and uses the bundled toolchain internally.
 
 Practical rule of thumb:
 - `android run --apks=…` → just works.
-- `./gradlew assembleDebug` → `JAVA_HOME=/usr/lib/jvm/java-26-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew assembleDebug` (or equivalent system JDK 17+ path).
+- `./gradlew assembleDebug` → `JAVA_HOME=/usr/lib/jvm/java-27-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew assembleDebug` (or equivalent system JDK 17+ path).
 
 **Worktree caveat:** Gradle reads the SDK path from `local.properties`, which is gitignored. Worktrees created off `main` for subagents start without a `local.properties`, so direct `./gradlew` calls there will fail with `SDK location not found` unless `ANDROID_HOME` is exported (or `local.properties` is generated locally in the worktree). Always export `ANDROID_HOME=$HOME/Android/Sdk` alongside `JAVA_HOME` when invoking Gradle directly in an agent worktree.
 
@@ -108,7 +108,7 @@ Any change that touches Compose UI (layout, composable structure, navigation, th
 Canonical loop:
 
 ```bash
-JAVA_HOME=/usr/lib/jvm/java-26-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:assembleDebug
+JAVA_HOME=/usr/lib/jvm/java-27-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:assembleDebug
 adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk
 adb -s emulator-5554 shell am start -n com.eight87.shutterboy/.MainActivity
 adb -s emulator-5554 exec-out screencap -p | magick - -resize 50% /tmp/shutterboy.png   # then Read the PNG
@@ -158,7 +158,7 @@ The app ships an open-source acknowledgements sub-page driven by the [`app.cash.
 
 When adding a new `implementation` dep:
 
-1. Run `JAVA_HOME=/usr/lib/jvm/java-26-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:licenseeAndroidRelease` and confirm the dep's SPDX is in the allowlist above.
+1. Run `JAVA_HOME=/usr/lib/jvm/java-27-openjdk ANDROID_HOME=$HOME/Android/Sdk ./gradlew :app:licenseeAndroidRelease` and confirm the dep's SPDX is in the allowlist above.
 2. If it isn't, prefer adding it via `licensee { allow("<SPDX>") }` in `app/build.gradle.kts`; only fall back to `allowDependency(group, artifact, version) { because("…") }` for one-off exemptions (e.g. test-only deps like JUnit's EPL-1.0).
 3. If the SPDX is genuinely new, ship the matching `app/src/main/assets/licenses/<spdx>.txt` from spdx.org in the same commit. `LicensesCatalogTest` (Robolectric, JVM-only) will fail loud if the asset is missing or the SPDX falls outside the allowlist.
 

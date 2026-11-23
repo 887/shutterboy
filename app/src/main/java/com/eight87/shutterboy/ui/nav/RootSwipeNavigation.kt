@@ -6,9 +6,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalWindowInfo
 
 /**
  * Root destinations the user can swipe between, in the order they
@@ -38,12 +36,9 @@ fun Modifier.rootSwipe(
     val left = rootSwipeOrder.getOrNull(idx - 1)
     val right = rootSwipeOrder.getOrNull(idx + 1)
     if (left == null && right == null) return this
-    val configuration = LocalConfiguration.current
-    val threshold = with(LocalDensity.current) {
-        // ~quarter of the screen width is enough commitment to read as
-        // intentional. Below that we treat the gesture as scroll-noise.
-        configuration.screenWidthDp.dp.toPx() * 0.25f
-    }
+    // ~quarter of the window width is enough commitment to read as
+    // intentional. Below that we treat the gesture as scroll-noise.
+    val threshold = LocalWindowInfo.current.containerSize.width * 0.25f
     val accumulator = remember(current) { mutableFloatStateOf(0f) }
     return this.pointerInput(current, left, right, threshold) {
         detectHorizontalDragGestures(

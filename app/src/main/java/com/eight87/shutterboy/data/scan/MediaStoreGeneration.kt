@@ -13,7 +13,7 @@ import android.provider.MediaStore
  * cheapest reliable way to ask "did anything change since the last
  * scan?".
  *
- * `MediaStore.getGeneration` is API 29+; on older SDKs the default
+ * `MediaStore.getGeneration` is API 30+; on older SDKs the default
  * impl returns [ALWAYS_RESCAN] so the gate never matches and the
  * scanner always runs.
  *
@@ -36,7 +36,7 @@ private class FrameworkMediaStoreGenerationSource(
     private val context: Context,
 ) : MediaStoreGenerationSource {
     override fun current(volume: String): Long =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             MediaStore.getGeneration(context, volume)
         } else {
             MediaStoreGenerationSource.ALWAYS_RESCAN

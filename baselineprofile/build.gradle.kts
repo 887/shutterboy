@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // cold-start-perf Phase F — Baseline Profile generator module.
 //
 // Records the cold-boot critical path (launch -> photos timeline visible)
@@ -17,7 +18,8 @@ plugins {
 
 android {
     namespace = "com.eight87.shutterboy.baselineprofile"
-    compileSdk = 36
+    compileSdk = 37
+    compileSdkMinor = 2
 
     defaultConfig {
         minSdk = 28
@@ -26,8 +28,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     // Self-instrumenting test module: same process drives the macrobench
@@ -39,7 +41,9 @@ android {
 }
 
 kotlin {
-    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
+    }
 }
 
 dependencies {

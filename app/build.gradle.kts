@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -17,12 +18,13 @@ plugins {
 }
 
 // Capture build-time metadata for the About screen (Phase I.6).
+// Via ProviderFactory.exec — Gradle 9.9 deprecates raw ProcessBuilder
+// calls at configuration time.
 val gitShortSha: String = runCatching {
-  val proc = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
-    .redirectErrorStream(true)
-    .start()
-  proc.waitFor()
-  proc.inputStream.bufferedReader().readText().trim().ifEmpty { "unknown" }
+  providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+    isIgnoreExitValue = true
+  }.standardOutput.asText.get().trim().ifEmpty { "unknown" }
 }.getOrDefault("unknown")
 
 val buildDateUtc: String = DateTimeFormatter.ISO_LOCAL_DATE
@@ -30,7 +32,8 @@ val buildDateUtc: String = DateTimeFormatter.ISO_LOCAL_DATE
 
 android {
     namespace = "com.eight87.shutterboy"
-    compileSdk = 36
+    compileSdk = 37
+    compileSdkMinor = 2
 
     // R.F.27 — auto-generate `locales_config.xml` from `values-<locale>/`
     // directories so per-app `cmd locale set-app-locales` is consistent.
@@ -58,8 +61,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
       compose = true
@@ -126,7 +129,7 @@ licensee {
 // LicensesScreen can read it at runtime via AssetManager. Wired as a
 // dependency of both `mergeReleaseAssets` and `mergeDebugAssets` so every
 // fresh build keeps the inventory in sync with the resolved classpath.
-val copyLicenseeInventory by tasks.registering(Copy::class) {
+val copyLicenseeInventory = tasks.register<Copy>("copyLicenseeInventory") {
     val src = layout.buildDirectory.file("reports/licensee/androidRelease/artifacts.json")
     val dst = layout.projectDirectory.dir("src/main/assets/licenses")
     from(src)
@@ -152,15 +155,10 @@ afterEvaluate {
 }
 
 kotlin {
-    jvmToolchain(17)
     compilerOptions {
-        // Opt in to Kotlin 2.2's future-default annotation use-site
-        // targets (param + property + field for properties). Silences
-        // the "annotation currently applied to value parameter only,
-        // but in the future will also be applied to field" warnings
-        // that pepper @StringRes, @Stable, @SerialName, etc. on
-        // primary-constructor properties.
-        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+        jvmTarget.set(JvmTarget.JVM_21)
+        // Kotlin 2.4 made the param + property annotation use-site target
+        // the default, so the former `-Xannotation-default-target` flag is gone.
     }
 }
 

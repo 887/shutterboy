@@ -48,6 +48,7 @@ fun ExternalPhotoViewerScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val shareChooserTitle = stringResource(R.string.viewer_share_chooser_title)
     val uri = remember(uriString) { Uri.parse(uriString) }
     val isVideo = mime?.startsWith("video/") == true
 
@@ -73,7 +74,7 @@ fun ExternalPhotoViewerScreen(
                         }
                         val chooser = Intent.createChooser(
                             share,
-                            context.getString(R.string.viewer_share_chooser_title),
+                            shareChooserTitle,
                         )
                         context.startActivity(chooser)
                     }) {

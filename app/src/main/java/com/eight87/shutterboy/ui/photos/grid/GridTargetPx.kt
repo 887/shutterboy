@@ -3,7 +3,7 @@ package com.eight87.shutterboy.ui.photos.grid
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
@@ -46,9 +46,9 @@ fun rememberGridTargetPx(
     multiplier: Float = LocalThumbnailQuality.current.multiplier,
 ): Int {
     val density = LocalDensity.current
-    val configuration = LocalConfiguration.current
-    return remember(columns, configuration.screenWidthDp, multiplier) {
-        val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+    val windowWidthPx = LocalWindowInfo.current.containerSize.width
+    return remember(columns, windowWidthPx, multiplier) {
+        val screenWidthPx = windowWidthPx.toFloat()
         val sidePaddingPx = with(density) { 8.dp.toPx() }
         val gapsPx = with(density) { ((columns - 1) * 2).dp.toPx() }
         val cellPx = ((screenWidthPx - sidePaddingPx - gapsPx) / columns)

@@ -23,8 +23,13 @@ step() {
     printf '\n[step] %s\n' "$*"
 }
 
+if [ -z "${JAVA_HOME:-}" ] || [ ! -x "${JAVA_HOME}/bin/javac" ]; then
+    for _jdk in $(ls -d /usr/lib/jvm/java-*-openjdk 2>/dev/null | sort -V -r); do
+        if [ -x "${_jdk}/bin/javac" ]; then export JAVA_HOME="${_jdk}"; break; fi
+    done
+fi
 step "build debug APK"
-JAVA_HOME=/usr/lib/jvm/java-26-openjdk ANDROID_HOME=$HOME/Android/Sdk \
+JAVA_HOME="$JAVA_HOME" ANDROID_HOME=$HOME/Android/Sdk \
     "${REPO_ROOT}/gradlew" -p "$REPO_ROOT" :app:assembleDebug --quiet
 
 step "install"

@@ -23,7 +23,7 @@ internal fun MonthYearBand(
     yearMonth: YearMonth,
     modifier: Modifier = Modifier,
 ) {
-    val locale = LocalConfiguration.current.locales.get(0) ?: java.util.Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     Text(
         text = formatMonthBand(yearMonth, locale),
         style = MaterialTheme.typography.headlineSmall,

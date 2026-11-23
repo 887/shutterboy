@@ -81,7 +81,7 @@ internal fun PhotosGrid(
         return
     }
 
-    val locale = LocalConfiguration.current.locales.get(0) ?: java.util.Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     // Timeline assembly off the main thread. Critically, we KEEP the
     // previous timeline visible while a new one builds — resetting to
     // empty on every photo emission would unmount the grid mid-scroll

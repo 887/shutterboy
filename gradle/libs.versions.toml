@@ -1,46 +1,45 @@
 [versions]
-androidGradlePlugin = "9.0.1"
-androidxCore = "1.18.0"
-androidxLifecycle = "2.10.0"
+androidGradlePlugin = "9.5.2"
+androidxCore = "1.19.1"
+androidxLifecycle = "2.11.1"
 androidxActivity = "1.13.0"
-androidxComposeBom = "2026.03.01"
-# m3-expressive A.1 — BOM resolves material3 to 1.4.0 which keeps the
-# Expressive APIs internal. Pin to 1.5.0-alpha18 (the alpha that
-# promoted them to public). Drop the override when 1.5.0 stable lands.
-composeMaterial3 = "1.5.0-alpha18"
+androidxComposeBom = "2026.11.01"
+# m3-expressive A.1 — pinned explicitly to material3 1.5.0 stable (the
+# first stable line with the public Expressive APIs).
+composeMaterial3 = "1.5.0"
 androidxTest = "1.7.0"
 androidxTestExt = "1.3.0"
 androidxTestRunner = "1.7.0"
 androidxTestEspresso = "3.7.0"
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 junit = "4.13.2"
-kotlin = "2.3.20"
-nav3Core = "1.0.1"
-lifecycleViewmodelNav3 = "2.10.0"
-room = "2.8.4"
-ksp = "2.3.7"
-robolectric = "4.14.1"
+kotlin = "2.4.21"
+nav3Core = "1.2.2"
+lifecycleViewmodelNav3 = "2.11.1"
+room = "2.8.5"
+ksp = "2.3.14"
+robolectric = "4.18.1"
 androidxArchCoreTest = "2.2.0"
-androidxDataStore = "1.1.2"
-kotlinxSerializationJson = "1.7.3"
-coil3 = "3.1.0"
-coreSplashscreen = "1.0.1"
-exifinterface = "1.4.1"
-documentfile = "1.0.1"
+androidxDataStore = "1.3.0"
+kotlinxSerializationJson = "1.13.0"
+coil3 = "3.6.3"
+coreSplashscreen = "1.2.0"
+exifinterface = "1.4.2"
+documentfile = "1.1.0"
 licensee = "1.14.1"
 # cold-start-perf Phase F — Baseline Profile + Macrobenchmark.
 # Versions verified against https://dl.google.com/dl/android/maven2/...
 # baselineprofile + benchmark kept in lockstep (same release train).
-# profileinstaller latest stable is 1.4.1 (1.4.2 does not exist yet).
-androidxBaselineProfile = "1.5.0-alpha06"
-androidxBenchmark = "1.5.0-alpha06"
+# profileinstaller latest stable is 1.4.1.
+androidxBaselineProfile = "1.5.0"
+androidxBenchmark = "1.5.0"
 androidxProfileInstaller = "1.4.1"
-androidxTestUiAutomator = "2.3.0"
+androidxTestUiAutomator = "2.4.1"
 # Media3 ExoPlayer — used by the photo viewer to play video MIME-type
 # items inline. Same release tonearmboy ships against (sibling app).
 # androidx.media3 has no Maven BOM, so the version is centralized here
 # and referenced by media3-exoplayer + media3-ui below.
-media3 = "1.10.0"
+media3 = "1.11.1"
 # ML Kit on-device image tagging (Smart Tags).
 # - Image labeling: GMS-backed (model downloaded by Play Services on
 #   demand, NOT bundled — keeps the APK small, absent gracefully on
